@@ -1,0 +1,356 @@
+/* =========================
+   ساختار اصلی منوی کناری
+========================= */
+
+.sidebar {
+  flex: 0 0 240px;
+  width: 240px;
+  min-width: 0;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background-color: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+
+  color: var(--color-text);
+
+  transition:
+    width var(--transition-normal),
+    flex-basis var(--transition-normal);
+}
+
+/* حالت جمع‌شده منو */
+.sidebar.is-collapsed {
+  flex-basis: 72px;
+  width: 72px;
+}
+
+
+/* =========================
+   عنوان منو
+========================= */
+
+.sidebar__header {
+  flex-shrink: 0;
+
+  min-height: 58px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 20px;
+
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sidebar__section-label {
+  color: var(--color-text-secondary);
+
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+
+/* =========================
+   فهرست منو
+========================= */
+
+.sidebar__nav {
+  flex: 1;
+  min-height: 0;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  padding: 14px 12px;
+}
+
+.sidebar__list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.sidebar__list-item {
+  width: 100%;
+  min-width: 0;
+}
+
+
+/* =========================
+   دکمه‌های اصلی منو
+========================= */
+
+.sidebar__item {
+  position: relative;
+
+  width: 100%;
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 0 12px;
+
+  border: 0;
+  border-radius: var(--radius-md);
+
+  background-color: transparent;
+  color: var(--color-text-secondary);
+
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+
+  text-align: right;
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+/* تغییر رنگ هنگام قرار گرفتن نشانگر روی منو */
+.sidebar__item:hover {
+  background-color: #f4f6fa;
+  color: var(--color-primary);
+}
+
+/* بخش انتخاب‌شده */
+.sidebar__item.is-active {
+  background-color: #eff6ff;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* خط تأکیدی کنار بخش فعال */
+.sidebar__item.is-active::before {
+  content: "";
+
+  position: absolute;
+
+  top: 9px;
+  right: 0;
+  bottom: 9px;
+
+  width: 3px;
+
+  border-radius: 3px 0 0 3px;
+
+  background-color: var(--color-accent);
+}
+
+
+/* =========================
+   آیکون‌های منو
+========================= */
+
+.sidebar__item-icon {
+  flex: 0 0 22px;
+
+  width: 22px;
+  height: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar__item-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+
+/* =========================
+   عنوان و فلش زیرمنو
+========================= */
+
+.sidebar__item-label {
+  flex: 1;
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__chevron {
+  flex-shrink: 0;
+
+  width: 17px;
+  height: 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: transform var(--transition-fast);
+}
+
+.sidebar__chevron svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* چرخش فلش هنگام باز شدن زیرمنو */
+.sidebar__chevron.is-expanded {
+  transform: rotate(180deg);
+}
+
+
+/* =========================
+   زیرمنوها
+========================= */
+
+.sidebar__submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  margin: 5px 22px 8px 0;
+  padding: 3px 14px 3px 0;
+
+  border-right: 1px solid var(--color-border);
+
+  list-style: none;
+}
+
+/* دکمه‌های زیرمنو */
+.sidebar__subitem {
+  width: 100%;
+  min-height: 38px;
+
+  padding: 7px 11px;
+
+  border: 0;
+  border-radius: var(--radius-sm);
+
+  background-color: transparent;
+  color: var(--color-text-secondary);
+
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+
+  text-align: right;
+  cursor: pointer;
+
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.sidebar__subitem:hover {
+  background-color: #f4f6fa;
+  color: var(--color-primary);
+}
+
+.sidebar__subitem.is-active {
+  background-color: #f0fdfa;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+
+/* =========================
+   حالت جمع‌شده منو
+========================= */
+
+.sidebar.is-collapsed .sidebar__header {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar.is-collapsed .sidebar__section-label,
+.sidebar.is-collapsed .sidebar__item-label,
+.sidebar.is-collapsed .sidebar__chevron,
+.sidebar.is-collapsed .sidebar__submenu {
+  display: none;
+}
+
+.sidebar.is-collapsed .sidebar__item {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar.is-collapsed .sidebar__item-icon {
+  flex-basis: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+
+/* =========================
+   نمایش در موبایل
+========================= */
+
+@media (max-width: 760px) {
+
+  .sidebar {
+    position: fixed;
+
+    top: 68px;
+    right: 0;
+    bottom: 0;
+
+    z-index: 40;
+
+    width: min(280px, calc(100vw - 48px));
+    height: auto;
+
+    flex: 0 0 auto;
+
+    transform: translateX(105%);
+
+    box-shadow: -8px 0 25px rgba(15, 23, 42, 0.08);
+
+    transition: transform var(--transition-normal);
+  }
+
+  /* باز شدن منوی کشویی در موبایل */
+  .sidebar.is-mobile-open {
+    transform: translateX(0);
+  }
+
+  /* در موبایل منو همیشه با عنوان نمایش داده می‌شود */
+  .sidebar.is-collapsed {
+    width: min(280px, calc(100vw - 48px));
+    flex-basis: auto;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .sidebar {
+    top: 62px;
+  }
+
+}
+
+
+/* =========================
+   حرکت کمتر
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .sidebar,
+  .sidebar__item,
+  .sidebar__chevron,
+  .sidebar__subitem {
+    transition: none;
+  }
+
+}
