@@ -1,11 +1,8 @@
 
+import Login from './pages/Login/Login';
+
 function App() {
-  return (
-    <main className="app-placeholder">
-      <h1>حساب‌یار</h1>
-      <p>زیرساخت اولیه رابط کاربری آماده است.</p>
-    </main>
-  );
+  return <Login />;
 }
 
 export default App;
