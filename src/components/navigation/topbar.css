@@ -1,0 +1,285 @@
+/* =========================
+   ساختار اصلی نوار بالایی
+========================= */
+
+.topbar {
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
+  width: 100%;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 24px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* =========================
+   بخش هویت برنامه
+========================= */
+
+.topbar__identity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* دکمه‌های آیکونی */
+.topbar__icon-button {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.topbar__icon-button:hover {
+  background-color: #f1f5f9;
+  color: var(--color-primary);
+}
+
+.topbar__icon-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* نشان و نام حساب‌یار */
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.topbar__brand-icon {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.topbar__brand-icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+.topbar__brand-name {
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+/* =========================
+   بخش ابزارها و اطلاعات
+========================= */
+
+.topbar__tools {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+}
+
+/* نمایش تاریخ */
+.topbar__date {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.topbar__date-icon {
+  display: flex;
+  align-items: center;
+  color: #9ca3af;
+}
+
+.topbar__date-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* =========================
+   دکمه‌های اعلان و تنظیمات
+========================= */
+
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.topbar__action-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* =========================
+   اطلاعات پروفایل کاربر
+========================= */
+
+.topbar__profile-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  font-family: var(--font-family);
+  text-align: right;
+  transition: background-color var(--transition-fast);
+}
+
+.topbar__profile-button:hover {
+  background-color: #f8fafc;
+}
+
+.topbar__avatar {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #e0f2f1;
+  color: var(--color-accent);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+
+.topbar__profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topbar__profile-name {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.topbar__profile-role {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+/* =========================
+   پنل‌های بازشونده
+========================= */
+
+.topbar__popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 12px);
+  left: 0;
+  width: 270px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.topbar__popover h3 {
+  margin: 0 0 10px;
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+
+.topbar__popover p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.9;
+}
+
+
+/* =========================
+   واکنش‌گرایی
+========================= */
+
+@media (max-width: 760px) {
+
+  .topbar {
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  /* پنهان کردن تاریخ برای حفظ فضای کافی */
+  .topbar__date {
+    display: none;
+  }
+
+  .topbar__tools {
+    gap: 10px;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .topbar {
+    height: 62px;
+    padding: 0 10px;
+  }
+
+  .topbar__identity {
+    gap: 7px;
+  }
+
+  .topbar__brand {
+    gap: 7px;
+  }
+
+  .topbar__brand-name {
+    font-size: var(--font-size-md);
+  }
+
+  .topbar__brand-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* در نمایشگر کوچک فقط آواتار را نشان می‌دهیم */
+  .topbar__profile-info {
+    display: none;
+  }
+
+  .topbar__actions {
+    gap: 0;
+  }
+
+  .topbar__icon-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .topbar__popover {
+    width: min(270px, calc(100vw - 24px));
+  }
+
+}

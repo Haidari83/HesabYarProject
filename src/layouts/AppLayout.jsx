@@ -1,28 +1,42 @@
-
+import { useState } from 'react';
+import TopBar from '../components/navigation/TopBar';
 import './app-layout.css';
 
 function AppLayout({ children }) {
+
+  // وضعیت باز یا بسته بودن منوی کناری
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // تغییر وضعیت منوی کناری
+  function toggleSidebar() {
+    setSidebarCollapsed((previousState) => !previousState);
+  }
+
   return (
     <div className="app-layout">
 
       {/* نوار بالایی برنامه */}
-      <header className="app-layout__topbar">
-        {/* TopBar component will be added here */}
-        <span>محل قرارگیری Top Bar</span>
-      </header>
+      <TopBar
+        onToggleSidebar={toggleSidebar}
+        sidebarCollapsed={sidebarCollapsed}
+      />
 
 
       {/* بدنه اصلی برنامه */}
       <div className="app-layout__body">
 
-        {/* منوی کناری */}
-        <aside className="app-layout__sidebar">
-          {/* Sidebar component will be added here */}
-          <span>محل قرارگیری Sidebar</span>
+        {/* محل قرارگیری منوی کناری */}
+        <aside
+          className={`app-layout__sidebar ${sidebarCollapsed ? 'is-collapsed' : ''
+            }`}
+        >
+          <span>
+            {sidebarCollapsed ? 'منو' : 'محل قرارگیری Sidebar'}
+          </span>
         </aside>
 
 
-        {/* فضای نمایش صفحات */}
+        {/* محل نمایش صفحات برنامه */}
         <main className="app-layout__main">
           {children}
         </main>

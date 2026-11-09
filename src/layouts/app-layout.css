@@ -13,24 +13,7 @@
 }
 
 /* =========================
-   Top Bar Area
-========================= */
-
-.app-layout__topbar {
-  flex-shrink: 0;
-  width: 100%;
-  height: 68px;
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-/* =========================
-   Main Body
+   بدنه اصلی برنامه
 ========================= */
 
 .app-layout__body {
@@ -43,7 +26,7 @@
 }
 
 /* =========================
-   Sidebar Area
+   محل قرارگیری منوی کناری
 ========================= */
 
 .app-layout__sidebar {
@@ -52,10 +35,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
   background-color: var(--color-surface);
   border-left: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  transition:
+    width var(--transition-normal),
+    flex-basis var(--transition-normal);
+}
+
+/* حالت جمع‌شده منوی کناری */
+.app-layout__sidebar.is-collapsed {
+  flex-basis: 72px;
+  width: 72px;
 }
 
 /* =========================
