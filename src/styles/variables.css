@@ -1,0 +1,66 @@
+:root {
+
+  /************ رنگ ها **********/
+
+  /* رنگ‌های اصلی */
+  --color-primary: #172554;
+  --color-primary-hover: #1e3a8a;
+  --color-accent: #0f766e;
+
+  /* رنگ‌های پس‌زمینه */
+  --color-background: #f4f6fa;
+  --color-surface: #ffffff;
+
+  /* رنگ‌های متن */
+  --color-text: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-disabled: #9ca3af;
+
+  /* رنگ خطوط */
+  --color-border: #e5e7eb;
+
+  /* رنگ وضعیت‌ها */
+  --color-success: #15803d;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  /************ تایپوگرافی **********/
+
+  --font-family: "Vazirmatn", Tahoma, Arial, sans-serif;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /************ فاصله ها **********/
+
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+
+  /************ گردی گوشه ها **********/
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /************ سایه ها **********/
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /************ ترانسشن **********/
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}

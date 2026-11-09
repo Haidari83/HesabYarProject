@@ -1,0 +1,95 @@
+/************  ریست **********/
+
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  direction: rtl;
+  font-family: var(--font-family);
+  height: 100%;
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  background-color: var(--color-background);
+  color: var(--color-text);
+
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  line-height: 1.7;
+}
+
+/************  عناصر عمومی **********/
+
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/************  حالت فوکس **********/
+
+
+:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.35);
+  outline-offset: 2px;
+}
+
+/* =========================
+   Temporary App Preview
+========================= */
+
+.app-placeholder {
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: var(--spacing-6);
+  text-align: center;
+}
+
+.app-placeholder h1 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+}
+
+.app-placeholder p {
+  margin: var(--spacing-2) 0 0;
+  color: var(--color-text-secondary);
+}
