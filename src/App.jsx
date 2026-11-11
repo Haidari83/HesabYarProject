@@ -1,63 +1,78 @@
 
-// import Login from './pages/Login/Login';
+import { useState } from 'react';
+
 import AppLayout from './layouts/AppLayout';
 import PageLayout from './components/page/PageLayout';
 
+import {
+  navigationItems,
+  pageRegistry
+} from './routes/pageRegistry';
+
+
+/* =========================
+   برنامه اصلی حساب‌یار
+========================= */
+
 function App() {
+
+  // شناسه صفحه‌ای که در حال حاضر نمایش داده می‌شود
+  const [activePageId, setActivePageId] = useState('dashboard');
+
+
+  // دریافت اطلاعات صفحه انتخاب‌شده
+  const currentPage = pageRegistry[activePageId];
+
+
+  /* =========================
+     مدیریت تغییر صفحات
+  ========================= */
+
+  function handlePageSelect(page) {
+
+    // جلوگیری از انتخاب شناسه‌های ثبت‌نشده
+    if (!pageRegistry[page.id]) {
+      return;
+    }
+
+    // تغییر صفحه فعال
+    setActivePageId(page.id);
+
+  }
+
+
   return (
-    <AppLayout>
 
+    <AppLayout
+
+      // ارسال ساختار منو به چارچوب اصلی
+      navigationItems={navigationItems}
+
+      // ارسال شناسه صفحه فعال
+      activeItem={activePageId}
+
+      // دریافت انتخاب جدید از Sidebar
+      onPageSelect={handlePageSelect}
+
+    >
+
+      {/* قالب عمومی صفحه انتخاب‌شده */}
       <PageLayout
-
-        // عنوان صفحه
-        title="فهرست محصولات"
-
-        // توضیحات زیر عنوان
-        description="مدیریت و بررسی محصولات فروشگاه"
-
-        // مسیر دسترسی؛ عنوان صفحه به‌صورت خودکار اضافه می‌شود
-        breadcrumbs={[
-          'داشبورد',
-          'محصولات و انبار'
-        ]}
-
-        // عملیات مرتبط با صفحه
-        actions={
-          <button
-            type="button"
-            className="page-demo-action"
-          >
-            افزودن محصول
-          </button>
-        }
-
-        // نوار ابزار صفحه
-        toolbar={
-          <div className="page-demo-toolbar">
-
-            <span>
-              جست‌وجوی محصولات...
-            </span>
-
-            <button type="button">
-              فیلتر
-            </button>
-
-          </div>
-        }
-
+        title={currentPage.title}
+        description={currentPage.description}
+        breadcrumbs={currentPage.breadcrumbs}
       >
 
         {/* محتوای آزمایشی صفحه */}
         <div className="page-demo-content">
 
           <h2>
-            محتوای صفحه
+            {currentPage.title}
           </h2>
 
           <p>
-            اطلاعات محصولات، جدول‌ها و سایر اجزای صفحه
-            در این قسمت نمایش داده خواهند شد.
+            ساختار جابه‌جایی بین صفحات با موفقیت کار می‌کند.
+            محتوای واقعی این بخش در مرحله مربوط به آن پیاده‌سازی خواهد شد.
           </p>
 
         </div>
@@ -65,8 +80,8 @@ function App() {
       </PageLayout>
 
     </AppLayout>
-    //  {<Login />;}
-  )
+
+  );
 }
 
 export default App;

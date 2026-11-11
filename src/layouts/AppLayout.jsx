@@ -6,40 +6,51 @@ import Sidebar from '../components/navigation/Sidebar';
 
 import './app-layout.css';
 
-function AppLayout({ children }) {
 
-  // وضعیت جمع‌شده منوی کناری در دسکتاپ
+/* =========================
+   چارچوب اصلی برنامه
+========================= */
+
+function AppLayout({
+  children,
+  navigationItems = [],
+  activeItem = 'dashboard',
+  onPageSelect = () => { }
+}) {
+
+  // وضعیت جمع‌شدن منوی کناری در دسکتاپ
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // وضعیت باز بودن منوی کشویی در موبایل
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // تشخیص اینکه اندازه صفحه در محدوده موبایل است یا خیر
+  // تشخیص اندازه نمایشگر
   const [isMobile, setIsMobile] = useState(
     () => window.matchMedia('(max-width: 760px)').matches
   );
 
-  // شناسه بخش انتخاب‌شده در منو
-  const [activeItem, setActiveItem] = useState('dashboard');
-
 
   /* =========================
-     تشخیص اندازه نمایشگر
+     مدیریت اندازه نمایشگر
   ========================= */
 
   useEffect(() => {
 
     const mediaQuery = window.matchMedia('(max-width: 760px)');
 
-    // به‌روزرسانی وضعیت هنگام تغییر اندازه نمایشگر
+    // بررسی تغییر اندازه نمایشگر
     function handleMediaChange(event) {
+
       setIsMobile(event.matches);
+
+      // هنگام تغییر حالت نمایشگر، منوی موبایل را می‌بندیم
       setMobileSidebarOpen(false);
+
     }
 
     mediaQuery.addEventListener('change', handleMediaChange);
 
-    // حذف رویداد هنگام خروج کامپوننت از صفحه
+    // حذف رویداد هنگام خروج کامپوننت
     return () => {
       mediaQuery.removeEventListener('change', handleMediaChange);
     };
@@ -48,40 +59,34 @@ function AppLayout({ children }) {
 
 
   /* =========================
-     مدیریت منوی کناری
+     مدیریت باز و بسته شدن Sidebar
   ========================= */
 
-  // تغییر وضعیت Sidebar متناسب با اندازه نمایشگر
   function handleToggleSidebar() {
 
+    // در موبایل، منو به شکل کشویی باز و بسته می‌شود
     if (isMobile) {
+
       setMobileSidebarOpen((previousState) => !previousState);
+
       return;
     }
 
+    // در دسکتاپ، منو جمع یا باز می‌شود
     setSidebarCollapsed((previousState) => !previousState);
+
   }
 
 
-  // بستن منوی کشویی موبایل
+  // بستن منوی موبایل
   function closeMobileSidebar() {
     setMobileSidebarOpen(false);
   }
 
 
-  // باز کردن منوی دسکتاپ در صورت نیاز
+  // باز کردن منوی دسکتاپ
   function expandSidebar() {
     setSidebarCollapsed(false);
-  }
-
-
-  /* =========================
-     مدیریت انتخاب بخش‌ها
-  ========================= */
-
-  // ثبت بخش انتخاب‌شده در منو
-  function handlePageSelect(page) {
-    setActiveItem(page.id);
   }
 
 
@@ -97,13 +102,16 @@ function AppLayout({ children }) {
     }
 
     function handleEscape(event) {
+
       if (event.key === 'Escape') {
-        closeMobileSidebar();
+        setMobileSidebarOpen(false);
       }
+
     }
 
     document.addEventListener('keydown', handleEscape);
 
+    // حذف رویداد هنگام بسته شدن منو
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
@@ -112,6 +120,7 @@ function AppLayout({ children }) {
 
 
   return (
+
     <div className="app-layout">
 
       {/* نوار بالایی برنامه */}
@@ -126,29 +135,32 @@ function AppLayout({ children }) {
       {/* بدنه اصلی برنامه */}
       <div className="app-layout__body">
 
-        {/* لایه تیره پشت منوی موبایل */}
+        {/* لایه تیره پشت منوی کشویی موبایل */}
         {isMobile && mobileSidebarOpen && (
+
           <button
             type="button"
             className="app-layout__sidebar-overlay"
             onClick={closeMobileSidebar}
             aria-label="بستن منوی کناری"
           />
+
         )}
 
 
         {/* منوی کناری */}
         <Sidebar
+          items={navigationItems}
           collapsed={!isMobile && sidebarCollapsed}
           mobileOpen={isMobile && mobileSidebarOpen}
           activeItem={activeItem}
-          onSelect={handlePageSelect}
+          onSelect={onPageSelect}
           onCloseMobile={closeMobileSidebar}
           onExpand={expandSidebar}
         />
 
 
-        {/* فضای نمایش صفحات */}
+        {/* فضای نمایش صفحه انتخاب‌شده */}
         <main className="app-layout__main">
           {children}
         </main>
@@ -156,6 +168,7 @@ function AppLayout({ children }) {
       </div>
 
     </div>
+
   );
 }
 

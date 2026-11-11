@@ -131,84 +131,26 @@ function ChevronIcon() {
 
 
 /* =========================
-   اطلاعات بخش‌های منو
+   ارتباط شناسه آیکون‌ها با کامپوننت آن‌ها
 ========================= */
 
-const menuItems = [
-  {
-    id: 'dashboard',
-    label: 'داشبورد',
-    icon: DashboardIcon
-  },
-  {
-    id: 'products',
-    label: 'محصولات و انبار',
-    icon: PackageIcon,
-    children: [
-      { id: 'product-list', label: 'فهرست محصولات' },
-      { id: 'categories', label: 'دسته‌بندی محصولات' },
-      { id: 'inventory', label: 'موجودی انبار' }
-    ]
-  },
-  {
-    id: 'sales',
-    label: 'فروش و فاکتورها',
-    icon: ShoppingCartIcon,
-    children: [
-      { id: 'sales-list', label: 'فهرست فاکتورهای فروش' },
-      { id: 'new-sale', label: 'ثبت فروش' }
-    ]
-  },
-  {
-    id: 'purchases',
-    label: 'خرید',
-    icon: ShoppingBagIcon,
-    children: [
-      { id: 'purchases-list', label: 'فهرست خریدها' },
-      { id: 'new-purchase', label: 'ثبت خرید' }
-    ]
-  },
-  {
-    id: 'contacts',
-    label: 'مشتریان و تأمین‌کنندگان',
-    icon: UsersIcon,
-    children: [
-      { id: 'customers', label: 'مشتریان' },
-      { id: 'suppliers', label: 'تأمین‌کنندگان' }
-    ]
-  },
-  {
-    id: 'accounts',
-    label: 'بدهکاری و طلبکاری',
-    icon: WalletIcon,
-    children: [
-      { id: 'debts', label: 'بدهکاری‌ها' },
-      { id: 'receivables', label: 'طلبکاری‌ها' }
-    ]
-  },
-  {
-    id: 'reports',
-    label: 'گزارش‌ها',
-    icon: ChartIcon,
-    children: [
-      { id: 'sales-reports', label: 'گزارش فروش' },
-      { id: 'purchase-reports', label: 'گزارش خرید' },
-      { id: 'inventory-reports', label: 'گزارش موجودی' }
-    ]
-  },
-  {
-    id: 'settings',
-    label: 'تنظیمات',
-    icon: SettingsIcon
-  }
-];
-
+const iconComponents = {
+  dashboard: DashboardIcon,
+  package: PackageIcon,
+  sales: ShoppingCartIcon,
+  purchases: ShoppingBagIcon,
+  contacts: UsersIcon,
+  accounts: WalletIcon,
+  reports: ChartIcon,
+  settings: SettingsIcon
+};
 
 /* =========================
    کامپوننت منوی کناری
 ========================= */
 
 function Sidebar({
+  items = [],
   collapsed = false,
   mobileOpen = false,
   activeItem = 'dashboard',
@@ -290,9 +232,9 @@ function Sidebar({
 
         <ul className="sidebar__list">
 
-          {menuItems.map((item) => {
+          {items.map((item) => {
 
-            const Icon = item.icon;
+            const Icon = iconComponents[item.icon] || DashboardIcon;
 
             const hasChildren = Boolean(item.children?.length);
 
