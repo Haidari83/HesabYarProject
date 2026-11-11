@@ -1,0 +1,240 @@
+/* =========================
+   ساختار عمومی صفحه
+========================= */
+
+.page-layout {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+/* =========================
+   مسیر دسترسی
+========================= */
+
+.page-layout__breadcrumb ol {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.page-layout__breadcrumb li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  color: var(--color-text-secondary);
+
+  font-size: var(--font-size-xs);
+}
+
+/* افزودن جداکننده بین بخش‌های مسیر */
+.page-layout__breadcrumb li:not(:last-child)::after {
+  content: "‹";
+
+  color: #9ca3af;
+  font-size: 16px;
+}
+
+/* مشخص کردن صفحه فعلی */
+.page-layout__breadcrumb li[aria-current="page"] {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+
+/* =========================
+   سربرگ صفحه
+========================= */
+
+.page-layout__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  gap: 20px;
+
+  min-width: 0;
+}
+
+.page-layout__heading {
+  min-width: 0;
+}
+
+.page-layout__heading h1 {
+  margin: 0;
+
+  color: var(--color-primary);
+
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.page-layout__heading p {
+  margin: 7px 0 0;
+
+  color: var(--color-text-secondary);
+
+  font-size: var(--font-size-sm);
+  line-height: 1.9;
+}
+
+
+/* =========================
+   عملیات صفحه
+========================= */
+
+.page-layout__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  flex-shrink: 0;
+}
+
+
+/* =========================
+   نوار ابزار
+========================= */
+
+.page-layout__toolbar {
+  min-width: 0;
+
+  padding: 14px;
+
+  background-color: var(--color-surface);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+
+/* =========================
+   محتوای صفحه
+========================= */
+
+.page-layout__content {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+
+/* =========================
+   واکنش‌گرایی
+========================= */
+
+@media (max-width: 640px) {
+
+  .page-layout {
+    gap: 16px;
+  }
+
+  .page-layout__header {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .page-layout__heading h1 {
+    font-size: var(--font-size-xl);
+  }
+
+  .page-layout__actions {
+    width: 100%;
+  }
+
+  .page-layout__toolbar {
+    padding: 10px;
+  }
+
+}
+
+
+/* =========================
+   استایل‌های موقت برای آزمایش
+========================= */
+
+/* دکمه آزمایشی افزودن محصول */
+.page-demo-action {
+  min-height: 42px;
+
+  padding: 9px 18px;
+
+  border: 0;
+  border-radius: var(--radius-md);
+
+  background-color: var(--color-primary);
+  color: #ffffff;
+
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+/* نوار ابزار آزمایشی */
+.page-demo-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.page-demo-toolbar button {
+  padding: 8px 16px;
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+
+  background-color: #ffffff;
+  color: var(--color-text);
+
+  font-family: var(--font-family);
+}
+
+/* محتوای آزمایشی */
+.page-demo-content {
+  min-height: 200px;
+
+  padding: 24px;
+
+  background-color: var(--color-surface);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.page-demo-content h2 {
+  margin: 0 0 12px;
+
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+}
+
+.page-demo-content p {
+  margin: 0;
+
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.9;
+}
