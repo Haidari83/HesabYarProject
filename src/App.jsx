@@ -4,6 +4,7 @@ import { useState } from 'react';
 import AppLayout from './layouts/AppLayout';
 import PageLayout from './components/page/PageLayout';
 import Dashboard from './pages/Dashboard/Dashboard';
+import ProductList from './pages/Products/ProductList';
 
 import {
   navigationItems,
@@ -59,6 +60,7 @@ function App() {
 
       {/* قالب عمومی صفحه انتخاب‌شده */}
 
+
       <PageLayout
         title={currentPage.title}
         description={currentPage.description}
@@ -66,6 +68,8 @@ function App() {
       >
         {activePageId === 'dashboard' ? (
           <Dashboard />
+        ) : activePageId === 'product-list' ? (
+          <ProductList />
         ) : (
           <div className="page-demo-content">
             <h2>{currentPage.title}</h2>
@@ -73,6 +77,7 @@ function App() {
           </div>
         )}
       </PageLayout>
+
 
 
     </AppLayout>
