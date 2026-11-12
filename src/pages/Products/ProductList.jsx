@@ -225,6 +225,14 @@ function getProductMarkup(product) {
 function ProductList() {
   const [products, setProducts] = useState(initialProducts);
 
+  // وضعیت فرم ویرایش کالا
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [editError, setEditError] = useState('');
+
+  // کالای انتخاب‌شده برای تغییر وضعیت
+  const [statusTarget, setStatusTarget] = useState(null);
+
   // وضعیت جست‌وجو و فیلترها
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -285,6 +293,19 @@ function ProductList() {
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [products, search, categoryFilter, statusFilter]);
+
+
+  // بررسی نام‌های مشابه با کالاهای دیگر هنگام ویرایش
+  const editDuplicateProducts =
+    editingProduct && editForm
+      ? products.filter(
+        (product) =>
+          product.id !== editingProduct.id &&
+          normalizeProductName(editForm.name) !== '' &&
+          normalizeProductName(product.name) ===
+          normalizeProductName(editForm.name)
+      )
+      : [];
 
   // یافتن کالاهای ثبت‌شده با نام یکسان
   function findDuplicateProducts(name) {
@@ -664,6 +685,208 @@ function ProductList() {
     setSubmitError('');
   }
 
+  // بازکردن فرم ویرایش کالا
+  function openEditForm(product) {
+    setEditingProduct(product);
+
+    setEditForm({
+      name: product.name,
+      category: product.category,
+      unit: product.unit,
+      purchasePrice: String(product.purchasePrice),
+      salePrice: String(product.salePrice),
+      profitRate:
+        calculateMarkup(product.purchasePrice, product.salePrice) ||
+        defaultProfitRate,
+      salePriceMode: 'manual',
+      allowDuplicateName: false,
+    });
+
+    setEditError('');
+  }
+
+  // بستن فرم ویرایش
+  function closeEditForm() {
+    setEditingProduct(null);
+    setEditForm(null);
+    setEditError('');
+  }
+
+  // مدیریت تغییر فیلدهای فرم ویرایش
+  function updateEditForm(changes) {
+    setEditForm((previous) => {
+      if (!previous) return previous;
+
+      const next = { ...previous, ...changes };
+
+      // با تغییر نام، تأیید قبلی نام تکراری باطل می‌شود
+      if (Object.hasOwn(changes, 'name')) {
+        next.allowDuplicateName = false;
+      }
+
+      // با تغییر مستقیم قیمت فروش، محاسبه به حالت دستی می‌رود
+      if (Object.hasOwn(changes, 'salePrice')) {
+        next.salePriceMode = 'manual';
+        next.profitRate = calculateMarkup(
+          next.purchasePrice,
+          next.salePrice
+        );
+      }
+
+      // تغییر درصد افزایش، قیمت فروش را دوباره محاسبه می‌کند
+      if (Object.hasOwn(changes, 'profitRate')) {
+        next.salePriceMode = 'auto';
+        next.salePrice = calculateSalePrice(
+          next.purchasePrice,
+          next.profitRate
+        );
+      }
+
+      // تغییر قیمت خرید متناسب با حالت محاسبه
+      if (Object.hasOwn(changes, 'purchasePrice')) {
+        if (next.salePriceMode === 'auto') {
+          next.salePrice = calculateSalePrice(
+            next.purchasePrice,
+            next.profitRate
+          );
+        } else {
+          next.profitRate = calculateMarkup(
+            next.purchasePrice,
+            next.salePrice
+          );
+        }
+      }
+
+      return next;
+    });
+
+    setEditError('');
+  }
+
+  // تغییر حالت محاسبه قیمت فروش
+  function setEditSalePriceMode(mode) {
+    setEditForm((previous) => {
+      if (!previous) return previous;
+
+      if (mode === 'auto') {
+        return {
+          ...previous,
+          salePriceMode: 'auto',
+          salePrice: calculateSalePrice(
+            previous.purchasePrice,
+            previous.profitRate
+          ),
+        };
+      }
+
+      return {
+        ...previous,
+        salePriceMode: 'manual',
+      };
+    });
+
+    setEditError('');
+  }
+
+  // ثبت تغییرات کالا
+  function handleEditSubmit(event) {
+    event.preventDefault();
+
+    if (!editingProduct || !editForm) return;
+
+    const purchasePrice = Number(editForm.purchasePrice);
+    const salePrice = Number(editForm.salePrice);
+    const profitRate = Number(editForm.profitRate);
+
+    if (!editForm.name.trim()) {
+      setEditError('نام کالا را وارد کن.');
+      return;
+    }
+
+    if (
+      editForm.purchasePrice === '' ||
+      !Number.isFinite(purchasePrice) ||
+      purchasePrice < 0
+    ) {
+      setEditError('قیمت خرید معتبر نیست.');
+      return;
+    }
+
+    if (
+      editForm.salePrice === '' ||
+      !Number.isFinite(salePrice) ||
+      salePrice < 0
+    ) {
+      setEditError('قیمت فروش معتبر نیست.');
+      return;
+    }
+
+    if (!Number.isFinite(profitRate) || profitRate < 0) {
+      setEditError('درصد افزایش قیمت معتبر نیست.');
+      return;
+    }
+
+    // جلوگیری از تغییر نام به نام کالای موجود بدون تأیید
+    if (
+      editDuplicateProducts.length > 0 &&
+      !editForm.allowDuplicateName
+    ) {
+      setEditError(
+        'نام این کالا مشابه کالای دیگری است. پس از بررسی، مستقل بودن آن را تأیید کن.'
+      );
+      return;
+    }
+
+    setProducts((previous) =>
+      previous.map((product) =>
+        product.id === editingProduct.id
+          ? {
+            ...product,
+            name: editForm.name.trim(),
+            category: editForm.category,
+            unit: editForm.unit,
+            purchasePrice,
+            salePrice,
+          }
+          : product
+      )
+    );
+
+    setSuccessMessage(
+      `اطلاعات کالای «${editForm.name.trim()}» با موفقیت ویرایش شد.`
+    );
+
+    closeEditForm();
+  }
+
+  // بازکردن تأیید تغییر وضعیت
+  function requestStatusChange(product) {
+    setStatusTarget(product);
+  }
+
+  // تأیید تغییر وضعیت
+  function confirmStatusChange() {
+    if (!statusTarget) return;
+
+    const nextStatus = !statusTarget.isActive;
+
+    setProducts((previous) =>
+      previous.map((product) =>
+        product.id === statusTarget.id
+          ? { ...product, isActive: nextStatus }
+          : product
+      )
+    );
+
+    setSuccessMessage(
+      nextStatus
+        ? `کالای «${statusTarget.name}» فعال شد.`
+        : `کالای «${statusTarget.name}» غیرفعال شد.`
+    );
+
+    setStatusTarget(null);
+  }
+
   return (
     <div className="product-page">
 
@@ -788,6 +1011,7 @@ function ProductList() {
                 <th>قیمت فروش</th>
                 <th>افزایش قیمت</th>
                 <th>وضعیت</th>
+                <th>عملیات</th>
               </tr>
             </thead>
 
@@ -813,12 +1037,35 @@ function ProductList() {
                       {product.isActive ? 'فعال' : 'غیرفعال'}
                     </span>
                   </td>
+                  <td>
+                    <div className="product-table-actions">
+                      <button
+                        type="button"
+                        className="product-edit-action"
+                        onClick={() => openEditForm(product)}
+                      >
+                        ویرایش
+                      </button>
+
+                      <button
+                        type="button"
+                        className={
+                          product.isActive
+                            ? 'product-deactivate-action'
+                            : 'product-activate-action'
+                        }
+                        onClick={() => requestStatusChange(product)}
+                      >
+                        {product.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
 
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan="8">
+                  <td colSpan="9">
                     <div className="product-empty-state">
                       <span>⌕</span>
                       <strong>کالایی پیدا نشد</strong>
@@ -1278,6 +1525,281 @@ function ProductList() {
           </section>
         </div>
       )}
+
+
+      {/* پنجره ویرایش کالا */}
+      {editingProduct && editForm && (
+        <div
+          className="product-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeEditForm();
+            }
+          }}
+        >
+          <section
+            className="product-edit-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="product-edit-title"
+          >
+
+            <header className="product-modal-header">
+              <div>
+                <h2 id="product-edit-title">ویرایش اطلاعات کالا</h2>
+                <p>کد کالا: {editingProduct.code}</p>
+              </div>
+
+              <button
+                type="button"
+                className="product-modal-close"
+                onClick={closeEditForm}
+                aria-label="بستن پنجره"
+              >
+                ×
+              </button>
+            </header>
+
+            <form onSubmit={handleEditSubmit}>
+
+              <div className="product-edit-form">
+
+                <label className="product-edit-field">
+                  <span>نام کالا</span>
+                  <input
+                    value={editForm.name}
+                    onChange={(event) =>
+                      updateEditForm({ name: event.target.value })
+                    }
+                    required
+                  />
+                </label>
+
+                <label className="product-edit-field">
+                  <span>دسته‌بندی</span>
+                  <select
+                    value={editForm.category}
+                    onChange={(event) =>
+                      updateEditForm({ category: event.target.value })
+                    }
+                  >
+                    {availableCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="product-edit-field">
+                  <span>واحد اندازه‌گیری</span>
+                  <select
+                    value={editForm.unit}
+                    onChange={(event) =>
+                      updateEditForm({ unit: event.target.value })
+                    }
+                  >
+                    {units.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="product-edit-field">
+                  <span>قیمت خرید</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={editForm.purchasePrice}
+                    onChange={(event) =>
+                      updateEditForm({ purchasePrice: event.target.value })
+                    }
+                    required
+                  />
+                </label>
+
+                <label className="product-edit-field">
+                  <span>درصد افزایش قیمت</span>
+                  <div className="product-edit-percent">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editForm.profitRate}
+                      onChange={(event) =>
+                        updateEditForm({ profitRate: event.target.value })
+                      }
+                    />
+                    <span>٪</span>
+                  </div>
+                </label>
+
+                <label className="product-edit-field">
+                  <span>قیمت فروش</span>
+
+                  <div className="product-sale-mode">
+                    <button
+                      type="button"
+                      className={
+                        editForm.salePriceMode === 'auto' ? 'selected' : ''
+                      }
+                      onClick={() => setEditSalePriceMode('auto')}
+                    >
+                      خودکار
+                    </button>
+
+                    <button
+                      type="button"
+                      className={
+                        editForm.salePriceMode === 'manual' ? 'selected' : ''
+                      }
+                      onClick={() => setEditSalePriceMode('manual')}
+                    >
+                      دستی
+                    </button>
+                  </div>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={editForm.salePrice}
+                    onChange={(event) =>
+                      updateEditForm({ salePrice: event.target.value })
+                    }
+                    required
+                  />
+                </label>
+
+              </div>
+
+              {editDuplicateProducts.length > 0 && (
+                <div className="product-edit-duplicate">
+                  <strong>
+                    کالای دیگری با همین نام وجود دارد.
+                  </strong>
+
+                  {editDuplicateProducts.map((product) => (
+                    <span key={product.id}>
+                      {product.name} ـ {product.code}
+                    </span>
+                  ))}
+
+                  <label className="product-choice">
+                    <input
+                      type="checkbox"
+                      checked={editForm.allowDuplicateName}
+                      onChange={(event) =>
+                        updateEditForm({
+                          allowDuplicateName: event.target.checked,
+                        })
+                      }
+                    />
+                    تأیید می‌کنم این کالا مستقل از کالای مشابه است.
+                  </label>
+                </div>
+              )}
+
+              {editError && (
+                <div className="product-form-error" role="alert">
+                  {editError}
+                </div>
+              )}
+
+              <footer className="product-bulk-footer">
+                <button
+                  type="button"
+                  className="product-cancel-button"
+                  onClick={closeEditForm}
+                >
+                  انصراف
+                </button>
+
+                <button
+                  type="submit"
+                  className="product-submit-button"
+                >
+                  ذخیره تغییرات
+                </button>
+              </footer>
+
+            </form>
+          </section>
+        </div>
+      )}
+
+
+      {/* پنجره تأیید تغییر وضعیت کالا */}
+      {statusTarget && (
+        <div
+          className="product-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setStatusTarget(null);
+            }
+          }}
+        >
+          <section
+            className="product-status-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="product-status-title"
+          >
+
+            <div className="product-status-modal-icon">
+              {statusTarget.isActive ? '!' : '✓'}
+            </div>
+
+            <h2 id="product-status-title">
+              {statusTarget.isActive
+                ? 'غیرفعال‌کردن کالا'
+                : 'فعال‌کردن کالا'}
+            </h2>
+
+            <p>
+              آیا مطمئنی می‌خواهی کالای
+              {' '}
+              <strong>«{statusTarget.name}»</strong>
+              {' '}
+              را {statusTarget.isActive ? 'غیرفعال' : 'فعال'} کنی؟
+            </p>
+
+            {statusTarget.isActive && (
+              <div className="product-status-warning">
+                غیرفعال‌کردن کالا به معنای حذف آن نیست.
+                اطلاعات کالا و سوابق اسناد قبلی حفظ خواهند شد.
+              </div>
+            )}
+
+            <div className="product-status-actions">
+              <button
+                type="button"
+                className="product-cancel-button"
+                onClick={() => setStatusTarget(null)}
+              >
+                انصراف
+              </button>
+
+              <button
+                type="button"
+                className={
+                  statusTarget.isActive
+                    ? 'product-confirm-deactivate'
+                    : 'product-confirm-activate'
+                }
+                onClick={confirmStatusChange}
+              >
+                {statusTarget.isActive ? 'بله، غیرفعال کن' : 'بله، فعال کن'}
+              </button>
+            </div>
+
+          </section>
+        </div>
+      )}
+
 
     </div>
   );
