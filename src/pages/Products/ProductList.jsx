@@ -33,6 +33,7 @@ const initialProducts = [
     unit: 'کیلوگرام',
     purchasePrice: 70,
     salePrice: 85,
+    stock: 42,
     isActive: true,
   },
   {
@@ -43,6 +44,7 @@ const initialProducts = [
     unit: 'عدد',
     purchasePrice: 580,
     salePrice: 650,
+    stock: 42,
     isActive: true,
   },
   {
@@ -53,6 +55,7 @@ const initialProducts = [
     unit: 'بسته',
     purchasePrice: 120,
     salePrice: 150,
+    stock: 42,
     isActive: true,
   },
   {
@@ -63,6 +66,7 @@ const initialProducts = [
     unit: 'کیلوگرام',
     purchasePrice: 65,
     salePrice: 80,
+    stock: 42,
     isActive: true,
   },
   {
@@ -73,6 +77,7 @@ const initialProducts = [
     unit: 'عدد',
     purchasePrice: 25,
     salePrice: 35,
+    stock: 42,
     isActive: true,
   },
   {
@@ -83,6 +88,7 @@ const initialProducts = [
     unit: 'عدد',
     purchasePrice: 90,
     salePrice: 115,
+    stock: 42,
     isActive: true,
   },
   {
@@ -93,6 +99,7 @@ const initialProducts = [
     unit: 'عدد',
     purchasePrice: 20,
     salePrice: 30,
+    stock: 42,
     isActive: false,
   },
   {
@@ -103,6 +110,7 @@ const initialProducts = [
     unit: 'عدد',
     purchasePrice: 8,
     salePrice: 12,
+    stock: 42,
     isActive: true,
   },
 ];
@@ -659,10 +667,11 @@ function ProductList() {
         unit: row.unit,
         purchasePrice: Number(row.purchasePrice),
         salePrice: Number(row.salePrice),
+        stock: 0,
         isActive: true,
-      };
+      }; stock: 42,
 
-      nextProducts.unshift(newProduct);
+        nextProducts.unshift(newProduct);
       nextNumber += 1;
       addedCount += 1;
     });
@@ -1009,6 +1018,7 @@ function ProductList() {
                 <th>واحد</th>
                 <th>قیمت خرید</th>
                 <th>قیمت فروش</th>
+                <th>موجودی فعلی</th>
                 <th>افزایش قیمت</th>
                 <th>وضعیت</th>
                 <th>عملیات</th>
@@ -1024,6 +1034,18 @@ function ProductList() {
                   <td>{product.unit}</td>
                   <td>{formatNumber(product.purchasePrice)}</td>
                   <td>{formatNumber(product.salePrice)}</td>
+
+                  <td>
+                    <span
+                      className={`product-stock-value ${Number(product.stock ?? 0) <= 0 ? 'empty' : ''
+                        }`}
+                    >
+                      {formatNumber(product.stock ?? 0)}
+                      {' '}
+                      {product.unit}
+                    </span>
+                  </td>
+
                   <td>
                     {getProductMarkup(product) === ''
                       ? '—'
@@ -1037,6 +1059,7 @@ function ProductList() {
                       {product.isActive ? 'فعال' : 'غیرفعال'}
                     </span>
                   </td>
+
                   <td>
                     <div className="product-table-actions">
                       <button
@@ -1065,7 +1088,7 @@ function ProductList() {
 
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan="9">
+                  <td colSpan="10">
                     <div className="product-empty-state">
                       <span>⌕</span>
                       <strong>کالایی پیدا نشد</strong>

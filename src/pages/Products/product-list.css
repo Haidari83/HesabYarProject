@@ -1159,6 +1159,25 @@
   background-color: #065f46;
 }
 
+/* نمایش موجودی فعلی کالا */
+.product-stock-value {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background-color: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.product-stock-value.empty {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
 /* سازگاری پنجره ویرایش با صفحات کوچک */
 @media (max-width: 600px) {
   .product-edit-form {
