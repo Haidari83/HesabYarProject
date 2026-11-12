@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import AppLayout from './layouts/AppLayout';
 import PageLayout from './components/page/PageLayout';
+import Dashboard from './pages/Dashboard/Dashboard';
 
 import {
   navigationItems,
@@ -57,27 +58,22 @@ function App() {
     >
 
       {/* قالب عمومی صفحه انتخاب‌شده */}
+
       <PageLayout
         title={currentPage.title}
         description={currentPage.description}
         breadcrumbs={currentPage.breadcrumbs}
       >
-
-        {/* محتوای آزمایشی صفحه */}
-        <div className="page-demo-content">
-
-          <h2>
-            {currentPage.title}
-          </h2>
-
-          <p>
-            ساختار جابه‌جایی بین صفحات با موفقیت کار می‌کند.
-            محتوای واقعی این بخش در مرحله مربوط به آن پیاده‌سازی خواهد شد.
-          </p>
-
-        </div>
-
+        {activePageId === 'dashboard' ? (
+          <Dashboard />
+        ) : (
+          <div className="page-demo-content">
+            <h2>{currentPage.title}</h2>
+            <p>{currentPage.description}</p>
+          </div>
+        )}
       </PageLayout>
+
 
     </AppLayout>
 

@@ -1,0 +1,545 @@
+/* متغیرهای اختصاصی داشبورد */
+.dashboard {
+  --dashboard-primary: #172554;
+  --dashboard-accent: #0f766e;
+  --dashboard-text: #1f2937;
+  --dashboard-muted: #64748b;
+  --dashboard-border: #e8edf3;
+  --dashboard-surface: #ffffff;
+  --dashboard-background: #f4f6fa;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  color: var(--dashboard-text);
+}
+
+/* پیام نمایشی بودن اطلاعات */
+.dashboard-demo-notice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+}
+
+.dashboard-demo-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background-color: #3b82f6;
+}
+
+/* کارت‌های شاخص */
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.dashboard-metric-card {
+  min-width: 0;
+  padding: 19px;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 12px;
+  background-color: var(--dashboard-surface);
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.dashboard-metric-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 19px;
+}
+
+.dashboard-metric-icon {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+}
+
+.dashboard-metric-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.dashboard-metric-icon.icon-sales {
+  background-color: #eef2ff;
+  color: #4338ca;
+}
+
+.dashboard-metric-icon.icon-profit {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.dashboard-metric-icon.icon-invoice {
+  background-color: #f0f9ff;
+  color: #0284c7;
+}
+
+.dashboard-metric-icon.icon-payment {
+  background-color: #fff7ed;
+  color: #ea580c;
+}
+
+.dashboard-metric-title {
+  overflow: hidden;
+  color: var(--dashboard-muted);
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dashboard-metric-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--dashboard-primary);
+  font-size: 23px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-metric-value span {
+  color: var(--dashboard-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.dashboard-metric-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 13px;
+  color: var(--dashboard-muted);
+  font-size: 11px;
+}
+
+.dashboard-trend {
+  font-weight: 700;
+}
+
+.dashboard-trend.positive {
+  color: #059669;
+}
+
+/* کارت‌های عمومی */
+.dashboard-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 12px;
+  background-color: var(--dashboard-surface);
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.dashboard-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 23px;
+}
+
+.dashboard-card-header>div {
+  min-width: 0;
+}
+
+.dashboard-card-header h2 {
+  margin: 0;
+  color: var(--dashboard-primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dashboard-card-header p {
+  margin: 6px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.dashboard-period-label,
+.dashboard-count-badge,
+.dashboard-warning-badge {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.dashboard-period-label,
+.dashboard-count-badge {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.dashboard-warning-badge {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
+/* نمودار و خلاصه مالی */
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  gap: 15px;
+}
+
+.dashboard-sales-card,
+.dashboard-financial-card {
+  min-height: 310px;
+}
+
+.dashboard-chart {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 10px;
+  padding-top: 7px;
+}
+
+.dashboard-chart-values {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 200px;
+  padding-bottom: 22px;
+  color: var(--dashboard-muted);
+  font-size: 10px;
+}
+
+.dashboard-chart-content {
+  position: relative;
+  height: 200px;
+  min-width: 0;
+}
+
+.dashboard-chart-grid {
+  position: absolute;
+  inset: 0 0 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dashboard-chart-grid span {
+  width: 100%;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.dashboard-chart-columns {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dashboard-chart-column {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 25px;
+  justify-items: center;
+  min-width: 0;
+  height: 100%;
+}
+
+.dashboard-chart-bar {
+  align-self: end;
+  width: min(30px, 65%);
+  min-height: 4px;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, #14b8a6, #0f766e);
+  transition: opacity 0.2s ease;
+}
+
+.dashboard-chart-bar:hover {
+  opacity: 0.75;
+}
+
+.dashboard-chart-column>span {
+  align-self: end;
+  overflow: hidden;
+  width: 100%;
+  color: var(--dashboard-muted);
+  font-size: 10px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* خلاصه وضعیت مالی */
+.dashboard-financial-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-financial-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--dashboard-border);
+}
+
+.dashboard-financial-item:first-child {
+  padding-top: 0;
+}
+
+.dashboard-financial-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.dashboard-financial-item>span {
+  color: var(--dashboard-muted);
+  font-size: 12px;
+}
+
+.dashboard-financial-item strong {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  color: var(--dashboard-primary);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-financial-item small {
+  color: var(--dashboard-muted);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+/* جدول فروش و کالاهای پرفروش */
+.dashboard-bottom-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  gap: 15px;
+}
+
+.dashboard-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 13px 10px;
+  border-bottom: 1px solid var(--dashboard-border);
+  font-size: 11px;
+}
+
+.dashboard-table th {
+  background-color: #f8fafc;
+  color: var(--dashboard-muted);
+  font-weight: 600;
+}
+
+.dashboard-table td {
+  color: var(--dashboard-text);
+}
+
+.dashboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard-status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.dashboard-status.paid {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.dashboard-status.pending {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
+/* فهرست کالاهای پرفروش */
+.dashboard-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+}
+
+.dashboard-product-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+  color: var(--dashboard-text);
+  font-size: 12px;
+}
+
+.dashboard-product-info strong {
+  color: var(--dashboard-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.dashboard-progress {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 10px;
+  background-color: #f1f5f9;
+}
+
+.dashboard-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--dashboard-accent);
+}
+
+/* هشدار موجودی */
+.dashboard-stock-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-stock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--dashboard-border);
+}
+
+.dashboard-stock-item:first-child {
+  padding-top: 0;
+}
+
+.dashboard-stock-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.dashboard-stock-name {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dashboard-stock-name strong {
+  color: var(--dashboard-text);
+  font-size: 12px;
+}
+
+.dashboard-stock-name span {
+  color: var(--dashboard-muted);
+  font-size: 10px;
+}
+
+.dashboard-stock-quantity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  color: var(--dashboard-muted);
+  font-size: 10px;
+}
+
+.dashboard-stock-quantity strong {
+  color: #c2410c;
+  font-size: 11px;
+}
+
+/* واکنش‌گرایی داشبورد */
+@media (max-width: 1200px) {
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+
+  .dashboard-main-grid,
+  .dashboard-bottom-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard {
+    gap: 13px;
+  }
+
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .dashboard-metric-card {
+    padding: 13px;
+  }
+
+  .dashboard-metric-heading {
+    gap: 7px;
+    margin-bottom: 13px;
+  }
+
+  .dashboard-metric-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .dashboard-metric-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .dashboard-metric-title {
+    font-size: 11px;
+  }
+
+  .dashboard-metric-value {
+    font-size: 18px;
+  }
+
+  .dashboard-metric-footer {
+    font-size: 10px;
+  }
+
+  .dashboard-card {
+    padding: 15px;
+  }
+
+  .dashboard-card-header {
+    margin-bottom: 18px;
+  }
+
+  .dashboard-stock-item {
+    align-items: flex-start;
+  }
+
+  .dashboard-stock-quantity {
+    text-align: left;
+  }
+}
