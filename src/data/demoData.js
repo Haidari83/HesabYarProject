@@ -32,6 +32,7 @@ export const initialProducts = [
     purchasePrice: 70,
     salePrice: 85,
     stock: 42,
+    minStock: 10,
     isActive: true,
   },
   {
@@ -43,6 +44,7 @@ export const initialProducts = [
     purchasePrice: 580,
     salePrice: 650,
     stock: 3,
+    minStock: 2,
     isActive: true,
   },
   {
@@ -54,6 +56,7 @@ export const initialProducts = [
     purchasePrice: 120,
     salePrice: 150,
     stock: 24,
+    minStock: 6,
     isActive: true,
   },
   {
@@ -65,6 +68,7 @@ export const initialProducts = [
     purchasePrice: 65,
     salePrice: 80,
     stock: 18,
+    minStock: 4,
     isActive: true,
   },
   {
@@ -76,6 +80,7 @@ export const initialProducts = [
     purchasePrice: 25,
     salePrice: 35,
     stock: 6,
+    minStock: 10,
     isActive: true,
   },
   {
@@ -87,6 +92,7 @@ export const initialProducts = [
     purchasePrice: 90,
     salePrice: 115,
     stock: 32,
+    minStock: 4,
     isActive: true,
   },
   {
@@ -98,6 +104,7 @@ export const initialProducts = [
     purchasePrice: 20,
     salePrice: 30,
     stock: 0,
+    minStock: 6,
     isActive: false,
   },
   {
@@ -109,6 +116,7 @@ export const initialProducts = [
     purchasePrice: 8,
     salePrice: 12,
     stock: 65,
+    minStock: 10,
     isActive: true,
   },
 ];

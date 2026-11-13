@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import ProductList from './pages/Products/ProductList';
 import CategoryList from './pages/Categories/CategoryList';
 import UnitList from './pages/Units/UnitList';
+import InventoryOverview from './pages/Inventory/InventoryOverview';
 
 import {
   navigationItems,
@@ -76,6 +77,8 @@ function App() {
           <CategoryList />
         ) : activePageId === 'units' ? (
           <UnitList />
+        ) : activePageId === 'inventory' ? (
+          <InventoryOverview />
         ) : (
           <div className="page-demo-content">
             <h2>{currentPage.title}</h2>
