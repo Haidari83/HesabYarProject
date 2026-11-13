@@ -41,6 +41,38 @@ const recentActivities = [
   },
 ];
 
+
+const quickActions = [
+  {
+    id: 1,
+    title: 'ورود کالا',
+    description: 'ثبت ورود کالا به انبار',
+    icon: '＋',
+    className: 'quick-action-in',
+  },
+  {
+    id: 2,
+    title: 'خروج کالا',
+    description: 'ثبت خروج کالا از انبار',
+    icon: '−',
+    className: 'quick-action-out',
+  },
+  {
+    id: 3,
+    title: 'اصلاح موجودی',
+    description: 'اصلاح مقدار موجودی کالا',
+    icon: '↻',
+    className: 'quick-action-adjust',
+  },
+  {
+    id: 4,
+    title: 'فهرست موجودی',
+    description: 'مشاهده موجودی تمام کالاها',
+    icon: '▤',
+    className: 'quick-action-list',
+  },
+];
+
 function InventoryOverview() {
   const { products, units } = useBusinessData();
 
@@ -167,6 +199,41 @@ function InventoryOverview() {
           ))}
         </div>
       </section>
+
+
+      {/* دسترسی سریع */}
+      <section className="inventory-section">
+        <div className="inventory-section-header">
+          <div>
+            <h2>دسترسی سریع</h2>
+            <p>دسترسی به عملیات پرکاربرد انبار</p>
+          </div>
+        </div>
+
+        <div className="inventory-quick-actions">
+          {quickActions.map((action) => (
+            <button
+              type="button"
+              className="inventory-quick-action"
+              key={action.id}
+              disabled
+              title="این قابلیت در مرحله بعد فعال خواهد شد"
+            >
+              <span className={`inventory-quick-action-icon ${action.className}`}>
+                {action.icon}
+              </span>
+
+              <span className="inventory-quick-action-content">
+                <strong>{action.title}</strong>
+                <span>{action.description}</span>
+              </span>
+
+              <span className="inventory-quick-action-arrow">←</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
 
       {/* هشدارهای موجودی */}
       <section className="inventory-section">
