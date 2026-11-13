@@ -7,106 +7,6 @@ import './product-list.css';
 // درصد افزایش پیش‌فرض روی قیمت خرید
 const DEFAULT_PROFIT_RATE = 20;
 
-// فهرست دسته‌بندی‌های آزمایشی
-const categories = [
-  'مواد غذایی',
-  'مواد بهداشتی',
-  'لوازم‌التحریر',
-];
-
-
-// داده‌های آزمایشی کالاها
-const initialProducts = [
-  {
-    id: 1,
-    code: 'PR-000001',
-    name: 'برنج پاکستانی',
-    category: 'مواد غذایی',
-    unit: 'کیلوگرام',
-    purchasePrice: 70,
-    salePrice: 85,
-    stock: 42,
-    isActive: true,
-  },
-  {
-    id: 2,
-    code: 'PR-000002',
-    name: 'روغن مایع ۵ لیتری',
-    category: 'مواد غذایی',
-    unit: 'عدد',
-    purchasePrice: 580,
-    salePrice: 650,
-    stock: 42,
-    isActive: true,
-  },
-  {
-    id: 3,
-    code: 'PR-000003',
-    name: 'چای سیاه',
-    category: 'مواد غذایی',
-    unit: 'بسته',
-    purchasePrice: 120,
-    salePrice: 150,
-    stock: 42,
-    isActive: true,
-  },
-  {
-    id: 4,
-    code: 'PR-000004',
-    name: 'شکر سفید',
-    category: 'مواد غذایی',
-    unit: 'کیلوگرام',
-    purchasePrice: 65,
-    salePrice: 80,
-    stock: 42,
-    isActive: true,
-  },
-  {
-    id: 5,
-    code: 'PR-000005',
-    name: 'صابون',
-    category: 'مواد بهداشتی',
-    unit: 'عدد',
-    purchasePrice: 25,
-    salePrice: 35,
-    stock: 42,
-    isActive: true,
-  },
-  {
-    id: 6,
-    code: 'PR-000006',
-    name: 'مایع ظرف‌شویی',
-    category: 'مواد بهداشتی',
-    unit: 'عدد',
-    purchasePrice: 90,
-    salePrice: 115,
-    stock: 42,
-    isActive: true,
-  },
-  {
-    id: 7,
-    code: 'PR-000007',
-    name: 'دفترچه',
-    category: 'لوازم‌التحریر',
-    unit: 'عدد',
-    purchasePrice: 20,
-    salePrice: 30,
-    stock: 42,
-    isActive: false,
-  },
-  {
-    id: 8,
-    code: 'PR-000008',
-    name: 'خودکار آبی',
-    category: 'لوازم‌التحریر',
-    unit: 'عدد',
-    purchasePrice: 8,
-    salePrice: 12,
-    stock: 42,
-    isActive: true,
-  },
-];
-
 // شمارنده شناسه ردیف‌های فرم
 let rowSequence = 0;
 
@@ -269,7 +169,9 @@ function ProductList() {
     return {
       total: products.length,
       active: products.filter((product) => product.isActive).length,
-      categories: new Set(products.map((product) => product.category)).size,
+      categories: new Set(
+        products.map((product) => product.categoryId).filter(Boolean)
+      ).size,
     };
   }, [products]);
 
@@ -687,7 +589,7 @@ function ProductList() {
               purchasePrice: Number(row.purchasePrice),
               salePrice: Number(row.salePrice),
               categoryId: row.categoryId,
-              unitId: row.unit,
+              unitId: row.unitId,
             };
 
             updatedCount += 1;
@@ -705,14 +607,14 @@ function ProductList() {
         code: generateProductCode(nextNumber),
         name: row.name.trim(),
         categoryId: row.categoryId,
-        unit: row.unit,
+        unitId: row.unitId,
         purchasePrice: Number(row.purchasePrice),
         salePrice: Number(row.salePrice),
         stock: 0,
         isActive: true,
-      }; stock: 42,
+      };
 
-        nextProducts.unshift(newProduct);
+      nextProducts.unshift(newProduct);
       nextNumber += 1;
       addedCount += 1;
     });
@@ -915,7 +817,7 @@ function ProductList() {
             ...product,
             name: editForm.name.trim(),
             categoryId: editForm.categoryId,
-            unit: editForm.unit,
+            unitId: editForm.unitId,
             purchasePrice,
             salePrice,
           }

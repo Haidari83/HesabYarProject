@@ -43,7 +43,7 @@ export function BusinessDataProvider({ children }) {
       unitConversions,
       setUnitConversions
     }),
-    [categories, products]
+    [categories, products, units, unitConversions]
   );
 
   return (
