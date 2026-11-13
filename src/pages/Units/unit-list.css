@@ -1,0 +1,954 @@
+/* ساختار اصلی صفحه واحدها */
+.unit-page {
+  --unit-primary: #172554;
+  --unit-accent: #0f766e;
+  --unit-text: #1f2937;
+  --unit-muted: #64748b;
+  --unit-border: #e8edf3;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  color: var(--unit-text);
+}
+
+/* پیام موفقیت */
+.unit-success-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  border: 1px solid #a7f3d0;
+  border-radius: 9px;
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.unit-success-message>span {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background-color: #d1fae5;
+  font-weight: 700;
+}
+
+.unit-success-message p {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+}
+
+.unit-success-message button {
+  border: none;
+  background: transparent;
+  color: #047857;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* کارت‌های آماری */
+.unit-statistics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.unit-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--unit-border);
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.unit-stat-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  font-size: 20px;
+}
+
+.unit-stat-icon.total {
+  background-color: #eef2ff;
+  color: #4338ca;
+}
+
+.unit-stat-icon.active {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.unit-stat-icon.used {
+  background-color: #f0f9ff;
+  color: #0284c7;
+}
+
+.unit-stat-icon.conversion {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
+.unit-stat-card>div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.unit-stat-card p {
+  margin: 0;
+  color: var(--unit-muted);
+  font-size: 11px;
+}
+
+.unit-stat-card strong {
+  color: var(--unit-primary);
+  font-size: 21px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* زبانه‌های صفحه */
+.unit-tabs {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--unit-border);
+  border-radius: 9px;
+  background-color: #fff;
+}
+
+.unit-tabs button {
+  min-height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--unit-muted);
+  font: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.unit-tabs button.active {
+  background-color: var(--unit-primary);
+  color: #fff;
+}
+
+/* نوار ابزار */
+.unit-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--unit-border);
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+.unit-search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--unit-border);
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.unit-search:focus-within {
+  border-color: var(--unit-accent);
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+.unit-search>span {
+  margin-left: 8px;
+  color: var(--unit-muted);
+  font-size: 23px;
+}
+
+.unit-search input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--unit-text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.unit-search input::placeholder {
+  color: #94a3b8;
+}
+
+.unit-toolbar>select {
+  width: 145px;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--unit-border);
+  border-radius: 8px;
+  outline: none;
+  background-color: #fff;
+  color: var(--unit-text);
+  font: inherit;
+  font-size: 12px;
+}
+
+/* دکمه‌های ثبت */
+.unit-add-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.unit-add-actions button,
+.unit-add-conversion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 13px;
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.unit-add-single {
+  background-color: #eef2ff;
+  color: #3730a3;
+}
+
+.unit-add-single:hover {
+  background-color: #e0e7ff;
+}
+
+.unit-add-bulk,
+.unit-add-conversion {
+  background-color: var(--unit-primary);
+  color: #fff;
+}
+
+.unit-add-bulk:hover,
+.unit-add-conversion:hover {
+  background-color: #263b70;
+}
+
+/* کارت جدول */
+.unit-table-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--unit-border);
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.unit-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 19px 20px;
+  border-bottom: 1px solid var(--unit-border);
+}
+
+.unit-table-header h2 {
+  margin: 0;
+  color: var(--unit-primary);
+  font-size: 15px;
+}
+
+.unit-table-header p {
+  margin: 6px 0 0;
+  color: var(--unit-muted);
+  font-size: 11px;
+}
+
+.unit-conversion-info {
+  margin: 14px 18px 0;
+  padding: 11px 13px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+.unit-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.unit-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.unit-table th,
+.unit-table td {
+  padding: 14px 13px;
+  border-bottom: 1px solid #edf0f4;
+  font-size: 11px;
+}
+
+.unit-table th {
+  background-color: #f8fafc;
+  color: var(--unit-muted);
+  font-weight: 600;
+}
+
+.unit-table td {
+  color: var(--unit-text);
+}
+
+.unit-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.unit-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.unit-name {
+  font-weight: 600;
+}
+
+.unit-symbol {
+  direction: ltr;
+  text-align: right;
+}
+
+.unit-product-count {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 10px;
+}
+
+.unit-status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.unit-status.active {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.unit-status.inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.unit-conversion-factor {
+  color: #0f766e !important;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* عملیات واحدها */
+.unit-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unit-actions button {
+  min-height: 29px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.unit-edit-action {
+  border-color: #cbd5e1 !important;
+  background-color: #fff;
+  color: #334155;
+}
+
+.unit-edit-action:hover {
+  background-color: #f1f5f9;
+}
+
+.unit-deactivate-action {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
+.unit-activate-action {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.unit-delete-action {
+  background-color: #fff1f2;
+  color: #be123c;
+}
+
+.unit-delete-action:disabled {
+  border-color: #e2e8f0;
+  background-color: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* حالت خالی جدول */
+.unit-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 45px 15px;
+  color: var(--unit-muted);
+  white-space: normal;
+  text-align: center;
+}
+
+.unit-empty-state strong {
+  color: var(--unit-text);
+  font-size: 13px;
+}
+
+.unit-empty-state p {
+  margin: 0;
+  font-size: 11px;
+}
+
+/* پس‌زمینه پنجره‌ها */
+.unit-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 20px;
+  background-color: rgb(15 23 42 / 48%);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+/* پنجره‌های ثبت واحد */
+.unit-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+  border: 1px solid var(--unit-border);
+  border-radius: 14px;
+  background-color: #fff;
+  box-shadow: 0 20px 60px rgb(15 23 42 / 20%);
+}
+
+.unit-bulk-modal {
+  max-width: 950px;
+}
+
+.unit-conversion-modal {
+  max-width: 600px;
+}
+
+.unit-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  flex: 0 0 auto;
+  padding: 20px;
+  border-bottom: 1px solid var(--unit-border);
+}
+
+.unit-modal-header h2 {
+  margin: 0;
+  color: var(--unit-primary);
+  font-size: 16px;
+}
+
+.unit-modal-header p {
+  margin: 7px 0 0;
+  color: var(--unit-muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.unit-modal-close {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: none;
+  border-radius: 7px;
+  background-color: #f1f5f9;
+  color: #64748b;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+/* فرم تکی */
+.unit-single-form {
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.unit-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.unit-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.unit-form-field>span {
+  color: var(--unit-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.unit-form-field input,
+.unit-form-field select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 41px;
+  padding: 0 10px;
+  border: 1px solid var(--unit-border);
+  border-radius: 8px;
+  outline: none;
+  background-color: #fff;
+  color: var(--unit-text);
+  font: inherit;
+  font-size: 11px;
+}
+
+.unit-form-field input:focus,
+.unit-form-field select:focus {
+  border-color: var(--unit-accent);
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+.unit-form-field select:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.unit-form-field small {
+  color: var(--unit-muted);
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+/* فرم گروهی */
+.unit-bulk-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.unit-bulk-info {
+  flex: 0 0 auto;
+  margin: 14px 20px 0;
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.unit-bulk-table-wrapper {
+  flex: 1;
+  min-height: 140px;
+  margin: 14px 20px 0;
+  overflow: auto;
+  border: 1px solid var(--unit-border);
+  border-radius: 8px;
+}
+
+.unit-bulk-table {
+  width: 100%;
+  min-width: 730px;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.unit-bulk-table th,
+.unit-bulk-table td {
+  padding: 9px;
+  border-bottom: 1px solid var(--unit-border);
+  vertical-align: top;
+  font-size: 11px;
+}
+
+.unit-bulk-table th {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  background-color: #f8fafc;
+  color: var(--unit-muted);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.unit-bulk-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.unit-bulk-table td input,
+.unit-bulk-table td select {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 65px;
+  height: 36px;
+  margin: 0;
+  padding: 0 8px;
+  border: 1px solid var(--unit-border);
+  border-radius: 6px;
+  outline: none;
+  background-color: #fff;
+  color: var(--unit-text);
+  font: inherit;
+  font-size: 11px;
+}
+
+.unit-bulk-table td input:focus,
+.unit-bulk-table td select:focus {
+  border-color: var(--unit-accent);
+}
+
+.unit-bulk-table tr.invalid {
+  background-color: #fffafa;
+}
+
+.unit-bulk-table tr.invalid td input {
+  border-color: #fca5a5;
+}
+
+.unit-row-errors {
+  margin: 8px 0 0;
+  padding-right: 16px;
+  color: #b91c1c;
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+.unit-row-remove {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin: auto;
+  place-items: center;
+  border: none;
+  border-radius: 6px;
+  background-color: #fff1f2;
+  color: #be123c;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* افزودن ردیف */
+.unit-bulk-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+  margin: 12px 20px 0;
+}
+
+.unit-bulk-add-row>div {
+  display: flex;
+  gap: 8px;
+}
+
+.unit-bulk-add-row button {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background-color: #fff;
+  color: #475569;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.unit-bulk-add-row>span {
+  color: var(--unit-muted);
+  font-size: 10px;
+}
+
+/* پیش‌نمایش تبدیل */
+.unit-conversion-preview {
+  margin-top: 17px;
+  padding: 13px;
+  border-radius: 8px;
+  background-color: #f0fdfa;
+  color: #0f766e;
+  font-size: 12px;
+  line-height: 2;
+}
+
+/* پیام خطا */
+.unit-form-error {
+  flex: 0 0 auto;
+  margin: 13px 20px 0;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+/* دکمه‌های فرم */
+.unit-modal-actions,
+.unit-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  flex: 0 0 auto;
+  margin-top: 20px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--unit-border);
+}
+
+.unit-cancel-button,
+.unit-submit-button,
+.unit-delete-confirm {
+  min-width: 105px;
+  height: 39px;
+  padding: 0 13px;
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.unit-cancel-button {
+  border: 1px solid var(--unit-border);
+  background-color: #fff;
+  color: var(--unit-muted);
+}
+
+.unit-submit-button {
+  background-color: var(--unit-primary);
+  color: #fff;
+}
+
+.unit-delete-confirm {
+  background-color: #be123c;
+  color: #fff;
+}
+
+/* پنجره تأیید */
+.unit-confirm-modal {
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  border: 1px solid var(--unit-border);
+  border-radius: 14px;
+  background-color: #fff;
+  box-shadow: 0 20px 60px rgb(15 23 42 / 20%);
+}
+
+.unit-confirm-modal h2 {
+  margin: 0;
+  color: var(--unit-primary);
+  font-size: 16px;
+}
+
+.unit-confirm-modal>p {
+  margin: 13px 0;
+  color: var(--unit-muted);
+  font-size: 12px;
+  line-height: 2;
+}
+
+.unit-confirm-hint {
+  padding: 11px;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+/* واکنش‌گرایی */
+@media (max-width: 1100px) {
+  .unit-statistics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .unit-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .unit-search {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 650px) {
+  .unit-page {
+    gap: 13px;
+  }
+
+  .unit-statistics {
+    gap: 9px;
+  }
+
+  .unit-stat-card {
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .unit-stat-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+
+  .unit-stat-card p {
+    font-size: 10px;
+  }
+
+  .unit-stat-card strong {
+    font-size: 17px;
+  }
+
+  .unit-toolbar>select {
+    flex: 1;
+    width: auto;
+  }
+
+  .unit-add-actions {
+    flex-basis: 100%;
+  }
+
+  .unit-add-actions button {
+    flex: 1;
+  }
+
+  .unit-tabs {
+    width: 100%;
+  }
+
+  .unit-tabs button {
+    flex: 1;
+    padding: 0 8px;
+  }
+
+  .unit-table-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 15px;
+  }
+
+  .unit-modal-backdrop {
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .unit-modal {
+    max-height: calc(100vh - 20px);
+    margin: auto 0;
+  }
+
+  .unit-modal-header {
+    padding: 15px;
+  }
+
+  .unit-single-form {
+    padding: 15px;
+  }
+
+  .unit-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .unit-bulk-info,
+  .unit-bulk-table-wrapper {
+    margin-right: 12px;
+    margin-left: 12px;
+  }
+
+  .unit-bulk-add-row {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-right: 12px;
+    margin-left: 12px;
+  }
+
+  .unit-form-error {
+    margin-right: 12px;
+    margin-left: 12px;
+  }
+
+  .unit-modal-actions {
+    padding: 12px;
+  }
+
+  .unit-confirm-modal {
+    margin: auto 0;
+    padding: 20px;
+  }
+
+  .unit-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

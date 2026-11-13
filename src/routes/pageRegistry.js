@@ -30,6 +30,11 @@ export const navigationItems = [
         description: 'مدیریت دسته‌بندی محصولات.'
       },
       {
+        id: 'units',
+        label: 'واحدهای اندازه‌گیری',
+        description: 'مدیریت واحدها و تبدیل واحدهای اندازه‌گیری',
+      },
+      {
         id: 'inventory',
         label: 'موجودی انبار',
         description: 'بررسی موجودی و وضعیت انبار.'

@@ -14,16 +14,6 @@ const categories = [
   'لوازم‌التحریر',
 ];
 
-// واحدهای اندازه‌گیری آزمایشی
-const units = [
-  'عدد',
-  'کیلوگرام',
-  'گرم',
-  'لیتر',
-  'متر',
-  'بسته',
-  'کارتن',
-];
 
 // داده‌های آزمایشی کالاها
 const initialProducts = [
@@ -123,7 +113,8 @@ let rowSequence = 0;
 // ساخت یک ردیف خالی برای ورود کالا
 function createEmptyRow(
   profitRate = DEFAULT_PROFIT_RATE,
-  categoryId = ''
+  categoryId = '',
+  unitId = '',
 ) {
   rowSequence += 1;
 
@@ -131,7 +122,7 @@ function createEmptyRow(
     id: `row-${rowSequence}`,
     name: '',
     categoryId,
-    unit: 'عدد',
+    unitId,
     purchasePrice: '',
     profitRate: String(profitRate),
     salePrice: '',
@@ -147,11 +138,12 @@ function createEmptyRow(
 function createEmptyRows(
   count = 5,
   profitRate = DEFAULT_PROFIT_RATE,
-  categoryId = ''
+  categoryId = '',
+  unitId = '',
 ) {
   return Array.from(
     { length: count },
-    () => createEmptyRow(profitRate, categoryId)
+    () => createEmptyRow(profitRate, categoryId, unitId)
   );
 }
 
@@ -244,6 +236,7 @@ function ProductList() {
     products,
     setProducts,
     categories,
+    units,
   } = useBusinessData();
 
   // وضعیت فرم ویرایش کالا
@@ -327,6 +320,17 @@ function ProductList() {
           normalizeProductName(editForm.name)
       )
       : [];
+
+  // واحدها
+  const activeUnits = units.filter((unit) => unit.isActive);
+
+  // دریافت نام واحد از شناسه آن
+  function getUnitName(unitId) {
+    return (
+      units.find((unit) => unit.id === unitId)?.name ||
+      'واحد نامشخص'
+    );
+  }
 
   // یافتن کالاهای ثبت‌شده با نام یکسان
   function findDuplicateProducts(name) {
@@ -443,7 +447,8 @@ function ProductList() {
       createEmptyRows(
         5,
         defaultProfitRate,
-        activeCategories[0]?.id || ''
+        activeCategories[0]?.id || '',
+        activeUnits[0]?.id || '',
       )
     );
 
@@ -466,7 +471,8 @@ function ProductList() {
       ...createEmptyRows(
         count,
         defaultProfitRate,
-        activeCategories[0]?.id || ''
+        activeCategories[0]?.id || '',
+        activeUnits[0]?.id || '',
       ),
     ]);
   }
@@ -558,10 +564,6 @@ function ProductList() {
       errors.push('یک دسته‌بندی فعال انتخاب کن.');
     }
 
-    if (!row.unit) {
-      errors.push('واحد کالا را انتخاب کن.');
-    }
-
     const matches = findDuplicateProducts(row.name);
 
     if (matches.length > 0) {
@@ -587,6 +589,13 @@ function ProductList() {
       );
     }
 
+    const selectedUnit = units.find(
+      (unit) => unit.id === row.unitId
+    );
+
+    if (!selectedUnit || !selectedUnit.isActive) {
+      errors.push('یک واحد اندازه‌گیری فعال انتخاب کن.');
+    }
     return errors;
   }
 
@@ -678,7 +687,7 @@ function ProductList() {
               purchasePrice: Number(row.purchasePrice),
               salePrice: Number(row.salePrice),
               categoryId: row.categoryId,
-              unit: row.unit,
+              unitId: row.unit,
             };
 
             updatedCount += 1;
@@ -733,7 +742,7 @@ function ProductList() {
     setEditForm({
       name: product.name,
       categoryId: product.categoryId,
-      unit: product.unit,
+      unitId: product.unitId,
       purchasePrice: String(product.purchasePrice),
       salePrice: String(product.salePrice),
       profitRate:
@@ -839,11 +848,13 @@ function ProductList() {
     const salePrice = Number(editForm.salePrice);
     const profitRate = Number(editForm.profitRate);
 
+    // بررسی نام کالا
     if (!editForm.name.trim()) {
       setEditError('نام کالا را وارد کن.');
       return;
     }
 
+    // بررسی قیمت خرید و فروش
     if (
       editForm.purchasePrice === '' ||
       !Number.isFinite(purchasePrice) ||
@@ -878,6 +889,25 @@ function ProductList() {
       return;
     }
 
+    // بررسی معتبر بودن واحد انتخاب‌شده
+    const selectedUnit = units.find(
+      (unit) => unit.id === editForm.unitId
+    );
+
+    if (!selectedUnit) {
+      setEditError('واحد انتخاب‌شده معتبر نیست.');
+      return;
+    }
+
+    if (
+      !selectedUnit.isActive &&
+      selectedUnit.id !== editingProduct.unitId
+    ) {
+      setEditError('نمی‌توان کالا را به یک واحد غیرفعال منتقل کرد.');
+      return;
+    }
+
+    // ذخیره تغییرات
     setProducts((previous) =>
       previous.map((product) =>
         product.id === editingProduct.id
@@ -910,10 +940,12 @@ function ProductList() {
       return;
     }
 
+    // پیام موفقیت ثبت تغیرات
     setSuccessMessage(
       `اطلاعات کالای «${editForm.name.trim()}» با موفقیت ویرایش شد.`
     );
 
+    // بستن فورم
     closeEditForm();
   }
 
@@ -1085,7 +1117,7 @@ function ProductList() {
                       (category) => category.id === product.categoryId
                     )?.name || 'دسته‌بندی نامشخص'}
                   </td>
-                  <td>{product.unit}</td>
+                  <td>{getUnitName(product.unitId)}</td>
                   <td>{formatNumber(product.purchasePrice)}</td>
                   <td>{formatNumber(product.salePrice)}</td>
 
@@ -1096,7 +1128,10 @@ function ProductList() {
                     >
                       {formatNumber(product.stock ?? 0)}
                       {' '}
-                      {product.unit}
+                      {
+                        units.find((unit) => unit.id === product.unitId)?.name ||
+                        'واحد نامشخص'
+                      }
                     </span>
                   </td>
 
@@ -1438,16 +1473,18 @@ function ProductList() {
                           {/* واحد */}
                           <td>
                             <select
-                              value={row.unit}
+                              value={row.unitId}
                               onChange={(event) =>
                                 updateRow(row.id, {
-                                  unit: event.target.value,
+                                  unitId: event.target.value,
                                 })
                               }
                             >
-                              {units.map((unit) => (
-                                <option key={unit} value={unit}>
-                                  {unit}
+                              <option value="">انتخاب واحد</option>
+
+                              {activeUnits.map((unit) => (
+                                <option key={unit.id} value={unit.id}>
+                                  {unit.name}
                                 </option>
                               ))}
                             </select>
@@ -1657,14 +1694,17 @@ function ProductList() {
                 <label className="product-edit-field">
                   <span>دسته‌بندی</span>
                   <select
-                    value={editForm.category}
+                    value={editForm.categoryId}
                     onChange={(event) =>
-                      updateEditForm({ category: event.target.value })
+                      updateEditForm({ categoryId: event.target.value })
                     }
                   >
                     {availableCategories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
+                      <option
+                        key={category.id}
+                        value={category.id}
+                      >
+                        {category.name}
                       </option>
                     ))}
                   </select>
@@ -1673,16 +1713,23 @@ function ProductList() {
                 <label className="product-edit-field">
                   <span>واحد اندازه‌گیری</span>
                   <select
-                    value={editForm.unit}
+                    value={editForm.unitId}
                     onChange={(event) =>
-                      updateEditForm({ unit: event.target.value })
+                      updateEditForm({ unitId: event.target.value })
                     }
                   >
-                    {units.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {unit}
-                      </option>
-                    ))}
+                    {units
+                      .filter(
+                        (unit) =>
+                          unit.isActive ||
+                          unit.id === editForm.unitId
+                      )
+                      .map((unit) => (
+                        <option key={unit.id} value={unit.id}>
+                          {unit.name}
+                          {!unit.isActive ? '(غیرفعال)' : ''}
+                        </option>
+                      ))}
                   </select>
                 </label>
 
