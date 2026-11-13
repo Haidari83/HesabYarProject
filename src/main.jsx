@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BusinessDataProvider } from './context/BusinessDataContext';
+import { BusinessDataProvider } from "./context/BusinessDataProvider";
 
 import App from './App';
 

@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from 'react';
 import { useBusinessData } from '../../context/BusinessDataContext';
 import './product-list.css';
@@ -809,22 +808,7 @@ function ProductList() {
       return;
     }
 
-    // ذخیره تغییرات
-    setProducts((previous) =>
-      previous.map((product) =>
-        product.id === editingProduct.id
-          ? {
-            ...product,
-            name: editForm.name.trim(),
-            categoryId: editForm.categoryId,
-            unitId: editForm.unitId,
-            purchasePrice,
-            salePrice,
-          }
-          : product
-      )
-    );
-
+    // بررسی معتبر بودن دسته‌بندی انتخاب‌شده
     const selectedCategory = categories.find(
       (category) => category.id === editForm.categoryId
     );
@@ -841,6 +825,22 @@ function ProductList() {
       setEditError('امکان انتقال کالا به یک دسته‌بندی غیرفعال وجود ندارد.');
       return;
     }
+
+    // ذخیره تغییرات
+    setProducts((previous) =>
+      previous.map((product) =>
+        product.id === editingProduct.id
+          ? {
+            ...product,
+            name: editForm.name.trim(),
+            categoryId: editForm.categoryId,
+            unitId: editForm.unitId,
+            purchasePrice,
+            salePrice,
+          }
+          : product
+      )
+    );
 
     // پیام موفقیت ثبت تغیرات
     setSuccessMessage(
