@@ -1,6 +1,8 @@
 
 import { useMemo, useState } from 'react';
+import { useBusinessData } from '../../context/BusinessDataContext';
 import './product-list.css';
+
 
 // درصد افزایش پیش‌فرض روی قیمت خرید
 const DEFAULT_PROFIT_RATE = 20;
@@ -119,13 +121,16 @@ const initialProducts = [
 let rowSequence = 0;
 
 // ساخت یک ردیف خالی برای ورود کالا
-function createEmptyRow(profitRate = DEFAULT_PROFIT_RATE) {
+function createEmptyRow(
+  profitRate = DEFAULT_PROFIT_RATE,
+  categoryId = ''
+) {
   rowSequence += 1;
 
   return {
     id: `row-${rowSequence}`,
     name: '',
-    category: 'مواد غذایی',
+    categoryId,
     unit: 'عدد',
     purchasePrice: '',
     profitRate: String(profitRate),
@@ -139,10 +144,14 @@ function createEmptyRow(profitRate = DEFAULT_PROFIT_RATE) {
 }
 
 // ساخت چند ردیف خالی
-function createEmptyRows(count = 5, profitRate = DEFAULT_PROFIT_RATE) {
+function createEmptyRows(
+  count = 5,
+  profitRate = DEFAULT_PROFIT_RATE,
+  categoryId = ''
+) {
   return Array.from(
     { length: count },
-    () => createEmptyRow(profitRate)
+    () => createEmptyRow(profitRate, categoryId)
   );
 }
 
@@ -231,7 +240,11 @@ function getProductMarkup(product) {
 }
 
 function ProductList() {
-  const [products, setProducts] = useState(initialProducts);
+  const {
+    products,
+    setProducts,
+    categories,
+  } = useBusinessData();
 
   // وضعیت فرم ویرایش کالا
   const [editingProduct, setEditingProduct] = useState(null);
@@ -267,13 +280,13 @@ function ProductList() {
     };
   }, [products]);
 
-  // ایجاد فهرست دسته‌بندی‌های موجود
-  const availableCategories = useMemo(() => {
-    return [...new Set([
-      ...categories,
-      ...products.map((product) => product.category),
-    ])];
-  }, [products]);
+  // تمام دسته‌بندی‌ها
+  const availableCategories = categories;
+
+  // فقط دسته‌بندی‌های فعال
+  const activeCategories = categories.filter(
+    (category) => category.isActive
+  );
 
   // فیلترکردن فهرست کالاها
   const filteredProducts = useMemo(() => {
@@ -288,7 +301,7 @@ function ProductList() {
 
       const matchesCategory =
         categoryFilter === 'all' ||
-        product.category === categoryFilter;
+        product.categoryId === categoryFilter;
 
       let matchesStatus = true;
 
@@ -426,7 +439,14 @@ function ProductList() {
 
   // بازکردن فرم ثبت گروهی
   function openBulkForm() {
-    setRows(createEmptyRows(5, defaultProfitRate));
+    setRows(
+      createEmptyRows(
+        5,
+        defaultProfitRate,
+        activeCategories[0]?.id || ''
+      )
+    );
+
     setRowErrors({});
     setSubmitError('');
     setIsModalOpen(true);
@@ -443,7 +463,11 @@ function ProductList() {
   function addRows(count = 1) {
     setRows((currentRows) => [
       ...currentRows,
-      ...createEmptyRows(count, defaultProfitRate),
+      ...createEmptyRows(
+        count,
+        defaultProfitRate,
+        activeCategories[0]?.id || ''
+      ),
     ]);
   }
 
@@ -526,8 +550,16 @@ function ProductList() {
       errors.push('درصد افزایش معتبر نیست.');
     }
 
-    if (!row.category || !row.unit) {
-      errors.push('دسته‌بندی و واحد کالا را انتخاب کن.');
+    const selectedCategory = categories.find(
+      (category) => category.id === row.categoryId
+    );
+
+    if (!selectedCategory || !selectedCategory.isActive) {
+      errors.push('یک دسته‌بندی فعال انتخاب کن.');
+    }
+
+    if (!row.unit) {
+      errors.push('واحد کالا را انتخاب کن.');
     }
 
     const matches = findDuplicateProducts(row.name);
@@ -645,7 +677,7 @@ function ProductList() {
               ...nextProducts[existingIndex],
               purchasePrice: Number(row.purchasePrice),
               salePrice: Number(row.salePrice),
-              category: row.category,
+              categoryId: row.categoryId,
               unit: row.unit,
             };
 
@@ -663,7 +695,7 @@ function ProductList() {
         id: Date.now() + nextNumber,
         code: generateProductCode(nextNumber),
         name: row.name.trim(),
-        category: row.category,
+        categoryId: row.categoryId,
         unit: row.unit,
         purchasePrice: Number(row.purchasePrice),
         salePrice: Number(row.salePrice),
@@ -700,7 +732,7 @@ function ProductList() {
 
     setEditForm({
       name: product.name,
-      category: product.category,
+      categoryId: product.categoryId,
       unit: product.unit,
       purchasePrice: String(product.purchasePrice),
       salePrice: String(product.salePrice),
@@ -852,7 +884,7 @@ function ProductList() {
           ? {
             ...product,
             name: editForm.name.trim(),
-            category: editForm.category,
+            categoryId: editForm.categoryId,
             unit: editForm.unit,
             purchasePrice,
             salePrice,
@@ -860,6 +892,23 @@ function ProductList() {
           : product
       )
     );
+
+    const selectedCategory = categories.find(
+      (category) => category.id === editForm.categoryId
+    );
+
+    if (!selectedCategory) {
+      setEditError('دسته‌بندی انتخاب‌شده معتبر نیست.');
+      return;
+    }
+
+    if (
+      !selectedCategory.isActive &&
+      selectedCategory.id !== editingProduct.categoryId
+    ) {
+      setEditError('امکان انتقال کالا به یک دسته‌بندی غیرفعال وجود ندارد.');
+      return;
+    }
 
     setSuccessMessage(
       `اطلاعات کالای «${editForm.name.trim()}» با موفقیت ویرایش شد.`
@@ -966,9 +1015,10 @@ function ProductList() {
           >
             <option value="all">همه دسته‌بندی‌ها</option>
 
-            {availableCategories.map((category) => (
-              <option key={category} value={category}>
-                {category}
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+                {!category.isActive ? ' (غیرفعال)' : ''}
               </option>
             ))}
           </select>
@@ -1030,7 +1080,11 @@ function ProductList() {
                 <tr key={product.id}>
                   <td className="product-code">{product.code}</td>
                   <td className="product-name">{product.name}</td>
-                  <td>{product.category}</td>
+                  <td>
+                    {categories.find(
+                      (category) => category.id === product.categoryId
+                    )?.name || 'دسته‌بندی نامشخص'}
+                  </td>
                   <td>{product.unit}</td>
                   <td>{formatNumber(product.purchasePrice)}</td>
                   <td>{formatNumber(product.salePrice)}</td>
@@ -1364,16 +1418,18 @@ function ProductList() {
                           {/* دسته‌بندی */}
                           <td>
                             <select
-                              value={row.category}
+                              value={row.categoryId}
                               onChange={(event) =>
                                 updateRow(row.id, {
-                                  category: event.target.value,
+                                  categoryId: event.target.value,
                                 })
                               }
                             >
-                              {availableCategories.map((category) => (
-                                <option key={category} value={category}>
-                                  {category}
+                              <option value="">انتخاب دسته‌بندی</option>
+
+                              {activeCategories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                  {category.name}
                                 </option>
                               ))}
                             </select>

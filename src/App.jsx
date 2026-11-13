@@ -5,6 +5,7 @@ import AppLayout from './layouts/AppLayout';
 import PageLayout from './components/page/PageLayout';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ProductList from './pages/Products/ProductList';
+import CategoryList from './pages/Categories/CategoryList';
 
 import {
   navigationItems,
@@ -70,6 +71,8 @@ function App() {
           <Dashboard />
         ) : activePageId === 'product-list' ? (
           <ProductList />
+        ) : activePageId === 'categories' ? (
+          <CategoryList />
         ) : (
           <div className="page-demo-content">
             <h2>{currentPage.title}</h2>

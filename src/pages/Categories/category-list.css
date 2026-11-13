@@ -1,0 +1,930 @@
+/* ساختار اصلی صفحه دسته‌بندی‌ها */
+.category-page {
+  --category-primary: #172554;
+  --category-accent: #0f766e;
+  --category-text: #1f2937;
+  --category-muted: #64748b;
+  --category-border: #e8edf3;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  color: var(--category-text);
+}
+
+/* پیام موفقیت */
+.category-success-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  border: 1px solid #a7f3d0;
+  border-radius: 9px;
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.category-success-message>span {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background-color: #d1fae5;
+  font-weight: 700;
+}
+
+.category-success-message p {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+}
+
+.category-success-message button {
+  border: none;
+  background: transparent;
+  color: #047857;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* کارت‌های آماری */
+.category-statistics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.category-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--category-border);
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.category-stat-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.category-stat-icon.total {
+  background-color: #eef2ff;
+  color: #4338ca;
+}
+
+.category-stat-icon.active {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.category-stat-icon.inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.category-stat-icon.used {
+  background-color: #f0f9ff;
+  color: #0284c7;
+}
+
+.category-stat-card>div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.category-stat-card p {
+  margin: 0;
+  color: var(--category-muted);
+  font-size: 11px;
+}
+
+.category-stat-card strong {
+  color: var(--category-primary);
+  font-size: 21px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* نوار جست‌وجو و عملیات افزودن */
+.category-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--category-border);
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+.category-search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--category-border);
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.category-search:focus-within {
+  border-color: var(--category-accent);
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+.category-search>span {
+  margin-left: 8px;
+  color: var(--category-muted);
+  font-size: 23px;
+}
+
+.category-search input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--category-text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.category-search input::placeholder {
+  color: #94a3b8;
+}
+
+.category-toolbar>select {
+  width: 145px;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--category-border);
+  border-radius: 8px;
+  outline: none;
+  background-color: #fff;
+  color: var(--category-text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.category-toolbar>select:focus {
+  border-color: var(--category-accent);
+}
+
+/* دکمه‌های افزودن تکی و گروهی */
+.category-add-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.category-add-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 13px;
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.category-add-actions button span {
+  font-size: 18px;
+}
+
+.category-add-single {
+  background-color: #eef2ff;
+  color: #3730a3;
+}
+
+.category-add-single:hover {
+  background-color: #e0e7ff;
+}
+
+.category-add-bulk {
+  background-color: var(--category-primary);
+  color: #fff;
+}
+
+.category-add-bulk:hover {
+  background-color: #263b70;
+}
+
+/* کارت جدول */
+.category-table-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--category-border);
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.category-table-header {
+  padding: 19px 20px;
+  border-bottom: 1px solid var(--category-border);
+}
+
+.category-table-header h2 {
+  margin: 0;
+  color: var(--category-primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.category-table-header p {
+  margin: 6px 0 0;
+  color: var(--category-muted);
+  font-size: 11px;
+}
+
+.category-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.category-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.category-table th,
+.category-table td {
+  padding: 14px 13px;
+  border-bottom: 1px solid #edf0f4;
+  font-size: 11px;
+}
+
+.category-table th {
+  background-color: #f8fafc;
+  color: var(--category-muted);
+  font-weight: 600;
+}
+
+.category-table td {
+  color: var(--category-text);
+}
+
+.category-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.category-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.category-name {
+  font-weight: 600;
+}
+
+.category-description {
+  max-width: 270px;
+  overflow: hidden;
+  color: var(--category-muted) !important;
+  text-overflow: ellipsis;
+}
+
+.category-product-count {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 10px;
+}
+
+.category-status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.category-status.active {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.category-status.inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* عملیات ردیف‌ها */
+.category-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.category-actions button {
+  min-height: 29px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.category-edit-action {
+  border-color: #cbd5e1 !important;
+  background-color: #fff;
+  color: #334155;
+}
+
+.category-edit-action:hover {
+  background-color: #f1f5f9;
+}
+
+.category-deactivate-action {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
+.category-activate-action {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.category-delete-action {
+  background-color: #fff1f2;
+  color: #be123c;
+}
+
+.category-delete-action:disabled {
+  border-color: #e2e8f0;
+  background-color: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* حالت خالی جدول */
+.category-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 55px 15px;
+  color: var(--category-muted);
+  text-align: center;
+  white-space: normal;
+}
+
+.category-empty-state strong {
+  color: var(--category-text);
+  font-size: 13px;
+}
+
+.category-empty-state p {
+  margin: 0;
+  font-size: 11px;
+}
+
+/* پس‌زمینه پنجره‌ها */
+.category-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 20px;
+  background-color: rgb(15 23 42 / 48%);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+/* پنجره مشترک */
+.category-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+  border: 1px solid var(--category-border);
+  border-radius: 14px;
+  background-color: #fff;
+  box-shadow: 0 20px 60px rgb(15 23 42 / 20%);
+}
+
+/* اندازه پنجره گروهی */
+.category-bulk-modal {
+  max-width: 1000px;
+}
+
+/* سربرگ پنجره */
+.category-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  flex: 0 0 auto;
+  padding: 20px;
+  border-bottom: 1px solid var(--category-border);
+}
+
+.category-modal-header h2 {
+  margin: 0;
+  color: var(--category-primary);
+  font-size: 16px;
+}
+
+.category-modal-header p {
+  margin: 7px 0 0;
+  color: var(--category-muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.category-modal-close {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: none;
+  border-radius: 7px;
+  background-color: #f1f5f9;
+  color: #64748b;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.category-modal-close:hover {
+  background-color: #e2e8f0;
+}
+
+/* فرم تکی */
+.category-single-form {
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.category-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.category-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category-form-field>span {
+  color: var(--category-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.category-form-field input,
+.category-form-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--category-border);
+  border-radius: 8px;
+  outline: none;
+  background-color: #fff;
+  color: var(--category-text);
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+}
+
+.category-form-field input {
+  height: 42px;
+}
+
+.category-form-field input:focus,
+.category-form-field textarea:focus {
+  border-color: var(--category-accent);
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+/* پیام راهنمای فرم گروهی */
+.category-bulk-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  flex: 0 0 auto;
+  margin: 15px 20px 0;
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.category-bulk-info>span {
+  flex: 0 0 auto;
+}
+
+.category-bulk-info p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+/* فرم گروهی */
+.category-bulk-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.category-bulk-table-wrapper {
+  flex: 1;
+  min-height: 150px;
+  margin: 15px 20px 0;
+  overflow: auto;
+  border: 1px solid var(--category-border);
+  border-radius: 8px;
+}
+
+.category-bulk-table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.category-bulk-table th,
+.category-bulk-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--category-border);
+  vertical-align: top;
+  font-size: 11px;
+}
+
+.category-bulk-table th {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  background-color: #f8fafc;
+  color: var(--category-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.category-bulk-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.category-bulk-number {
+  width: 55px;
+  text-align: center !important;
+  color: var(--category-muted);
+}
+
+.category-bulk-table td input[type="text"] {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  margin: 0;
+  padding: 0 9px;
+  border: 1px solid var(--category-border);
+  border-radius: 6px;
+  outline: none;
+  background-color: #fff;
+  color: var(--category-text);
+  font: inherit;
+  font-size: 11px;
+}
+
+.category-bulk-table td input:focus {
+  border-color: var(--category-accent);
+  box-shadow: 0 0 0 2px rgb(15 118 110 / 8%);
+}
+
+.category-bulk-table td input::placeholder {
+  color: #94a3b8;
+}
+
+.category-row-invalid {
+  background-color: #fffafa;
+}
+
+.category-row-invalid td:nth-child(2) input {
+  border-color: #fca5a5;
+}
+
+/* خطاهای ردیف‌های گروهی */
+.category-row-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding-right: 17px;
+  color: #b91c1c;
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+/* حذف ردیف */
+.category-row-remove {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin: auto;
+  place-items: center;
+  border: none;
+  border-radius: 6px;
+  background-color: #fff1f2;
+  color: #be123c;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.category-row-remove:hover {
+  background-color: #ffe4e6;
+}
+
+/* افزودن ردیف */
+.category-bulk-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 0 0 auto;
+  margin: 12px 20px 0;
+}
+
+.category-bulk-add-row>div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-bulk-add-row button {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background-color: #fff;
+  color: #475569;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.category-bulk-add-row button:hover {
+  background-color: #f8fafc;
+}
+
+.category-bulk-add-row>span {
+  color: var(--category-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* خطاهای فرم */
+.category-form-error {
+  flex: 0 0 auto;
+  margin: 12px 20px 0;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+/* دکمه‌های پایانی فرم */
+.category-modal-actions,
+.category-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  flex: 0 0 auto;
+  margin-top: 20px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--category-border);
+}
+
+.category-cancel-button,
+.category-submit-button,
+.category-delete-confirm {
+  min-width: 105px;
+  height: 39px;
+  padding: 0 13px;
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.category-cancel-button {
+  border: 1px solid var(--category-border);
+  background-color: #fff;
+  color: var(--category-muted);
+}
+
+.category-cancel-button:hover {
+  background-color: #f8fafc;
+}
+
+.category-submit-button {
+  background-color: var(--category-primary);
+  color: #fff;
+}
+
+.category-submit-button:hover {
+  background-color: #263b70;
+}
+
+.category-delete-confirm {
+  background-color: #be123c;
+  color: #fff;
+}
+
+.category-delete-confirm:hover {
+  background-color: #9f1239;
+}
+
+/* پنجره تأیید عملیات */
+.category-confirm-modal {
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  border: 1px solid var(--category-border);
+  border-radius: 14px;
+  background-color: #fff;
+  box-shadow: 0 20px 60px rgb(15 23 42 / 20%);
+}
+
+.category-confirm-modal h2 {
+  margin: 0;
+  color: var(--category-primary);
+  font-size: 16px;
+}
+
+.category-confirm-modal>p {
+  margin: 13px 0;
+  color: var(--category-muted);
+  font-size: 12px;
+  line-height: 2;
+}
+
+.category-confirm-modal>p strong {
+  color: var(--category-text);
+}
+
+.category-confirm-hint {
+  padding: 11px;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+/* واکنش‌گرایی */
+@media (max-width: 1100px) {
+  .category-statistics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .category-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .category-search {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 650px) {
+  .category-page {
+    gap: 13px;
+  }
+
+  .category-statistics {
+    gap: 9px;
+  }
+
+  .category-stat-card {
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .category-stat-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+
+  .category-stat-card p {
+    font-size: 10px;
+  }
+
+  .category-stat-card strong {
+    font-size: 17px;
+  }
+
+  .category-toolbar>select {
+    flex: 1;
+    width: auto;
+  }
+
+  .category-add-actions {
+    flex-basis: 100%;
+  }
+
+  .category-add-actions button {
+    flex: 1;
+  }
+
+  .category-modal-backdrop {
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .category-modal {
+    max-height: calc(100vh - 20px);
+    margin: auto 0;
+  }
+
+  .category-modal-header {
+    padding: 15px;
+  }
+
+  .category-single-form {
+    padding: 15px;
+  }
+
+  .category-bulk-info {
+    margin: 12px 12px 0;
+  }
+
+  .category-bulk-table-wrapper {
+    margin: 12px 12px 0;
+  }
+
+  .category-bulk-add-row {
+    align-items: flex-start;
+    flex-direction: column;
+    margin: 10px 12px 0;
+  }
+
+  .category-form-error {
+    margin-right: 12px;
+    margin-left: 12px;
+  }
+
+  .category-modal-actions {
+    padding: 12px;
+  }
+
+  .category-confirm-modal {
+    margin: auto 0;
+    padding: 20px;
+  }
+
+  .category-confirm-actions {
+    padding: 12px 0 0;
+  }
+
+  .category-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

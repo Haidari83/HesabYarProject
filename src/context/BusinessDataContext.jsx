@@ -1,0 +1,50 @@
+
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
+
+import {
+  initialCategories,
+  initialProducts,
+} from '../data/demoData';
+
+// ایجاد بستر اطلاعات مشترک
+const BusinessDataContext = createContext(null);
+
+// نگهداری اطلاعات مشترک صفحات
+export function BusinessDataProvider({ children }) {
+  const [categories, setCategories] = useState(initialCategories);
+  const [products, setProducts] = useState(initialProducts);
+
+  const value = useMemo(
+    () => ({
+      categories,
+      setCategories,
+      products,
+      setProducts,
+    }),
+    [categories, products]
+  );
+
+  return (
+    <BusinessDataContext.Provider value={value}>
+      {children}
+    </BusinessDataContext.Provider>
+  );
+}
+
+// دسترسی صفحات به اطلاعات مشترک
+export function useBusinessData() {
+  const context = useContext(BusinessDataContext);
+
+  if (!context) {
+    throw new Error(
+      'این کامپوننت باید داخل BusinessDataProvider قرار بگیرد.'
+    );
+  }
+
+  return context;
+}
