@@ -498,34 +498,50 @@ function UnitList() {
   }
 
   // بازکردن فرم تعریف تبدیل
+  // بازکردن فرم تعریف تبدیل جدید
   function openAddConversionForm() {
-    const firstUnit = activeUnits.find(
-      (unit) => unit.dimension === 'mass'
-    ) || activeUnits.find(
-      (unit) => unit.dimension !== 'package'
-    );
 
-    if (!firstUnit) {
-      setSuccessMessage('برای تعریف تبدیل، ابتدا واحدهای فعال و هم‌نوع ایجاد کن.');
+    // پیدا کردن اولین جفت واحد فعال که هنوز تبدیل آن ثبت نشده است
+    const availablePair = activeUnits
+      .flatMap((fromUnit) =>
+        getCompatibleUnits(fromUnit.id).map((toUnit) => ({
+          fromUnit,
+          toUnit,
+        }))
+      )
+      .find(({ fromUnit, toUnit }) => {
+
+        // بررسی ثبت نشدن تبدیل در هر دو جهت
+        return !unitConversions.some((conversion) => {
+
+          const sameDirection =
+            conversion.fromUnitId === fromUnit.id &&
+            conversion.toUnitId === toUnit.id;
+
+          const reverseDirection =
+            conversion.fromUnitId === toUnit.id &&
+            conversion.toUnitId === fromUnit.id;
+
+          return sameDirection || reverseDirection;
+        });
+
+      });
+
+    // اگر هیچ جفت واحد جدیدی وجود نداشت
+    if (!availablePair) {
+      setSuccessMessage(
+        'برای تعریف تبدیل جدید، ابتدا یک واحد هم‌نوع دیگر ایجاد کن.'
+      );
       return;
     }
 
-    const targets = getCompatibleUnits(firstUnit.id);
-
-    if (targets.length === 0) {
-      setSuccessMessage('برای این واحد، واحد دیگری با نوع کمیت یکسان وجود ندارد.');
-      return;
-    }
-
+    // بازکردن فرم با واحدهای انتخاب‌شده
     setEditingConversionId(null);
 
     setConversionForm({
-      fromUnitId: firstUnit.id,
-      toUnitId: targets[0].id,
-      factor:
-        firstUnit.id === 'UNIT-002' && targets[0].id === 'UNIT-003'
-          ? '1000'
-          : '1',
+      fromUnitId: availablePair.fromUnit.id,
+      toUnitId: availablePair.toUnit.id,
+      factor: '',
     });
 
     setConversionError('');
