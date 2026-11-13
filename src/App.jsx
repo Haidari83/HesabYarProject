@@ -8,6 +8,7 @@ import ProductList from './pages/Products/ProductList';
 import CategoryList from './pages/Categories/CategoryList';
 import UnitList from './pages/Units/UnitList';
 import InventoryOverview from './pages/Inventory/InventoryOverview';
+import InventoryStockList from './pages/Inventory/InventoryStockList';
 
 import {
   navigationItems,
@@ -78,7 +79,9 @@ function App() {
         ) : activePageId === 'units' ? (
           <UnitList />
         ) : activePageId === 'inventory' ? (
-          <InventoryOverview />
+          <InventoryOverview onNavigate={setActivePageId} />
+        ) : activePageId === 'inventory-stock-list' ? (
+          <InventoryStockList />
         ) : (
           <div className="page-demo-content">
             <h2>{currentPage.title}</h2>

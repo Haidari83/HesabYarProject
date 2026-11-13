@@ -202,4 +202,13 @@ function createPageRegistry(items, parentLabels = []) {
 ========================= */
 
 // اطلاعات صفحات از ساختار اصلی منو استخراج می‌شود
-export const pageRegistry = createPageRegistry(navigationItems);
+export const pageRegistry = {
+  ...createPageRegistry(navigationItems),
+
+  'inventory-stock-list': {
+    id: 'inventory-stock-list',
+    title: 'فهرست موجودی',
+    description: 'مشاهده و بررسی موجودی کالاهای انبار.',
+    breadcrumbs: ['داشبورد', 'محصولات و انبار', 'موجودی انبار'],
+  },
+};

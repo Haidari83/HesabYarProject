@@ -70,10 +70,11 @@ const quickActions = [
     description: 'مشاهده موجودی تمام کالاها',
     icon: '▤',
     className: 'quick-action-list',
+    pageId: 'inventory-stock-list',
   },
 ];
 
-function InventoryOverview() {
+function InventoryOverview({ onNavigate }) {
   const { products, units } = useBusinessData();
 
   // فقط کالاهای فعال در شاخص تعداد کالاهای فعال محاسبه می‌شوند
@@ -216,8 +217,17 @@ function InventoryOverview() {
               type="button"
               className="inventory-quick-action"
               key={action.id}
-              disabled
-              title="این قابلیت در مرحله بعد فعال خواهد شد"
+              disabled={!action.pageId}
+              onClick={() => {
+                if (action.pageId) {
+                  onNavigate(action.pageId);
+                }
+              }}
+              title={
+                action.pageId
+                  ? 'مشاهده فهرست موجودی'
+                  : 'این قابلیت در مرحله بعد فعال خواهد شد'
+              }
             >
               <span className={`inventory-quick-action-icon ${action.className}`}>
                 {action.icon}

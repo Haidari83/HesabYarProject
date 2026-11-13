@@ -1,0 +1,556 @@
+.inventory-stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+
+  --stock-text: #1f2937;
+  --stock-muted: #64748b;
+  --stock-border: #e8edf3;
+  --stock-primary: #172554;
+}
+
+/* نوار جست‌وجو و فیلترها */
+.stock-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 17px;
+  border: 1px solid var(--stock-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.stock-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 43px;
+  padding: 0 12px;
+  border: 1px solid var(--stock-border);
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.stock-search:focus-within {
+  border-color: #93c5fd;
+  background: #fff;
+}
+
+.stock-search-icon {
+  color: var(--stock-muted);
+  font-size: 23px;
+}
+
+.stock-search input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--stock-text);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.stock-search input::placeholder {
+  color: #94a3b8;
+}
+
+.stock-search-clear {
+  border: none;
+  background: transparent;
+  color: var(--stock-muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.stock-filter-row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stock-filter-field {
+  display: flex;
+  flex: 1 1 160px;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 130px;
+}
+
+.stock-filter-field>span {
+  color: var(--stock-muted);
+  font-size: 11px;
+}
+
+.stock-filter-field select {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--stock-border);
+  border-radius: 7px;
+  outline: none;
+  background: #fff;
+  color: var(--stock-text);
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.stock-filter-field select:focus {
+  border-color: #93c5fd;
+}
+
+.stock-sort-direction,
+.stock-reset-button {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--stock-border);
+  border-radius: 7px;
+  background: #fff;
+  color: #475569;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.stock-sort-direction {
+  min-width: 38px;
+  font-size: 19px;
+}
+
+.stock-reset-button:hover,
+.stock-sort-direction:hover {
+  background: #f8fafc;
+}
+
+/* فیلتر وضعیت موجودی */
+.stock-status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 13px;
+  border-top: 1px solid var(--stock-border);
+}
+
+.stock-status-filters button {
+  padding: 7px 12px;
+  border: 1px solid var(--stock-border);
+  border-radius: 7px;
+  background: #fff;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.stock-status-filters button:hover {
+  background: #f8fafc;
+}
+
+.stock-status-filters button.active {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+/* خلاصه نتایج */
+.stock-list-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--stock-muted);
+  font-size: 11px;
+}
+
+/* جدول */
+.stock-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--stock-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.stock-table {
+  width: 100%;
+  min-width: 1050px;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.stock-table th {
+  padding: 14px 11px;
+  border-bottom: 1px solid var(--stock-border);
+  background: #f8fafc;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stock-table td {
+  padding: 13px 11px;
+  border-bottom: 1px solid #edf1f5;
+  color: var(--stock-text);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.stock-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.stock-table tbody tr:hover {
+  background: #fafcff;
+}
+
+.stock-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-product-name {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 110px;
+}
+
+.stock-product-name strong {
+  color: var(--stock-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stock-product-name span {
+  color: var(--stock-muted);
+  font-size: 10px;
+  direction: ltr;
+  text-align: right;
+}
+
+/* برچسب وضعیت */
+.stock-status-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stock-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.stock-status.available {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.stock-status.low {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.stock-status.out {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.stock-status.negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.stock-status.inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* دکمه جزئیات */
+.stock-detail-button {
+  padding: 6px 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.stock-detail-button:hover {
+  background: #dbeafe;
+}
+
+/* حالت بدون نتیجه */
+.stock-empty-state {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 9px;
+  padding: 45px 15px;
+  color: var(--stock-muted);
+  text-align: center;
+}
+
+.stock-empty-state>span {
+  font-size: 27px;
+}
+
+.stock-empty-state strong {
+  color: var(--stock-text);
+  font-size: 13px;
+}
+
+.stock-empty-state p {
+  margin: 0;
+  font-size: 11px;
+}
+
+.stock-empty-state button {
+  margin-top: 7px;
+  padding: 8px 13px;
+  border: 1px solid var(--stock-border);
+  border-radius: 7px;
+  background: #fff;
+  color: #475569;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* کارت‌های موبایل */
+.stock-mobile-list {
+  display: none;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.stock-mobile-card {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 15px;
+  border: 1px solid var(--stock-border);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.stock-mobile-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--stock-border);
+}
+
+.stock-mobile-card-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.stock-mobile-card-details>div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.stock-mobile-card-details span {
+  color: var(--stock-muted);
+  font-size: 10px;
+}
+
+.stock-mobile-card-details strong {
+  overflow-wrap: anywhere;
+  color: var(--stock-text);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.stock-mobile-card>.stock-detail-button {
+  align-self: flex-start;
+  padding: 8px 13px;
+}
+
+/* صفحه‌بندی */
+.stock-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 8px 0;
+  color: var(--stock-muted);
+  font-size: 11px;
+}
+
+.stock-pagination button {
+  min-width: 65px;
+  padding: 8px 12px;
+  border: 1px solid var(--stock-border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--stock-text);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.stock-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* پنجره جزئیات */
+.stock-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(15 23 42 / 45%);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.stock-detail-modal {
+  width: min(100%, 520px);
+  max-height: 85vh;
+  overflow-y: auto;
+  border: 1px solid var(--stock-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgb(15 23 42 / 18%);
+}
+
+.stock-detail-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 20px;
+  border-bottom: 1px solid var(--stock-border);
+}
+
+.stock-detail-modal-header h2 {
+  margin: 0;
+  color: var(--stock-text);
+  font-size: 15px;
+}
+
+.stock-detail-modal-header p {
+  margin: 7px 0 0;
+  color: var(--stock-muted);
+  font-size: 11px;
+}
+
+.stock-detail-modal-header button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.stock-detail-modal-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 20px;
+}
+
+.stock-detail-modal-content>div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.stock-detail-modal-content span {
+  color: var(--stock-muted);
+  font-size: 10px;
+}
+
+.stock-detail-modal-content strong {
+  overflow-wrap: anywhere;
+  color: var(--stock-text);
+  font-size: 12px;
+}
+
+.stock-detail-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 20px;
+  border-top: 1px solid var(--stock-border);
+}
+
+.stock-detail-modal-footer button {
+  padding: 8px 16px;
+  border: 1px solid var(--stock-border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--stock-text);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* واکنش‌گرایی */
+@media (max-width: 720px) {
+  .stock-table-wrapper {
+    display: none;
+  }
+
+  .stock-mobile-list {
+    display: flex;
+  }
+
+  .stock-filter-row {
+    align-items: stretch;
+  }
+
+  .stock-filter-field {
+    flex-basis: calc(50% - 10px);
+  }
+
+  .stock-reset-button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 420px) {
+  .stock-toolbar {
+    padding: 12px;
+  }
+
+  .stock-filter-field {
+    flex-basis: 100%;
+  }
+
+  .stock-status-filters {
+    gap: 6px;
+  }
+
+  .stock-status-filters button {
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+
+  .stock-detail-modal-content {
+    gap: 15px 10px;
+    padding: 15px;
+  }
+}
