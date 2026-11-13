@@ -561,6 +561,7 @@ function UnitList() {
       ...previous,
       fromUnitId,
       toUnitId: targets[0]?.id || '',
+      factor: '',
     }));
 
     setConversionError('');
@@ -1480,6 +1481,7 @@ function UnitList() {
                       setConversionForm((previous) => ({
                         ...previous,
                         toUnitId: event.target.value,
+                        factor: '',
                       }))
                     }
                     disabled={conversionTargets.length === 0}
