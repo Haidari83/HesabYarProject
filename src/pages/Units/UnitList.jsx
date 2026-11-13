@@ -1,6 +1,6 @@
 
 import { useMemo, useState } from 'react';
-import { useBusinessData } from '../../context/BusinessDataContext.jsx';
+import { useBusinessData } from '../../context/BusinessDataContext';
 import './unit-list.css';
 
 // انواع کمیت‌های قابل تعریف
