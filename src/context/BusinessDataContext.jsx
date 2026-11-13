@@ -1,57 +1,10 @@
-
 import {
   createContext,
   useContext,
-  useMemo,
-  useState,
 } from 'react';
-
-import {
-  initialCategories,
-  initialProducts,
-  initialUnits,
-  initialUnitConversions,
-} from '../data/demoData';
 
 // ایجاد بستر اطلاعات مشترک
 const BusinessDataContext = createContext(null);
-
-// نگهداری اطلاعات مشترک صفحات
-export function BusinessDataProvider({ children }) {
-  // تعریف وضعیت کالاها
-  const [categories, setCategories] = useState(initialCategories);
-  const [products, setProducts] = useState(initialProducts);
-
-  // تعریف واحد اندازه گیری کالاها
-  const [units, setUnits] = useState(initialUnits);
-
-  const [unitConversions, setUnitConversions] = useState(
-    initialUnitConversions
-  );
-
-  const value = useMemo(
-    () => ({
-      categories,
-      setCategories,
-
-      products,
-      setProducts,
-
-      units,
-      setUnits,
-
-      unitConversions,
-      setUnitConversions
-    }),
-    [categories, products, units, unitConversions]
-  );
-
-  return (
-    <BusinessDataContext.Provider value={value}>
-      {children}
-    </BusinessDataContext.Provider>
-  );
-}
 
 // دسترسی صفحات به اطلاعات مشترک
 export function useBusinessData() {
@@ -65,3 +18,6 @@ export function useBusinessData() {
 
   return context;
 }
+
+// در اختیار قرار دادن Context برای Provider
+export default BusinessDataContext;
