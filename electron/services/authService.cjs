@@ -814,4 +814,5 @@ module.exports = {
   authenticateUser,
   getSessionUser,
   recordLogout,
+  createPasswordHash,
 };

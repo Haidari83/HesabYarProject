@@ -33,5 +33,20 @@ contextBridge.exposeInMainWorld('hesabyar', {
     logout: () =>
       ipcRenderer.invoke('auth:logout'),
   },
+  users: {
+
+    // دریافت فهرست مجوزهای قابل انتخاب
+    getPermissionCatalog: () =>
+      ipcRenderer.invoke('users:get-permission-catalog'),
+
+    // دریافت فهرست کاربران
+    list: () =>
+      ipcRenderer.invoke('users:list'),
+
+    // ایجاد کاربر جدید
+    create: (input) =>
+      ipcRenderer.invoke('users:create', input),
+
+  },
 
 });

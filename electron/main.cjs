@@ -17,6 +17,12 @@ const {
   recordLogout,
 } = require('./services/authService.cjs');
 
+const {
+  createUser,
+  getUsers,
+  getPermissionCatalog,
+} = require('./services/userService.cjs');
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -139,6 +145,52 @@ function isTrustedRenderer(event) {
   return isAllowedRendererUrl(frame.url);
 
 }
+
+
+// بررسی هویت و نقش مدیر سیستم برای عملیات مدیریتی
+function requireAdminSession(event) {
+
+  // بررسی منبع درخواست
+  if (!isTrustedRenderer(event)) {
+    throw new Error(
+      'درخواست از منبع غیرمجاز ارسال شده است.'
+    );
+  }
+
+  // بررسی وجود نشست
+  if (!activeSession) {
+    throw new Error(
+      'برای انجام این عملیات ابتدا باید وارد حساب‌یار شوی.'
+    );
+  }
+
+  // دریافت اطلاعات کاربر از پایگاه داده
+  const actor = getSessionUser(
+    database,
+    activeSession.userId
+  );
+
+  if (!actor) {
+
+    activeSession = null;
+
+    throw new Error(
+      'نشست کاربر معتبر نیست. دوباره وارد حساب‌یار شو.'
+    );
+
+  }
+
+  // فقط مدیر سیستم اجازه مدیریت کاربران را دارد
+  if (actor.role !== 'admin') {
+    throw new Error(
+      'برای انجام این عملیات دسترسی مدیریتی لازم است.'
+    );
+  }
+
+  return actor;
+
+}
+
 
 
 /* ==============================
@@ -292,6 +344,51 @@ function registerIpcHandlers() {
       return {
         success: true,
       };
+
+    }
+  );
+
+
+  // دریافت فهرست مجوزهای قابل انتخاب
+  ipcMain.handle(
+    'users:get-permission-catalog',
+    (event) => {
+
+      requireAdminSession(event);
+
+      return getPermissionCatalog();
+
+    }
+  );
+
+
+  // دریافت فهرست کاربران
+  ipcMain.handle(
+    'users:list',
+    (event) => {
+
+      requireAdminSession(event);
+
+      return getUsers(database);
+
+    }
+  );
+
+
+  // ایجاد کاربر جدید
+  ipcMain.handle(
+    'users:create',
+    (event, input) => {
+
+      // دریافت مدیر معتبر از نشست Main Process
+      const actor = requireAdminSession(event);
+
+      // ثبت کاربر و مجوزها با هویت مدیر فعلی
+      return createUser(
+        database,
+        actor,
+        input
+      );
 
     }
   );
