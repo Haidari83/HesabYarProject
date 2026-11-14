@@ -1,78 +1,103 @@
 
 /* ==============================
-   وارد کردن ماژول‌های موردنیاز
+   ماژول‌های موردنیاز
 ================================ */
 
-// امکانات اصلی Electron
-const { app, BrowserWindow } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+} = require('electron');
 
-// ابزار مدیریت مسیر فایل‌ها
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+
+const { openDatabase } = require('./database.cjs');
 
 
 /* ==============================
-   آزمایش موقت پایگاه داده SQLite
+   تنظیمات عمومی
 ================================ */
 
-try {
-  const { DatabaseSync } = require('node:sqlite');
+// نام برنامه
+app.setName('HesabYar');
 
-  // ساخت یک پایگاه داده آزمایشی در حافظه
-  const testDb = new DatabaseSync(':memory:');
+// آدرس سرور Vite در زمان توسعه
+const DEV_SERVER_URL = 'http://localhost:5173';
 
-  // بستن پایگاه داده آزمایشی
-  testDb.close();
+// پایگاه داده
+let database = null;
 
-  console.log('SQLite test successful: true');
+// پنجره اصلی
+let mainWindow = null;
 
-} catch (error) {
 
-  // در صورت در دسترس نبودن SQLite، خطا را گزارش می‌کنیم
-  console.error('SQLite test failed:', error);
+/* ==============================
+   ایجاد یا بازکردن پایگاه داده
+================================ */
+
+function initializeDatabase() {
+
+  // مسیر اختصاصی اطلاعات حساب‌یار در ویندوز
+  const dataDirectory = path.join(
+    app.getPath('userData'),
+    'data'
+  );
+
+  // ایجاد پوشه در صورت نبودن آن
+  fs.mkdirSync(dataDirectory, {
+    recursive: true,
+  });
+
+  // مسیر فایل SQLite
+  const databasePath = path.join(
+    dataDirectory,
+    'hesabyar.sqlite'
+  );
+
+  // اتصال به پایگاه داده
+  const db = openDatabase(databasePath);
+
+  console.log('SQLite database initialized successfully.');
+
+  console.log('Database location:', databasePath);
+
+  return db;
 
 }
 
 
 /* ==============================
-   ایجاد پنجره اصلی برنامه
+   بررسی آدرس مجاز رابط کاربری
 ================================ */
 
-function createWindow() {
+function isAllowedRendererUrl(url) {
 
-  const mainWindow = new BrowserWindow({
-
-    // اندازه اولیه پنجره
-    width: 1200,
-    height: 800,
-
-    // حداقل اندازه مجاز پنجره
-    minWidth: 900,
-    minHeight: 600,
-
-    // تنظیمات امنیتی
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true
-    }
-
-  });
-
-
-  /* ==============================
-     بارگذاری رابط کاربری
-  ================================ */
-
+  // در نسخه بسته‌بندی‌شده، فقط فایل اصلی برنامه مجاز است
   if (app.isPackaged) {
 
-    // در نسخه نهایی، فایل ساخته‌شده توسط Vite را باز می‌کنیم
-    mainWindow.loadFile(
-      path.join(__dirname, '../dist/index.html')
+    const indexPath = path.resolve(
+      __dirname,
+      '../dist/index.html'
     );
 
-  } else {
+    return url === pathToFileURL(indexPath).href;
 
-    // در زمان توسعه، رابط کاربری را از سرور Vite دریافت می‌کنیم
-    mainWindow.loadURL('http://localhost:5173');
+  }
+
+  // در حالت توسعه، فقط مبدأ سرور Vite مجاز است
+  try {
+
+    const target = new URL(url);
+    const allowed = new URL(DEV_SERVER_URL);
+
+    return target.origin === allowed.origin;
+
+  } catch {
+
+    return false;
 
   }
 
@@ -80,16 +105,217 @@ function createWindow() {
 
 
 /* ==============================
-   مدیریت چرخه اجرای برنامه
+   اعتبارسنجی فرستنده پیام IPC
 ================================ */
 
-// اجرای برنامه پس از آماده شدن Electron
-app.whenReady().then(() => {
+function isTrustedRenderer(event) {
 
-  // ایجاد پنجره اصلی
-  createWindow();
+  if (!mainWindow) {
+    return false;
+  }
 
-  // مخصوص macOS: بازسازی پنجره با کلیک روی آیکون برنامه
+  // پیام باید از پنجره اصلی برنامه آمده باشد
+  if (event.sender !== mainWindow.webContents) {
+    return false;
+  }
+
+  const frame = event.senderFrame;
+
+  // پیام iframe یا فریم ناشناس پذیرفته نمی‌شود
+  if (!frame || frame !== event.sender.mainFrame) {
+    return false;
+  }
+
+  return isAllowedRendererUrl(frame.url);
+
+}
+
+
+/* ==============================
+   مدیریت ارتباط React و Electron
+================================ */
+
+function registerIpcHandlers() {
+
+  // دریافت وضعیت راه‌اندازی اولیه برنامه
+  ipcMain.handle(
+    'system:get-setup-status',
+    (event) => {
+
+      // بررسی هویت پنجره درخواست‌کننده
+      if (!isTrustedRenderer(event)) {
+
+        throw new Error(
+          'درخواست از منبع غیرمجاز ارسال شده است.'
+        );
+
+      }
+
+      // بررسی تعداد کاربران ثبت‌شده
+      const result = database
+        .prepare('SELECT COUNT(*) AS userCount FROM users')
+        .get();
+
+      const userCount = Number(result.userCount);
+
+      return {
+        needsInitialSetup: userCount === 0,
+        userCount,
+      };
+
+    }
+  );
+
+}
+
+
+/* ==============================
+   ایجاد پنجره اصلی
+================================ */
+
+function createWindow() {
+
+  mainWindow = new BrowserWindow({
+
+    width: 1200,
+    height: 800,
+
+    minWidth: 900,
+    minHeight: 600,
+
+    webPreferences: {
+
+      // فایل ارتباطی امن
+      preload: path.join(__dirname, 'preload.cjs'),
+
+      // عدم دسترسی مستقیم Renderer به Node.js
+      nodeIntegration: false,
+
+      // جداسازی زمینه‌ها
+      contextIsolation: true,
+
+      // فعال‌سازی Sandbox
+      sandbox: true,
+
+      // حفظ امنیت وب
+      webSecurity: true,
+
+    },
+
+  });
+
+
+  // جلوگیری از بازشدن پنجره‌های جدید
+  mainWindow.webContents.setWindowOpenHandler(() => ({
+    action: 'deny',
+  }));
+
+
+  // جلوگیری از هدایت برنامه به آدرس‌های غیرمجاز
+  mainWindow.webContents.on(
+    'will-navigate',
+    (event, targetUrl) => {
+
+      if (!isAllowedRendererUrl(targetUrl)) {
+        event.preventDefault();
+      }
+
+    }
+  );
+
+
+  // بارگذاری رابط کاربری
+  if (app.isPackaged) {
+
+    mainWindow.loadFile(
+      path.join(__dirname, '../dist/index.html')
+    );
+
+  } else {
+
+    mainWindow.loadURL(DEV_SERVER_URL);
+
+  }
+
+
+  // آزادسازی مرجع پنجره پس از بسته‌شدن
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
+}
+
+
+/* ==============================
+   جلوگیری از اجرای چند نمونه برنامه
+================================ */
+
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+
+
+if (!gotSingleInstanceLock) {
+
+  app.quit();
+
+} else {
+
+
+  // اگر برنامه دوباره اجرا شد، پنجره قبلی فعال شود
+  app.on('second-instance', () => {
+
+    if (mainWindow) {
+
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+
+      mainWindow.focus();
+
+    }
+
+  });
+
+
+  /* ==============================
+     آماده‌سازی برنامه
+  ================================ */
+
+  app.whenReady().then(() => {
+
+    try {
+
+      // ۱. اتصال به پایگاه داده
+      database = initializeDatabase();
+
+      // ۲. ثبت مسیرهای مجاز ارتباطی
+      registerIpcHandlers();
+
+      // ۳. ایجاد پنجره اصلی
+      createWindow();
+
+    } catch (error) {
+
+      console.error(
+        'Application initialization failed:',
+        error
+      );
+
+      dialog.showErrorBox(
+        'خطا در راه‌اندازی حساب‌یار',
+        'پایگاه داده یا زیرساخت برنامه با خطا مواجه شده است.'
+      );
+
+      app.quit();
+
+    }
+
+  });
+
+
+  /* ==============================
+     مدیریت چرخه برنامه
+  ================================ */
+
   app.on('activate', () => {
 
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -98,16 +324,35 @@ app.whenReady().then(() => {
 
   });
 
-});
+
+  app.on('window-all-closed', () => {
+
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
+
+  });
 
 
-// بستن برنامه پس از بسته شدن تمام پنجره‌ها
-app.on('window-all-closed', () => {
+}
 
-  // در ویندوز و لینوکس برنامه بسته می‌شود
-  // در macOS برنامه باز می‌ماند
-  if (process.platform !== 'darwin') {
-    app.quit();
+
+/* ==============================
+   بستن پایگاه داده
+================================ */
+
+app.on('before-quit', () => {
+
+  if (database) {
+
+    try {
+      database.close();
+    } catch (error) {
+      console.error('Database close failed:', error);
+    }
+
+    database = null;
+
   }
 
 });
