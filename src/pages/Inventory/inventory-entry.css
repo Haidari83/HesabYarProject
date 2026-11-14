@@ -1,0 +1,229 @@
+.inventory-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.entry-section {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 22px;
+  min-width: 0;
+}
+
+.entry-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.entry-section-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary, #1f2937);
+}
+
+.entry-section-header p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.entry-status,
+.entry-item-count {
+  padding: 6px 11px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.entry-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.entry-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.entry-field>span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #374151);
+}
+
+.entry-field input,
+.entry-field select,
+.entry-field textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 8px;
+  background: var(--surface, #ffffff);
+  color: var(--text-primary, #1f2937);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.entry-field input:focus,
+.entry-field select:focus,
+.entry-field textarea:focus {
+  border-color: var(--primary, #2684c7);
+  box-shadow: 0 0 0 3px rgba(38, 132, 199, 0.1);
+}
+
+.entry-field input:disabled {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.entry-field textarea {
+  resize: vertical;
+  min-height: 85px;
+}
+
+.entry-field-full {
+  grid-column: 1 / -1;
+}
+
+.entry-empty-items {
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px dashed var(--border, #d1d5db);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+}
+
+.entry-empty-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #2684c7;
+  font-size: 25px;
+}
+
+.entry-empty-items strong {
+  font-size: 14px;
+  color: var(--text-primary, #374151);
+}
+
+.entry-empty-items p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.entry-empty-items button,
+.entry-form-actions button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.entry-empty-items button {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.entry-empty-items button:disabled,
+.entry-form-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.entry-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.entry-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.entry-summary-item span {
+  font-size: 12px;
+  color: var(--text-secondary, #64748b);
+}
+
+.entry-summary-item strong {
+  font-size: 20px;
+  color: var(--text-primary, #1f2937);
+}
+
+.entry-form-actions {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.entry-submit-button {
+  background: var(--primary, #2684c7);
+  color: white;
+}
+
+.entry-draft-button {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+@media (max-width: 700px) {
+  .entry-section {
+    padding: 16px;
+  }
+
+  .entry-form-grid,
+  .entry-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .entry-field-full {
+    grid-column: auto;
+  }
+
+  .entry-section-header {
+    align-items: flex-start;
+  }
+
+  .entry-form-actions {
+    flex-direction: column;
+  }
+
+  .entry-form-actions button {
+    width: 100%;
+  }
+}

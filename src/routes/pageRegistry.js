@@ -211,4 +211,10 @@ export const pageRegistry = {
     description: 'مشاهده و بررسی موجودی کالاهای انبار.',
     breadcrumbs: ['داشبورد', 'محصولات و انبار', 'موجودی انبار'],
   },
+  'inventory-entry': {
+    id: 'inventory-entry',
+    title: 'ورود کالا',
+    description: 'ثبت و مدیریت ورود کالا به انبار.',
+    breadcrumbs: ['داشبورد', 'محصولات و انبار', 'موجودی انبار'],
+  },
 };

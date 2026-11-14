@@ -49,6 +49,7 @@ const quickActions = [
     description: 'ثبت ورود کالا به انبار',
     icon: '＋',
     className: 'quick-action-in',
+    pageId: 'inventory-entry',
   },
   {
     id: 2,
