@@ -104,7 +104,7 @@ function EyeOffIcon() {
    صفحه ورود
 ************************= */
 
-function Login() {
+function Login({ onLogin }) {
 
   // اطلاعات ورودی کاربر
   const [username, setUsername] = useState('');
@@ -113,35 +113,106 @@ function Login() {
   // وضعیت نمایش یا مخفی بودن رمز
   const [showPassword, setShowPassword] = useState(false);
 
+  // وضعیت ارسال درخواست ورود
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // پیام‌های فرم
   const [feedback, setFeedback] = useState('');
   const [feedbackType, setFeedbackType] = useState('info');
 
+  // ارسال اطلاعات برای احراز هویت
+  async function handleSubmit(event) {
 
-  // مدیریت ارسال فرم
-  function handleSubmit(e) {
+    event.preventDefault();
 
-    // جلوگیری از بارگذاری مجدد صفحه
-    e.preventDefault();
+    setFeedback('');
 
-    // بررسی نام کاربری
     if (!username.trim()) {
       setFeedbackType('error');
-      setFeedback('لطفاً نام کاربری را وارد کنید.');
+      setFeedback('لطفاً نام کاربری را وارد کن.');
       return;
     }
 
-    // بررسی رمز عبور
     if (!password) {
       setFeedbackType('error');
-      setFeedback('لطفاً رمز عبور را وارد کنید.');
+      setFeedback('لطفاً گذرواژه را وارد کن.');
       return;
     }
 
-    // احراز هویت هنوز به برنامه متصل نشده است
-    setFeedbackType('info');
-    setFeedback('صفحه ورود آماده است؛ اتصال احراز هویت در مرحله بعد انجام می‌شود.');
+    setIsSubmitting(true);
+
+    // تا زمان پایان بررسی، اطلاعات کاربر را نگه می‌داریم
+    let authenticatedUser = null;
+
+    try {
+
+      // دریافت تابع ورود از Preload
+      const login = window.hesabyar?.auth?.login;
+
+      if (typeof login !== 'function') {
+        throw new Error(
+          'ارتباط با سرویس احراز هویت برقرار نیست.'
+        );
+      }
+
+      // ارسال اطلاعات به Main Process
+      const result = await login({
+        username,
+        password,
+      });
+
+      // بررسی نتیجه احراز هویت
+      if (!result?.success) {
+
+        setFeedbackType('error');
+
+        setFeedback(
+          result?.message ||
+          'ورود به حساب‌یار انجام نشد.'
+        );
+
+        setPassword('');
+
+      } else if (!result.user?.id) {
+
+        throw new Error(
+          'اطلاعات کاربر دریافت‌شده معتبر نیست.'
+        );
+
+      } else {
+
+        authenticatedUser = result.user;
+
+      }
+
+    } catch (error) {
+
+      setFeedbackType('error');
+
+      setFeedback(
+        error.message ||
+        'هنگام ورود به حساب‌یار خطایی رخ داد.'
+      );
+
+      setPassword('');
+
+    } finally {
+
+      setIsSubmitting(false);
+
+    }
+
+    // انتقال به محیط برنامه پس از ورود موفق
+    if (authenticatedUser) {
+
+      setPassword('');
+
+      onLogin(authenticatedUser);
+
+    }
+
   }
+
 
 
   return (
@@ -209,6 +280,7 @@ function Login() {
                     autoCapitalize="none"
                     spellCheck={false}
                     dir="auto"
+                    disabled={isSubmitting}
                   />
 
                 </div>
@@ -240,6 +312,7 @@ function Login() {
                       setFeedback('');
                     }}
                     autoComplete="current-password"
+                    disabled={isSubmitting}
                   />
 
                   {/* نمایش یا مخفی کردن رمز */}
@@ -273,8 +346,11 @@ function Login() {
               <button
                 type="submit"
                 className="login-submit"
+                disabled={isSubmitting}
               >
-                ورود به حساب‌یار
+                {isSubmitting
+                  ? 'در حال بررسی اطلاعات...'
+                  : 'ورود به حساب‌یار'}
               </button>
 
             </form>

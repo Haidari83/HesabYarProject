@@ -15,7 +15,9 @@ function AppLayout({
   children,
   navigationItems = [],
   activeItem = 'dashboard',
-  onPageSelect = () => { }
+  onPageSelect = () => { },
+  currentUser = null,
+  onLogout = () => { }
 }) {
 
   // وضعیت جمع‌شدن منوی کناری در دسکتاپ
@@ -129,6 +131,8 @@ function AppLayout({
         sidebarCollapsed={
           isMobile ? !mobileSidebarOpen : sidebarCollapsed
         }
+        currentUser={currentUser}
+        onLogout={onLogout}
       />
 
 

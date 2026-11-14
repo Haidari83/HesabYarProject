@@ -77,12 +77,26 @@ function SettingsIcon() {
 function TopBar({
   onToggleSidebar,
   sidebarCollapsed = false,
-  userName = 'کاربر فعلی',
-  userRole = 'کاربر سیستم'
+  currentUser = null,
+  onLogout
 }) {
+
+  // اطلاعات نمایشی کاربر واردشده
+  const userName = currentUser?.displayName || 'کاربر';
+
+  const username = currentUser?.username || '';
+
+  const userRole = currentUser?.role === 'admin'
+    ? 'مدیر سیستم'
+    : 'کاربر عادی';
 
   // مشخص می‌کند کدام پنل باز باشد
   const [activePanel, setActivePanel] = useState(null);
+  // وضعیت عملیات خروج
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // پیام خطای خروج
+  const [logoutError, setLogoutError] = useState('');
 
   // برای تشخیص کلیک خارج از پنل‌ها
   const actionsRef = useRef(null);
@@ -114,6 +128,34 @@ function TopBar({
     setActivePanel((currentPanel) =>
       currentPanel === panelName ? null : panelName
     );
+  }
+
+  // مدیریت خروج از حساب کاربری
+  async function handleLogout() {
+
+    if (typeof onLogout !== 'function') {
+      setLogoutError('عملیات خروج در دسترس نیست.');
+      return;
+    }
+
+    setLogoutError('');
+    setIsLoggingOut(true);
+
+    try {
+
+      await onLogout();
+
+    } catch (error) {
+
+      setLogoutError(
+        error.message ||
+        'خروج از حساب با خطا مواجه شد.'
+      );
+
+      setIsLoggingOut(false);
+
+    }
+
   }
 
   // بستن پنل‌ها با کلیک در خارج از آن‌ها یا فشردن Escape
@@ -302,13 +344,35 @@ function TopBar({
                 role="dialog"
                 aria-label="اطلاعات کاربر"
               >
+
                 <h3>{userName}</h3>
+
+                <p>
+                  نام کاربری: <span dir="ltr">{username}</span>
+                </p>
 
                 <p>{userRole}</p>
 
-                <p>
-                  مدیریت حساب کاربری در مراحل بعدی پیاده‌سازی می‌شود.
-                </p>
+                {logoutError && (
+                  <p
+                    className="topbar__logout-error"
+                    role="alert"
+                  >
+                    {logoutError}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  className="topbar__logout-button"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                >
+                  {isLoggingOut
+                    ? 'در حال خروج...'
+                    : 'خروج از حساب'}
+                </button>
+
               </div>
             )}
 

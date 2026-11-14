@@ -24,7 +24,7 @@ import {
    برنامه اصلی حساب‌یار
 ========================= */
 
-function ApplicationShell() {
+function ApplicationShell({ currentUser, onLogout }) {
 
   // شناسه صفحه‌ای که در حال حاضر نمایش داده می‌شود
   const [activePageId, setActivePageId] = useState('dashboard');
@@ -64,6 +64,9 @@ function ApplicationShell() {
       // دریافت انتخاب جدید از Sidebar
       onPageSelect={handlePageSelect}
 
+      currentUser={currentUser}
+
+      onLogout={onLogout}
     >
 
       {/* قالب عمومی صفحه انتخاب‌شده */}
@@ -111,6 +114,8 @@ function App() {
 
   const [startupError, setStartupError] = useState('');
 
+  // اطلاعات کاربر احراز هویت‌شده
+  const [currentUser, setCurrentUser] = useState(null);
 
   // بررسی وضعیت کاربران هنگام شروع برنامه
   useEffect(() => {
@@ -147,13 +152,37 @@ function App() {
         }
 
 
-        if (isActive) {
+        if (result.needsInitialSetup) {
 
-          setStartupState(
-            result.needsInitialSetup
-              ? 'setup'
-              : 'login'
-          );
+          if (isActive) {
+            setStartupState('setup');
+          }
+
+        } else {
+
+          // اگر در همین اجرای Electron نشست فعالی وجود داشته باشد،
+          // اطلاعات کاربر را دوباره دریافت می‌کنیم.
+          const getCurrentSession =
+            window.hesabyar?.auth?.getCurrentSession;
+
+          if (typeof getCurrentSession !== 'function') {
+            throw new Error(
+              'سرویس بازیابی نشست کاربر در دسترس نیست.'
+            );
+          }
+
+          const restoredUser = await getCurrentSession();
+
+          if (isActive) {
+
+            if (restoredUser) {
+              setCurrentUser(restoredUser);
+              setStartupState('authenticated');
+            } else {
+              setStartupState('login');
+            }
+
+          }
 
         }
 
@@ -185,6 +214,41 @@ function App() {
 
   }, []);
 
+  // تکمیل ورود موفق کاربر
+  function handleLogin(user) {
+
+    setCurrentUser(user);
+
+    setStartupState('authenticated');
+
+  }
+
+  // خروج از حساب کاربری
+  async function handleLogout() {
+
+    const logout = window.hesabyar?.auth?.logout;
+
+    if (typeof logout !== 'function') {
+      throw new Error(
+        'سرویس خروج از حساب در دسترس نیست.'
+      );
+    }
+
+    const result = await logout();
+
+    if (!result?.success) {
+      throw new Error(
+        'خروج از حساب انجام نشد.'
+      );
+    }
+
+    // پاک‌کردن اطلاعات کاربر از رابط React
+    setCurrentUser(null);
+
+    // بازگشت به صفحه ورود
+    setStartupState('login');
+
+  }
 
   // وضعیت بررسی اولیه
   if (startupState === 'checking') {
@@ -233,12 +297,16 @@ function App() {
   }
 
 
-  if (startupState === 'authenticated') {
-    return <ApplicationShell />;
+  if (startupState === 'authenticated' && currentUser) {
+    return (
+      <ApplicationShell
+        currentUser={currentUser}
+        onLogout={handleLogout}
+      />
+    );
   }
-  // در این مرحله، پس از ایجاد مدیر صفحه ورود نمایش داده می‌شود.
-  // اتصال واقعی ورود در مرحله بعد انجام خواهد شد.
-  return <Login />;
+
+  return <Login onLogin={handleLogin} />;
 
 }
 

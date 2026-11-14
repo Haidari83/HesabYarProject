@@ -218,6 +218,45 @@
 }
 
 
+/* دکمه خروج از حساب کاربری */
+
+.topbar__logout-button {
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  margin-top: 14px;
+  padding: 8px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.topbar__logout-button:hover {
+  border-color: #fca5a5;
+  background: #fee2e2;
+}
+
+.topbar__logout-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.topbar__logout-error {
+  margin-top: 10px !important;
+  padding: 8px;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c !important;
+  font-size: var(--font-size-xs) !important;
+}
+
 /* =========================
    واکنش‌گرایی
 ========================= */
