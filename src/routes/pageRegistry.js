@@ -147,7 +147,13 @@ export const navigationItems = [
     id: 'settings',
     label: 'تنظیمات',
     icon: 'settings',
-    description: 'مدیریت تنظیمات برنامه.'
+    children: [
+      {
+        id: 'users',
+        label: 'مدیریت کاربران',
+        description: 'ایجاد و مدیریت حساب‌های کاربری و دسترسی‌ها.'
+      }
+    ]
   }
 
 ];

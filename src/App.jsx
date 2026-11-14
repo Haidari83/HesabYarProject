@@ -13,6 +13,7 @@ import UnitList from './pages/Units/UnitList';
 import InventoryOverview from './pages/Inventory/InventoryOverview';
 import InventoryStockList from './pages/Inventory/InventoryStockList';
 import InventoryEntry from './pages/Inventory/InventoryEntry';
+import UserManagement from './pages/Users/UserManagement';
 
 import {
   navigationItems,
@@ -91,6 +92,8 @@ function ApplicationShell({ currentUser, onLogout }) {
           <InventoryStockList />
         ) : activePageId === 'inventory-entry' ? (
           <InventoryEntry />
+        ) : activePageId === 'users' ? (
+          <UserManagement />
         ) : (
           <div className="page-demo-content">
             <h2>{currentPage.title}</h2>
