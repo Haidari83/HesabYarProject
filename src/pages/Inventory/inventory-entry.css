@@ -201,6 +201,392 @@
   color: #475569;
 }
 
+
+/* =========================
+   جدول اقلام ورود کالا
+========================= */
+
+.entry-items-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.entry-add-item-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary, #2684c7);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.entry-add-item-button:hover {
+  background: #176da9;
+}
+
+.entry-add-item-button span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.entry-items-table-scroll {
+  width: 100%;
+  min-width: 0;
+}
+
+.entry-items-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+
+.entry-items-table th {
+  padding: 13px 9px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.entry-items-table th:first-child {
+  border-right: 1px solid #e5e7eb;
+  border-radius: 0 8px 0 0;
+}
+
+.entry-items-table th:last-child {
+  border-left: 1px solid #e5e7eb;
+  border-radius: 8px 0 0 0;
+}
+
+.entry-items-table td {
+  position: relative;
+  padding: 13px 8px;
+  border-bottom: 1px solid #eef0f3;
+  vertical-align: top;
+  color: #374151;
+}
+
+.entry-items-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.entry-items-table tbody tr:hover {
+  background: #fcfdff;
+}
+
+/* عرض ستون‌ها */
+
+.entry-items-table th:nth-child(1) {
+  width: 5%;
+}
+
+.entry-items-table th:nth-child(2) {
+  width: 25%;
+}
+
+.entry-items-table th:nth-child(3) {
+  width: 13%;
+}
+
+.entry-items-table th:nth-child(4) {
+  width: 13%;
+}
+
+.entry-items-table th:nth-child(5) {
+  width: 15%;
+}
+
+.entry-items-table th:nth-child(6) {
+  width: 15%;
+}
+
+.entry-items-table th:nth-child(7) {
+  width: 8%;
+}
+
+
+/* جست‌وجو و انتخاب کالا */
+
+.entry-product-picker {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  z-index: 1;
+}
+
+.entry-product-picker:focus-within {
+  z-index: 30;
+}
+
+.entry-product-picker>input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.entry-product-picker>input:focus {
+  border-color: #2684c7;
+  box-shadow: 0 0 0 3px rgba(38, 132, 199, 0.1);
+}
+
+.entry-product-options {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  left: 0;
+  z-index: 50;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.13);
+}
+
+.entry-product-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #1f2937;
+  text-align: right;
+  font: inherit;
+  cursor: pointer;
+}
+
+.entry-product-option:hover {
+  background: #f1f7fc;
+}
+
+.entry-product-option-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.entry-product-option-info strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.entry-product-option-info small,
+.entry-product-option-price {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.entry-product-no-result {
+  padding: 15px 10px;
+  color: #64748b;
+  font-size: 12px;
+  text-align: center;
+}
+
+
+/* انتخاب واحد و مقدار */
+
+.entry-items-table td select,
+.entry-number-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 9px 7px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #fff;
+  color: #374151;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.entry-items-table td select:focus,
+.entry-number-input:focus {
+  border-color: #2684c7;
+  box-shadow: 0 0 0 3px rgba(38, 132, 199, 0.1);
+}
+
+.entry-items-table td select:disabled,
+.entry-number-input:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.entry-unit-hint {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.entry-item-warning,
+.entry-item-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+.entry-item-warning {
+  color: #a16207;
+}
+
+.entry-item-error {
+  color: #dc2626;
+}
+
+
+/* مبلغ و عملیات */
+
+.entry-line-amount {
+  display: inline-block;
+  padding-top: 9px;
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry-remove-item-button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: 3px auto 0;
+  border: 0;
+  border-radius: 7px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.entry-remove-item-button:hover {
+  background: #fee2e2;
+}
+
+
+/* توضیح خلاصه سند */
+
+.entry-summary-note {
+  margin: 13px 0 0;
+  color: #a16207;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+
+/* =========================
+   نمایش کارت‌مانند جدول در موبایل
+========================= */
+
+@media (max-width: 900px) {
+
+  .entry-items-table,
+  .entry-items-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .entry-items-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .entry-items-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .entry-items-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px 12px;
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .entry-items-table tbody tr:hover {
+    background: #fff;
+  }
+
+  .entry-items-table td {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .entry-items-table td::before {
+    content: attr(data-label);
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .entry-items-table td[data-label="کالا"] {
+    grid-column: 1 / -1;
+  }
+
+  .entry-items-table td[data-label="عملیات"] {
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .entry-remove-item-button {
+    margin: 0;
+  }
+
+  .entry-line-amount {
+    padding-top: 0;
+  }
+
+}
+
 @media (max-width: 700px) {
   .entry-section {
     padding: 16px;
@@ -226,4 +612,22 @@
   .entry-form-actions button {
     width: 100%;
   }
+}
+
+@media (max-width: 480px) {
+
+  .entry-items-header-actions {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+
+  .entry-add-item-button {
+    width: 100%;
+  }
+
+  .entry-items-table tbody tr {
+    padding: 12px;
+    gap: 12px 9px;
+  }
+
 }
