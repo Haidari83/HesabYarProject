@@ -21,6 +21,17 @@ contextBridge.exposeInMainWorld('hesabyar', {
     createInitialAdmin: (data) =>
       ipcRenderer.invoke('auth:create-initial-admin', data),
 
+    // بررسی اطلاعات ورود
+    login: (credentials) =>
+      ipcRenderer.invoke('auth:login', credentials),
+
+    // دریافت کاربر دارای نشست فعال
+    getCurrentSession: () =>
+      ipcRenderer.invoke('auth:get-current-session'),
+
+    // خروج از حساب کاربری
+    logout: () =>
+      ipcRenderer.invoke('auth:logout'),
   },
 
 });

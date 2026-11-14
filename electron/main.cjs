@@ -12,6 +12,9 @@ const {
 
 const {
   createInitialAdmin,
+  authenticateUser,
+  getSessionUser,
+  recordLogout,
 } = require('./services/authService.cjs');
 
 const fs = require('node:fs');
@@ -36,6 +39,9 @@ let database = null;
 
 // پنجره اصلی
 let mainWindow = null;
+
+// نشست کاربر فعلی؛ فقط در حافظه Main Process
+let activeSession = null;
 
 
 /* ==============================
@@ -188,6 +194,109 @@ function registerIpcHandlers() {
     }
   );
 
+
+  // ورود کاربر
+  ipcMain.handle(
+    'auth:login',
+    (event, credentials) => {
+
+      // بررسی معتبر بودن درخواست
+      if (!isTrustedRenderer(event)) {
+        throw new Error(
+          'درخواست از منبع غیرمجاز ارسال شده است.'
+        );
+      }
+
+      // بررسی نام کاربری و گذرواژه در پایگاه داده
+      const result = authenticateUser(
+        database,
+        credentials
+      );
+
+      // فقط در صورت ورود موفق، نشست ایجاد می‌شود
+      if (result.success) {
+
+        activeSession = {
+          userId: result.user.id,
+        };
+
+      }
+
+      return result;
+
+    }
+  );
+
+
+  // دریافت اطلاعات کاربر دارای نشست فعال
+  ipcMain.handle(
+    'auth:get-current-session',
+    (event) => {
+
+      if (!isTrustedRenderer(event)) {
+        throw new Error(
+          'درخواست از منبع غیرمجاز ارسال شده است.'
+        );
+      }
+
+      // اگر هیچ کاربری وارد نشده باشد
+      if (!activeSession) {
+        return null;
+      }
+
+      // دریافت دوباره اطلاعات کاربر از SQLite
+      const currentUser = getSessionUser(
+        database,
+        activeSession.userId
+      );
+
+      // اگر کاربر غیرفعال یا حذف شده باشد، نشست باطل می‌شود
+      if (!currentUser) {
+
+        activeSession = null;
+
+        return null;
+
+      }
+
+      return currentUser;
+
+    }
+  );
+
+
+  // خروج کاربر
+  ipcMain.handle(
+    'auth:logout',
+    (event) => {
+
+      if (!isTrustedRenderer(event)) {
+        throw new Error(
+          'درخواست از منبع غیرمجاز ارسال شده است.'
+        );
+      }
+
+      if (activeSession) {
+
+        // ثبت رویداد خروج
+        recordLogout(
+          database,
+          activeSession.userId
+        );
+
+        // پاک‌کردن نشست از حافظه
+        activeSession = null;
+
+      }
+
+      return {
+        success: true,
+      };
+
+    }
+  );
+
+
 }
 
 
@@ -262,7 +371,12 @@ function createWindow() {
 
   // آزادسازی مرجع پنجره پس از بسته‌شدن
   mainWindow.on('closed', () => {
+
+    // با بسته‌شدن پنجره، کاربر از حساب خارج می‌شود
+    activeSession = null;
+
     mainWindow = null;
+
   });
 
 }
