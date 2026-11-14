@@ -10,6 +10,10 @@ const {
   dialog,
 } = require('electron');
 
+const {
+  createInitialAdmin,
+} = require('./services/authService.cjs');
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -162,6 +166,24 @@ function registerIpcHandlers() {
         needsInitialSetup: userCount === 0,
         userCount,
       };
+
+    }
+  );
+
+  // دریافت درخواست ایجاد مدیر اولیه
+  ipcMain.handle(
+    'auth:create-initial-admin',
+    (event, input) => {
+
+      // فقط پنجره اصلی و مجاز برنامه می‌تواند درخواست بفرستد
+      if (!isTrustedRenderer(event)) {
+        throw new Error(
+          'درخواست از منبع غیرمجاز ارسال شده است.'
+        );
+      }
+
+      // ایجاد مدیر در Main Process
+      return createInitialAdmin(database, input);
 
     }
   );
