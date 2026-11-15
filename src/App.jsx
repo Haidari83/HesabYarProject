@@ -92,8 +92,10 @@ function ApplicationShell({ currentUser, onLogout }) {
           <InventoryStockList />
         ) : activePageId === 'inventory-entry' ? (
           <InventoryEntry />
-        ) : activePageId === 'users' ? (
+        ) : activePageId === 'users' && currentUser.role === 'admin' ? (
           <UserManagement />
+        ) : activePageId === 'users' ? (
+          <div>شما اجازه دسترسی به این بخش را ندارید.</div>
         ) : (
           <div className="page-demo-content">
             <h2>{currentPage.title}</h2>

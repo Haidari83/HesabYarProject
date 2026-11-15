@@ -1,0 +1,293 @@
+/* ساختار کلی صفحه */
+.user-management {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  color: #334155;
+}
+
+/* کارت‌های آمار */
+.user-statistics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.user-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+.user-stat-card span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.user-stat-card strong {
+  color: #263b70;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* نوار جست‌وجو و فیلتر */
+.user-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+.user-search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.user-search:focus-within {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+.user-search>span {
+  margin-left: 8px;
+  color: #94a3b8;
+  font-size: 23px;
+}
+
+.user-search input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #334155;
+  font: inherit;
+  font-size: 11px;
+}
+
+.user-search input::placeholder {
+  color: #94a3b8;
+}
+
+.user-toolbar select {
+  width: 170px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  outline: none;
+  background-color: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.user-toolbar select:focus {
+  border-color: #0f766e;
+}
+
+/* کارت جدول */
+.user-table-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+}
+
+.user-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.user-table-header h2 {
+  margin: 0;
+  color: #263b70;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.user-table-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 10px;
+}
+
+/* جدول */
+.user-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.user-table th,
+.user-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #edf0f4;
+  font-size: 11px;
+}
+
+.user-table th {
+  background-color: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.user-table td {
+  color: #475569;
+}
+
+.user-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.user-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.user-name {
+  color: #263b70 !important;
+  font-weight: 600;
+}
+
+.user-username {
+  direction: ltr;
+  text-align: right;
+  color: #64748b !important;
+}
+
+/* برچسب نقش */
+.user-role,
+.user-status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.user-role.admin {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.user-role.regular {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+/* وضعیت حساب */
+.user-status.active {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.user-status.inactive {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* پیام‌های بارگذاری، خطا و فهرست خالی */
+.user-message,
+.user-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 220px;
+  padding: 30px 15px;
+  color: #64748b;
+  font-size: 12px;
+  text-align: center;
+}
+
+.user-empty-state>span {
+  color: #94a3b8;
+  font-size: 32px;
+}
+
+.user-empty-state strong,
+.user-error strong {
+  color: #334155;
+  font-size: 13px;
+}
+
+.user-empty-state p,
+.user-error p {
+  margin: 0;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+.user-error {
+  color: #b91c1c;
+}
+
+.user-error button {
+  height: 35px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 7px;
+  background-color: #263b70;
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* واکنش‌گرایی */
+@media (max-width: 900px) {
+  .user-statistics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .user-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .user-search,
+  .user-toolbar select {
+    width: 100%;
+  }
+
+  .user-stat-card {
+    padding: 13px;
+  }
+
+  .user-stat-card strong {
+    font-size: 19px;
+  }
+}
