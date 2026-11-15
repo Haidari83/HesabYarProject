@@ -657,7 +657,85 @@
   cursor: not-allowed;
 }
 
-/* واکنش‌گرایی پنجره */
+/* ستون عملیات جدول کاربران */
+.user-table {
+  min-width: 1050px;
+}
+
+.user-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.user-row-actions button {
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+/* دکمه ویرایش */
+.user-edit-button {
+  border: 1px solid #cbd5e1;
+  background-color: #fff;
+  color: #475569;
+}
+
+.user-edit-button:hover {
+  border-color: #94a3b8;
+  background-color: #f8fafc;
+}
+
+/* دکمه غیرفعال‌سازی */
+.user-toggle-button.deactivate {
+  border: 1px solid #fecaca;
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+.user-toggle-button.deactivate:hover {
+  background-color: #fee2e2;
+}
+
+/* دکمه فعال‌سازی */
+.user-toggle-button.activate {
+  border: 1px solid #a7f3d0;
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.user-toggle-button.activate:hover {
+  background-color: #d1fae5;
+}
+
+/* وضعیت غیرفعال دکمه‌های عملیات */
+.user-row-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* خطای عملیات جدول */
+.user-action-error {
+  padding: 11px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+/* نمایش متفاوت نام کاربری در حالت فقط خواندنی */
+.user-form-field>input:read-only {
+  background-color: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
 
 /* واکنش‌گرایی */
 @media (max-width: 900px) {

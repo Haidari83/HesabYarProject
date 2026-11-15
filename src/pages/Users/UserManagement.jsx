@@ -42,6 +42,19 @@ function UserManagement() {
 
   // وضعیت فرم ایجاد کاربر
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // وضعیت پنجره ویرایش کاربر
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // کاربری که در حال ویرایش آن هستیم
+  const [editingUser, setEditingUser] = useState(null);
+
+  // شناسه کاربری که تغییر وضعیت آن در حال انجام است
+  const [processingUserId, setProcessingUserId] = useState('');
+
+  // خطای عملیات جدول کاربران
+  const [tableActionError, setTableActionError] = useState('');
+
   const [form, setForm] = useState(INITIAL_FORM);
   const [permissionGroups, setPermissionGroups] = useState([]);
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
@@ -100,7 +113,10 @@ function UserManagement() {
 
   // دریافت فهرست دسترسی‌ها هنگام بازشدن فرم
   useEffect(() => {
-    if (!isCreateModalOpen || form.role !== 'user') {
+    if (
+      (!isCreateModalOpen && !isEditModalOpen) ||
+      form.role !== 'user'
+    ) {
       return;
     }
 
@@ -150,7 +166,7 @@ function UserManagement() {
     return () => {
       isActive = false;
     };
-  }, [isCreateModalOpen, form.role]);
+  }, [isCreateModalOpen, isEditModalOpen, form.role]);
 
   // محاسبه آمار کاربران
   const statistics = useMemo(() => ({
@@ -182,18 +198,56 @@ function UserManagement() {
   // بازکردن فرم ایجاد کاربر
   function openCreateModal() {
     setForm(INITIAL_FORM);
+    setEditingUser(null);
+
     setCreateError('');
-    setIsCreateModalOpen(true);
     setSuccessMessage('');
+    setTableActionError('');
+
+    setIsEditModalOpen(false);
+    setIsCreateModalOpen(true);
   }
 
-  // بستن فرم
+
+  // بستن فرم ایجاد یا ویرایش
   function closeCreateModal() {
     if (isSubmitting) return;
 
     setIsCreateModalOpen(false);
+    setIsEditModalOpen(false);
+
+    setEditingUser(null);
     setForm(INITIAL_FORM);
+
     setCreateError('');
+  }
+
+  // بازکردن فرم ویرایش کاربر
+  function openEditModal(user) {
+
+    // نگهداری اطلاعات کاربر انتخاب‌شده
+    setEditingUser(user);
+
+    // انتقال اطلاعات فعلی کاربر به فرم
+    setForm({
+      displayName: user.displayName,
+      username: user.username,
+      password: '',
+      confirmPassword: '',
+      role: user.role,
+      permissions:
+        user.role === 'admin'
+          ? []
+          : [...user.permissions],
+    });
+
+    setCreateError('');
+    setSuccessMessage('');
+    setTableActionError('');
+
+    setIsCreateModalOpen(false);
+    setIsEditModalOpen(true);
+
   }
 
   // تغییر اطلاعات فرم
@@ -338,6 +392,157 @@ function UserManagement() {
     }
   }
 
+  // ذخیره تغییرات اطلاعات کاربر
+  async function handleUpdateUser(event) {
+    event.preventDefault();
+
+    setCreateError('');
+    setSuccessMessage('');
+
+    if (!editingUser) {
+      setCreateError('کاربر انتخاب‌شده معتبر نیست.');
+      return;
+    }
+
+    if (
+      form.role === 'user' &&
+      form.permissions.length === 0
+    ) {
+      setCreateError(
+        'حداقل یک دسترسی برای کاربر عادی انتخاب کن.'
+      );
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const updateUser = window.hesabyar?.users?.update;
+
+      if (typeof updateUser !== 'function') {
+        throw new Error(
+          'سرویس ویرایش کاربر در دسترس نیست.'
+        );
+      }
+
+      const updatedUser = await updateUser(
+        editingUser.id,
+        {
+          displayName: form.displayName,
+          role: form.role,
+          permissions:
+            form.role === 'admin' ? [] : form.permissions,
+        }
+      );
+
+      if (!updatedUser?.id) {
+        throw new Error(
+          'پاسخ سرویس ویرایش کاربر معتبر نیست.'
+        );
+      }
+
+      // جایگزینی اطلاعات قبلی با اطلاعات به‌روز
+      setUsers((currentUsers) =>
+        currentUsers.map((user) =>
+          user.id === updatedUser.id
+            ? updatedUser
+            : user
+        )
+      );
+
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+      setForm(INITIAL_FORM);
+
+      setSuccessMessage(
+        `اطلاعات حساب «${updatedUser.displayName}» با موفقیت ویرایش شد.`
+      );
+
+    } catch (err) {
+      setCreateError(
+        err.message || 'ویرایش اطلاعات کاربر ناموفق بود.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  // فعال یا غیرفعال کردن حساب کاربر
+  async function handleSetUserActive(user) {
+
+    const nextStatus = !user.isActive;
+
+    const confirmationMessage = nextStatus
+      ? `آیا می‌خواهی حساب «${user.displayName}» را فعال کنی؟`
+      : `آیا می‌خواهی حساب «${user.displayName}» را غیرفعال کنی؟`;
+
+
+    // دریافت تأیید از مدیر
+    if (!window.confirm(confirmationMessage)) {
+      return;
+    }
+
+
+    try {
+
+      setProcessingUserId(user.id);
+      setTableActionError('');
+      setSuccessMessage('');
+
+
+      const setActive = window.hesabyar?.users?.setActive;
+
+      if (typeof setActive !== 'function') {
+        throw new Error(
+          'سرویس تغییر وضعیت حساب در دسترس نیست.'
+        );
+      }
+
+
+      // ارسال درخواست به Main Process
+      const updatedUser = await setActive(
+        user.id,
+        nextStatus
+      );
+
+
+      if (!updatedUser?.id) {
+        throw new Error(
+          'پاسخ سرویس تغییر وضعیت حساب معتبر نیست.'
+        );
+      }
+
+
+      // به‌روزرسانی اطلاعات همان ردیف
+      setUsers((currentUsers) =>
+        currentUsers.map((currentUser) =>
+          currentUser.id === updatedUser.id
+            ? updatedUser
+            : currentUser
+        )
+      );
+
+
+      setSuccessMessage(
+        nextStatus
+          ? `حساب «${user.displayName}» با موفقیت فعال شد.`
+          : `حساب «${user.displayName}» با موفقیت غیرفعال شد.`
+      );
+
+
+    } catch (err) {
+
+      setTableActionError(
+        err.message || 'تغییر وضعیت حساب ناموفق بود.'
+      );
+
+    } finally {
+
+      setProcessingUserId('');
+
+    }
+
+  }
   return (
     <div className="user-management">
 
@@ -371,6 +576,13 @@ function UserManagement() {
       {successMessage && (
         <div className="user-success-message">
           {successMessage}
+        </div>
+      )}
+
+      {/* خطای عملیات کاربران */}
+      {tableActionError && (
+        <div className="user-action-error">
+          {tableActionError}
         </div>
       )}
 
@@ -470,6 +682,7 @@ function UserManagement() {
 
               <thead>
                 <tr>
+                  <th>عملیات</th>
                   <th>ردیف</th>
                   <th>نام و نام خانوادگی</th>
                   <th>نام کاربری</th>
@@ -524,6 +737,40 @@ function UserManagement() {
 
                     <td>{formatDate(user.lastLoginAt)}</td>
 
+                    <td>
+
+                      <div className="user-row-actions">
+
+                        {/* دکمه ویرایش */}
+                        <button
+                          type="button"
+                          className="user-edit-button"
+                          onClick={() => openEditModal(user)}
+                          disabled={Boolean(processingUserId) || isSubmitting}
+                        >
+                          ویرایش
+                        </button>
+
+
+                        {/* دکمه تغییر وضعیت */}
+                        <button
+                          type="button"
+                          className={`user-toggle-button ${user.isActive ? 'deactivate' : 'activate'
+                            }`}
+                          onClick={() => handleSetUserActive(user)}
+                          disabled={Boolean(processingUserId) || isSubmitting}
+                        >
+                          {processingUserId === user.id
+                            ? 'در حال انجام...'
+                            : user.isActive
+                              ? 'غیرفعال‌سازی'
+                              : 'فعال‌سازی'}
+                        </button>
+
+                      </div>
+
+                    </td>
+
                   </tr>
 
                 ))}
@@ -538,8 +785,8 @@ function UserManagement() {
       </section>
 
 
-      {/* پنجره ایجاد کاربر */}
-      {isCreateModalOpen && (
+      {/* پنجره ایجاد یا ویرایش کاربر */}
+      {(isCreateModalOpen || isEditModalOpen) && (
 
         <div className="user-modal-backdrop">
 
@@ -553,9 +800,16 @@ function UserManagement() {
             <header className="user-modal-header">
 
               <div>
-                <h2 id="user-create-title">ایجاد حساب کاربری</h2>
+                <h2 id="user-create-title">
+                  {isEditModalOpen
+                    ? 'ویرایش حساب کاربری'
+                    : 'ایجاد حساب کاربری'}
+                </h2>
+
                 <p>
-                  اطلاعات حساب و سطح دسترسی کاربر جدید را تعیین کن.
+                  {isEditModalOpen
+                    ? 'اطلاعات حساب و سطح دسترسی کاربر را ویرایش کن.'
+                    : 'اطلاعات حساب و سطح دسترسی کاربر جدید را تعیین کن.'}
                 </p>
               </div>
 
@@ -574,7 +828,11 @@ function UserManagement() {
 
             <form
               className="user-create-form"
-              onSubmit={handleCreateUser}
+              onSubmit={
+                isEditModalOpen
+                  ? handleUpdateUser
+                  : handleCreateUser
+              }
             >
 
               {/* اطلاعات پایه */}
@@ -610,6 +868,7 @@ function UserManagement() {
                       maxLength={32}
                       autoComplete="off"
                       dir="ltr"
+                      readOnly={isEditModalOpen}
                       required
                     />
                     <small>
@@ -617,34 +876,40 @@ function UserManagement() {
                     </small>
                   </label>
 
-                  <label className="user-form-field">
-                    <span>گذرواژه اولیه</span>
-                    <input
-                      type="password"
-                      name="password"
-                      value={form.password}
-                      onChange={handleFormChange}
-                      minLength={12}
-                      maxLength={128}
-                      autoComplete="new-password"
-                      required
-                    />
-                    <small>حداقل ۱۲ نویسه.</small>
-                  </label>
+                  {!isEditModalOpen && (
+                    <>
+                      {/* فیلد گذرواژه اولیه */}
+                      <label className="user-form-field">
+                        <span>گذرواژه اولیه</span>
+                        <input
+                          type="password"
+                          name="password"
+                          value={form.password}
+                          onChange={handleFormChange}
+                          minLength={12}
+                          maxLength={128}
+                          autoComplete="new-password"
+                          required
+                        />
+                        <small>حداقل ۱۲ نویسه.</small>
+                      </label>
 
-                  <label className="user-form-field">
-                    <span>تکرار گذرواژه</span>
-                    <input
-                      type="password"
-                      name="confirmPassword"
-                      value={form.confirmPassword}
-                      onChange={handleFormChange}
-                      minLength={12}
-                      maxLength={128}
-                      autoComplete="new-password"
-                      required
-                    />
-                  </label>
+                      {/* فیلد تکرار گذرواژه */}
+                      <label className="user-form-field">
+                        <span>تکرار گذرواژه</span>
+                        <input
+                          type="password"
+                          name="confirmPassword"
+                          value={form.confirmPassword}
+                          onChange={handleFormChange}
+                          minLength={12}
+                          maxLength={128}
+                          autoComplete="new-password"
+                          required
+                        />
+                      </label>
+                    </>
+                  )}
 
                 </div>
 
@@ -830,12 +1095,16 @@ function UserManagement() {
                   className="user-submit-button"
                   disabled={
                     isSubmitting ||
-                    isLoadingPermissions && form.role === 'user'
+                    (isLoadingPermissions && form.role === 'user')
                   }
                 >
                   {isSubmitting
-                    ? 'در حال ایجاد حساب...'
-                    : 'ایجاد حساب کاربری'}
+                    ? isEditModalOpen
+                      ? 'در حال ذخیره تغییرات...'
+                      : 'در حال ایجاد حساب...'
+                    : isEditModalOpen
+                      ? 'ذخیره تغییرات'
+                      : 'ایجاد حساب کاربری'}
                 </button>
 
               </footer>
