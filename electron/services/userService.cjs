@@ -538,6 +538,525 @@ function getUsers(database) {
 }
 
 
+// اعتبارسنجی اطلاعات ویرایش حساب کاربری
+function validateUserUpdateInput(input) {
+
+  if (
+    !input ||
+    typeof input !== 'object' ||
+    Array.isArray(input)
+  ) {
+    throw new Error('اطلاعات ارسالی معتبر نیست.');
+  }
+
+  const displayName =
+    typeof input.displayName === 'string'
+      ? input.displayName.trim()
+      : '';
+
+  const role = input.role;
+  const permissions = input.permissions;
+
+  if (displayName.length < 2 || displayName.length > 80) {
+    throw new Error(
+      'نام و نام خانوادگی باید بین ۲ تا ۸۰ نویسه باشد.'
+    );
+  }
+
+  if (!['admin', 'user'].includes(role)) {
+    throw new Error('نقش کاربر معتبر نیست.');
+  }
+
+  if (!Array.isArray(permissions)) {
+    throw new Error('فهرست دسترسی‌های کاربر معتبر نیست.');
+  }
+
+  // حذف موارد تکراری و کنترل تعداد
+  const uniquePermissions = [...new Set(permissions)];
+
+  if (uniquePermissions.length !== permissions.length) {
+    throw new Error('یک دسترسی بیش از یک بار انتخاب شده است.');
+  }
+
+  // بررسی اعتبار تک‌تک دسترسی‌ها
+  for (const permission of uniquePermissions) {
+
+    if (
+      typeof permission !== 'string' ||
+      !ALLOWED_PERMISSION_KEYS.has(permission)
+    ) {
+      throw new Error(
+        'یکی از دسترسی‌های انتخاب‌شده معتبر نیست.'
+      );
+    }
+
+  }
+
+  // مدیر سیستم مجوزهای اختصاصی دریافت نمی‌کند
+  if (role === 'admin' && uniquePermissions.length > 0) {
+    throw new Error(
+      'مدیر سیستم تمام دسترسی‌ها را دارد و نیازی به انتخاب مجوز جداگانه نیست.'
+    );
+  }
+
+  return {
+    displayName,
+    role,
+    permissions: uniquePermissions,
+  };
+
+}
+
+
+// ثبت سابقه عملیات مدیریتی روی حساب کاربران
+function writeUserManagementAudit(
+  database,
+  actor,
+  actionKey,
+  targetUserId,
+  details,
+  createdAt
+) {
+
+  database.prepare(`
+
+    INSERT INTO audit_logs (
+
+      id,
+      actor_user_id,
+      actor_username,
+      actor_display_name,
+
+      action_key,
+      entity_type,
+      entity_id,
+
+      details_json,
+      created_at
+
+    )
+
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+  `).run(
+
+    crypto.randomUUID(),
+
+    actor.id,
+    actor.username,
+    actor.displayName,
+
+    actionKey,
+    'user',
+    targetUserId,
+
+    JSON.stringify(details),
+    createdAt
+
+  );
+
+}
+
+
+// ویرایش اطلاعات و دسترسی‌های کاربر
+function updateUser(database, actor, userId, input) {
+
+  if (typeof userId !== 'string' || !userId.trim()) {
+    throw new Error('شناسه کاربر معتبر نیست.');
+  }
+
+  const {
+    displayName,
+    role,
+    permissions,
+  } = validateUserUpdateInput(input);
+
+  const updatedAt = new Date().toISOString();
+
+  // آغاز تراکنش
+  database.exec('BEGIN IMMEDIATE');
+
+  try {
+
+    // دریافت اطلاعات فعلی کاربر
+    const existingUser = database.prepare(`
+
+      SELECT
+        id,
+        username,
+        display_name,
+        role,
+        is_active
+
+      FROM users
+
+      WHERE id = ?
+
+    `).get(userId);
+
+
+    if (!existingUser) {
+      throw new Error('کاربر موردنظر پیدا نشد.');
+    }
+
+
+    // جلوگیری از تغییر نقش حسابی که با آن وارد شده‌ایم
+    if (
+      actor.id === userId &&
+      existingUser.role !== role
+    ) {
+      throw new Error(
+        'امکان تغییر نقش حساب فعلی وجود ندارد.'
+      );
+    }
+
+
+    // جلوگیری از تبدیل آخرین مدیر فعال به کاربر عادی
+    if (
+      existingUser.role === 'admin' &&
+      role !== 'admin' &&
+      existingUser.is_active
+    ) {
+
+      const otherAdmins = database.prepare(`
+
+        SELECT COUNT(*) AS adminCount
+
+        FROM users
+
+        WHERE role = 'admin'
+          AND is_active = 1
+          AND id <> ?
+
+      `).get(userId);
+
+      if (Number(otherAdmins.adminCount) === 0) {
+        throw new Error(
+          'سیستم باید حداقل یک مدیر فعال داشته باشد.'
+        );
+      }
+
+    }
+
+
+    // دریافت دسترسی‌های فعلی
+    const currentPermissions = database.prepare(`
+
+      SELECT permission_key
+
+      FROM user_permissions
+
+      WHERE user_id = ?
+
+      ORDER BY permission_key
+
+    `).all(userId).map((item) => item.permission_key);
+
+
+    // تشخیص دسترسی‌های اضافه‌شده
+    const addedPermissions = permissions.filter(
+      (permission) => !currentPermissions.includes(permission)
+    );
+
+
+    // تشخیص دسترسی‌های حذف‌شده
+    const removedPermissions = currentPermissions.filter(
+      (permission) => !permissions.includes(permission)
+    );
+
+
+    const nameChanged =
+      existingUser.display_name !== displayName;
+
+    const roleChanged =
+      existingUser.role !== role;
+
+    const permissionsChanged =
+      addedPermissions.length > 0 ||
+      removedPermissions.length > 0;
+
+
+    // جلوگیری از ثبت تغییرات غیرضروری
+    if (
+      !nameChanged &&
+      !roleChanged &&
+      !permissionsChanged
+    ) {
+
+      database.exec('COMMIT');
+
+      return getUsers(database).find(
+        (user) => user.id === userId
+      );
+
+    }
+
+
+    // به‌روزرسانی اطلاعات اصلی حساب
+    database.prepare(`
+
+      UPDATE users
+
+      SET
+        display_name = ?,
+        role = ?,
+        updated_at = ?,
+        updated_by_user_id = ?
+
+      WHERE id = ?
+
+    `).run(
+      displayName,
+      role,
+      updatedAt,
+      actor.id,
+      userId
+    );
+
+
+    // حذف دسترسی‌های قبلی
+    database.prepare(`
+
+      DELETE FROM user_permissions
+
+      WHERE user_id = ?
+
+    `).run(userId);
+
+
+    // آماده‌سازی دستور ثبت دسترسی‌ها
+    const insertPermission = database.prepare(`
+
+      INSERT INTO user_permissions (
+
+        user_id,
+        permission_key,
+        granted_at,
+        granted_by_user_id
+
+      )
+
+      VALUES (?, ?, ?, ?)
+
+    `);
+
+
+    // ثبت دسترسی‌های جدید
+    for (const permission of permissions) {
+
+      insertPermission.run(
+        userId,
+        permission,
+        updatedAt,
+        actor.id
+      );
+
+    }
+
+
+    // ثبت سابقه تغییرات
+    writeUserManagementAudit(
+      database,
+      actor,
+      'users.updated',
+      userId,
+      {
+        before: {
+          displayName: existingUser.display_name,
+          role: existingUser.role,
+          permissions: currentPermissions,
+        },
+
+        after: {
+          displayName,
+          role,
+          permissions,
+        },
+
+        addedPermissions,
+        removedPermissions,
+      },
+      updatedAt
+    );
+
+
+    // نهایی‌کردن تراکنش
+    database.exec('COMMIT');
+
+
+    // بازگرداندن اطلاعات جدید کاربر
+    return getUsers(database).find(
+      (user) => user.id === userId
+    );
+
+
+  } catch (error) {
+
+    // بازگرداندن تغییرات در صورت بروز خطا
+    try {
+      database.exec('ROLLBACK');
+    } catch {
+      // نادیده‌گرفتن خطای احتمالی بازگشت تراکنش
+    }
+
+    throw error;
+
+  }
+
+}
+
+
+// فعال یا غیرفعال کردن حساب کاربری
+function setUserActive(database, actor, userId, isActive) {
+
+  if (typeof userId !== 'string' || !userId.trim()) {
+    throw new Error('شناسه کاربر معتبر نیست.');
+  }
+
+  if (typeof isActive !== 'boolean') {
+    throw new Error('وضعیت حساب کاربری معتبر نیست.');
+  }
+
+  const updatedAt = new Date().toISOString();
+
+  database.exec('BEGIN IMMEDIATE');
+
+  try {
+
+    // دریافت اطلاعات حساب
+    const targetUser = database.prepare(`
+
+      SELECT
+        id,
+        username,
+        display_name,
+        role,
+        is_active
+
+      FROM users
+
+      WHERE id = ?
+
+    `).get(userId);
+
+
+    if (!targetUser) {
+      throw new Error('کاربر موردنظر پیدا نشد.');
+    }
+
+
+    // جلوگیری از غیرفعال کردن حساب فعلی
+    if (
+      actor.id === userId &&
+      isActive === false
+    ) {
+      throw new Error(
+        'نمی‌توانی حسابی را که با آن وارد شده‌ای غیرفعال کنی.'
+      );
+    }
+
+
+    // اگر وضعیت حساب از قبل همین باشد، کاری انجام نمی‌دهیم
+    if (Boolean(targetUser.is_active) === isActive) {
+
+      database.exec('COMMIT');
+
+      return getUsers(database).find(
+        (user) => user.id === userId
+      );
+
+    }
+
+
+    // جلوگیری از غیرفعال کردن آخرین مدیر فعال
+    if (
+      targetUser.role === 'admin' &&
+      targetUser.is_active &&
+      !isActive
+    ) {
+
+      const otherAdmins = database.prepare(`
+
+        SELECT COUNT(*) AS adminCount
+
+        FROM users
+
+        WHERE role = 'admin'
+          AND is_active = 1
+          AND id <> ?
+
+      `).get(userId);
+
+      if (Number(otherAdmins.adminCount) === 0) {
+        throw new Error(
+          'آخرین مدیر فعال سیستم را نمی‌توان غیرفعال کرد.'
+        );
+      }
+
+    }
+
+
+    // تغییر وضعیت حساب
+    database.prepare(`
+
+      UPDATE users
+
+      SET
+        is_active = ?,
+        updated_at = ?,
+        updated_by_user_id = ?
+
+      WHERE id = ?
+
+    `).run(
+      isActive ? 1 : 0,
+      updatedAt,
+      actor.id,
+      userId
+    );
+
+
+    // ثبت سابقه عملیات
+    writeUserManagementAudit(
+      database,
+      actor,
+      isActive
+        ? 'users.reactivated'
+        : 'users.deactivated',
+      userId,
+      {
+        username: targetUser.username,
+        previousStatus: Boolean(targetUser.is_active),
+        newStatus: isActive,
+      },
+      updatedAt
+    );
+
+
+    database.exec('COMMIT');
+
+
+    // بازگرداندن اطلاعات به‌روز کاربر
+    return getUsers(database).find(
+      (user) => user.id === userId
+    );
+
+
+  } catch (error) {
+
+    try {
+      database.exec('ROLLBACK');
+    } catch {
+      // نادیده‌گرفتن خطای احتمالی بازگشت تراکنش
+    }
+
+    throw error;
+
+  }
+
+}
+
+
 // دریافت فهرست مجوزها برای رابط کاربری
 function getPermissionCatalog() {
 
@@ -557,9 +1076,10 @@ function getPermissionCatalog() {
 
 }
 
-
 module.exports = {
   createUser,
   getUsers,
   getPermissionCatalog,
+  updateUser,
+  setUserActive,
 };

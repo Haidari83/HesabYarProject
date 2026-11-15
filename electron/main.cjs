@@ -21,6 +21,8 @@ const {
   createUser,
   getUsers,
   getPermissionCatalog,
+  updateUser,
+  setUserActive,
 } = require('./services/userService.cjs');
 
 const fs = require('node:fs');
@@ -388,6 +390,44 @@ function registerIpcHandlers() {
         database,
         actor,
         input
+      );
+
+    }
+  );
+
+
+  // ویرایش اطلاعات و دسترسی‌های کاربر
+  ipcMain.handle(
+    'users:update',
+    (event, userId, input) => {
+
+      // بررسی نشست و نقش مدیر
+      const actor = requireAdminSession(event);
+
+      return updateUser(
+        database,
+        actor,
+        userId,
+        input
+      );
+
+    }
+  );
+
+
+  // فعال یا غیرفعال کردن حساب کاربری
+  ipcMain.handle(
+    'users:set-active',
+    (event, userId, isActive) => {
+
+      // بررسی نشست و نقش مدیر
+      const actor = requireAdminSession(event);
+
+      return setUserActive(
+        database,
+        actor,
+        userId,
+        isActive
       );
 
     }

@@ -47,6 +47,24 @@ contextBridge.exposeInMainWorld('hesabyar', {
     create: (input) =>
       ipcRenderer.invoke('users:create', input),
 
+
+    // ویرایش اطلاعات و دسترسی‌های کاربر
+    update: (userId, input) =>
+      ipcRenderer.invoke(
+        'users:update',
+        userId,
+        input
+      ),
+
+
+    // فعال یا غیرفعال کردن حساب کاربری
+    setActive: (userId, isActive) =>
+      ipcRenderer.invoke(
+        'users:set-active',
+        userId,
+        isActive
+      ),
+
   },
 
 });
