@@ -149,8 +149,9 @@ function isTrustedRenderer(event) {
 }
 
 
-// بررسی هویت و نقش مدیر سیستم برای عملیات مدیریتی
-function requireAdminSession(event) {
+
+// بررسی معتبر بودن نشست هر کاربر
+function requireAuthenticatedSession(event) {
 
   // بررسی منبع درخواست
   if (!isTrustedRenderer(event)) {
@@ -159,6 +160,7 @@ function requireAdminSession(event) {
     );
   }
 
+
   // بررسی وجود نشست
   if (!activeSession) {
     throw new Error(
@@ -166,12 +168,15 @@ function requireAdminSession(event) {
     );
   }
 
-  // دریافت اطلاعات کاربر از پایگاه داده
+
+  // دریافت مجدد اطلاعات کاربر از پایگاه داده
   const actor = getSessionUser(
     database,
     activeSession.userId
   );
 
+
+  // در صورت نامعتبر بودن نشست، آن را باطل می‌کنیم
   if (!actor) {
 
     activeSession = null;
@@ -182,16 +187,31 @@ function requireAdminSession(event) {
 
   }
 
-  // فقط مدیر سیستم اجازه مدیریت کاربران را دارد
+
+  return actor;
+
+}
+
+
+// بررسی هویت و نقش مدیر سیستم
+function requireAdminSession(event) {
+
+  // ابتدا باید نشست معتبر باشد
+  const actor = requireAuthenticatedSession(event);
+
+
+  // فقط مدیر اجازه مدیریت کاربران را دارد
   if (actor.role !== 'admin') {
     throw new Error(
       'برای انجام این عملیات دسترسی مدیریتی لازم است.'
     );
   }
 
+
   return actor;
 
 }
+
 
 
 

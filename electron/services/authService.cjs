@@ -367,6 +367,25 @@ function verifyPassword(password, user) {
 }
 
 
+// دریافت کلیدهای دسترسی اختصاصی یک کاربر
+function getUserPermissionKeys(database, userId) {
+
+  return database.prepare(`
+
+    SELECT permission_key
+
+    FROM user_permissions
+
+    WHERE user_id = ?
+
+    ORDER BY permission_key
+
+  `).all(userId).map(
+    (item) => item.permission_key
+  );
+
+}
+
 // ثبت رویداد مربوط به کاربر در دفتر سوابق
 function writeUserAudit(
   database,
@@ -716,6 +735,12 @@ function authenticateUser(database, input) {
       mustChangePassword: Boolean(
         user.must_change_password
       ),
+
+      // مجوزهای اختصاصی حساب کاربر
+      permissions: getUserPermissionKeys(
+        database,
+        user.id
+      ),
     },
 
   };
@@ -755,6 +780,11 @@ function getSessionUser(database, userId) {
     role: user.role,
     mustChangePassword: Boolean(
       user.must_change_password
+    ),
+    // دریافت مجوزهای فعلی از پایگاه داده
+    permissions: getUserPermissionKeys(
+      database,
+      user.id
     ),
   };
 
