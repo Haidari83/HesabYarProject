@@ -2,6 +2,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import './user-management.css';
 
+// وضعیت اولیه فرم ایجاد کاربر
+const INITIAL_FORM = {
+  displayName: '',
+  username: '',
+  password: '',
+  confirmPassword: '',
+  role: 'user',
+  permissions: [],
+};
+
 // تبدیل تاریخ میلادی به تاریخ فارسی
 function formatDate(value) {
   if (!value) return '—';
@@ -10,7 +20,7 @@ function formatDate(value) {
 
   if (Number.isNaN(date.getTime())) return '—';
 
-  return new Intl.DateTimeFormat('fa-Af', {
+  return new Intl.DateTimeFormat('fa-AF', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -30,7 +40,16 @@ function UserManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // دریافت فهرست کاربران از Main Process
+  // وضعیت فرم ایجاد کاربر
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [permissionGroups, setPermissionGroups] = useState([]);
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // دریافت فهرست کاربران
   useEffect(() => {
     let isActive = true;
 
@@ -79,6 +98,60 @@ function UserManagement() {
     };
   }, []);
 
+  // دریافت فهرست دسترسی‌ها هنگام بازشدن فرم
+  useEffect(() => {
+    if (!isCreateModalOpen || form.role !== 'user') {
+      return;
+    }
+
+    let isActive = true;
+
+    async function loadPermissions() {
+      try {
+        setIsLoadingPermissions(true);
+        setCreateError('');
+
+        const getCatalog =
+          window.hesabyar?.users?.getPermissionCatalog;
+
+        if (typeof getCatalog !== 'function') {
+          throw new Error(
+            'سرویس دریافت فهرست دسترسی‌ها در دسترس نیست.'
+          );
+        }
+
+        const result = await getCatalog();
+
+        if (!Array.isArray(result)) {
+          throw new Error(
+            'فهرست دسترسی‌ها معتبر نیست.'
+          );
+        }
+
+        if (isActive) {
+          setPermissionGroups(result);
+        }
+
+      } catch (err) {
+        if (isActive) {
+          setCreateError(
+            err.message || 'دریافت دسترسی‌ها ناموفق بود.'
+          );
+        }
+      } finally {
+        if (isActive) {
+          setIsLoadingPermissions(false);
+        }
+      }
+    }
+
+    loadPermissions();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isCreateModalOpen, form.role]);
+
   // محاسبه آمار کاربران
   const statistics = useMemo(() => ({
     total: users.length,
@@ -105,6 +178,165 @@ function UserManagement() {
       return matchesSearch && matchesStatus;
     });
   }, [users, search, statusFilter]);
+
+  // بازکردن فرم ایجاد کاربر
+  function openCreateModal() {
+    setForm(INITIAL_FORM);
+    setCreateError('');
+    setIsCreateModalOpen(true);
+    setSuccessMessage('');
+  }
+
+  // بستن فرم
+  function closeCreateModal() {
+    if (isSubmitting) return;
+
+    setIsCreateModalOpen(false);
+    setForm(INITIAL_FORM);
+    setCreateError('');
+  }
+
+  // تغییر اطلاعات فرم
+  function handleFormChange(event) {
+    const { name, value } = event.target;
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+
+    setCreateError('');
+  }
+
+  // انتخاب یا لغو انتخاب یک دسترسی
+  function togglePermission(permissionKey) {
+    setForm((currentForm) => {
+      const exists = currentForm.permissions.includes(permissionKey);
+
+      return {
+        ...currentForm,
+        permissions: exists
+          ? currentForm.permissions.filter(
+            (key) => key !== permissionKey
+          )
+          : [...currentForm.permissions, permissionKey],
+      };
+    });
+
+    setCreateError('');
+  }
+
+  // انتخاب تمام دسترسی‌های یک گروه
+  function togglePermissionGroup(group) {
+    const groupKeys = group.permissions.map(
+      (permission) => permission.key
+    );
+
+    const allSelected = groupKeys.every((key) =>
+      form.permissions.includes(key)
+    );
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      permissions: allSelected
+        ? currentForm.permissions.filter(
+          (key) => !groupKeys.includes(key)
+        )
+        : [
+          ...new Set([
+            ...currentForm.permissions,
+            ...groupKeys,
+          ]),
+        ],
+    }));
+
+    setCreateError('');
+  }
+
+  // تغییر نقش کاربر
+  function handleRoleChange(event) {
+    const role = event.target.value;
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      role,
+      permissions: [],
+    }));
+
+    setCreateError('');
+  }
+
+  // ثبت کاربر جدید
+  async function handleCreateUser(event) {
+    event.preventDefault();
+
+    setCreateError('');
+    setSuccessMessage('');
+
+    if (form.password !== form.confirmPassword) {
+      setCreateError('گذرواژه و تکرار آن یکسان نیستند.');
+      return;
+    }
+
+    if (form.password.length < 12) {
+      setCreateError('گذرواژه باید حداقل ۱۲ نویسه داشته باشد.');
+      return;
+    }
+
+    if (
+      form.role === 'user' &&
+      form.permissions.length === 0
+    ) {
+      setCreateError(
+        'حداقل یک دسترسی برای کاربر عادی انتخاب کن.'
+      );
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const createUser = window.hesabyar?.users?.create;
+
+      if (typeof createUser !== 'function') {
+        throw new Error(
+          'سرویس ایجاد کاربر در دسترس نیست.'
+        );
+      }
+
+      const newUser = await createUser({
+        ...form,
+        permissions:
+          form.role === 'admin' ? [] : form.permissions,
+      });
+
+      if (!newUser?.id) {
+        throw new Error(
+          'پاسخ سرویس ایجاد کاربر معتبر نیست.'
+        );
+      }
+
+      // افزودن کاربر جدید به ابتدای فهرست
+      setUsers((currentUsers) => [
+        newUser,
+        ...currentUsers,
+      ]);
+
+      setIsCreateModalOpen(false);
+      setForm(INITIAL_FORM);
+
+      setSuccessMessage(
+        `حساب کاربری «${newUser.displayName}» با موفقیت ایجاد شد.`
+      );
+
+    } catch (err) {
+      setCreateError(
+        err.message || 'ایجاد حساب کاربری ناموفق بود.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="user-management">
@@ -135,6 +367,14 @@ function UserManagement() {
       </section>
 
 
+      {/* پیام موفقیت */}
+      {successMessage && (
+        <div className="user-success-message">
+          {successMessage}
+        </div>
+      )}
+
+
       {/* ابزار جست‌وجو و فیلتر */}
       <section className="user-toolbar">
 
@@ -158,6 +398,15 @@ function UserManagement() {
           <option value="active">کاربران فعال</option>
           <option value="inactive">کاربران غیرفعال</option>
         </select>
+
+        <button
+          type="button"
+          className="user-create-button"
+          onClick={openCreateModal}
+        >
+          <span aria-hidden="true">+</span>
+          ایجاد کاربر
+        </button>
 
       </section>
 
@@ -287,6 +536,317 @@ function UserManagement() {
         )}
 
       </section>
+
+
+      {/* پنجره ایجاد کاربر */}
+      {isCreateModalOpen && (
+
+        <div className="user-modal-backdrop">
+
+          <section
+            className="user-create-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-create-title"
+          >
+
+            <header className="user-modal-header">
+
+              <div>
+                <h2 id="user-create-title">ایجاد حساب کاربری</h2>
+                <p>
+                  اطلاعات حساب و سطح دسترسی کاربر جدید را تعیین کن.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="user-modal-close"
+                onClick={closeCreateModal}
+                disabled={isSubmitting}
+                aria-label="بستن پنجره"
+              >
+                ×
+              </button>
+
+            </header>
+
+
+            <form
+              className="user-create-form"
+              onSubmit={handleCreateUser}
+            >
+
+              {/* اطلاعات پایه */}
+              <div className="user-form-section">
+
+                <h3>اطلاعات حساب</h3>
+
+                <div className="user-form-grid">
+
+                  <label className="user-form-field">
+                    <span>نام و نام خانوادگی</span>
+                    <input
+                      type="text"
+                      name="displayName"
+                      value={form.displayName}
+                      onChange={handleFormChange}
+                      placeholder="مثلاً علی احمد حیدری"
+                      minLength={2}
+                      maxLength={80}
+                      required
+                    />
+                  </label>
+
+                  <label className="user-form-field">
+                    <span>نام کاربری</span>
+                    <input
+                      type="text"
+                      name="username"
+                      value={form.username}
+                      onChange={handleFormChange}
+                      placeholder="مثلاً ali.ahmadi"
+                      minLength={3}
+                      maxLength={32}
+                      autoComplete="off"
+                      dir="ltr"
+                      required
+                    />
+                    <small>
+                      فقط حروف انگلیسی کوچک، عدد، نقطه، خط تیره و زیرخط.
+                    </small>
+                  </label>
+
+                  <label className="user-form-field">
+                    <span>گذرواژه اولیه</span>
+                    <input
+                      type="password"
+                      name="password"
+                      value={form.password}
+                      onChange={handleFormChange}
+                      minLength={12}
+                      maxLength={128}
+                      autoComplete="new-password"
+                      required
+                    />
+                    <small>حداقل ۱۲ نویسه.</small>
+                  </label>
+
+                  <label className="user-form-field">
+                    <span>تکرار گذرواژه</span>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      value={form.confirmPassword}
+                      onChange={handleFormChange}
+                      minLength={12}
+                      maxLength={128}
+                      autoComplete="new-password"
+                      required
+                    />
+                  </label>
+
+                </div>
+
+              </div>
+
+
+              {/* انتخاب نقش */}
+              <div className="user-form-section">
+
+                <h3>نقش کاربر</h3>
+
+                <div className="user-role-options">
+
+                  <label className={`user-role-option ${form.role === 'user' ? 'selected' : ''
+                    }`}>
+                    <input
+                      type="radio"
+                      name="role"
+                      value="user"
+                      checked={form.role === 'user'}
+                      onChange={handleRoleChange}
+                    />
+                    <span>
+                      <strong>کاربر عادی</strong>
+                      <small>
+                        دسترسی‌ها به‌صورت جداگانه تعیین می‌شوند.
+                      </small>
+                    </span>
+                  </label>
+
+                  <label className={`user-role-option ${form.role === 'admin' ? 'selected' : ''
+                    }`}>
+                    <input
+                      type="radio"
+                      name="role"
+                      value="admin"
+                      checked={form.role === 'admin'}
+                      onChange={handleRoleChange}
+                    />
+                    <span>
+                      <strong>مدیر سیستم</strong>
+                      <small>
+                        دسترسی کامل به تمام بخش‌های برنامه.
+                      </small>
+                    </span>
+                  </label>
+
+                </div>
+
+              </div>
+
+
+              {/* دسترسی‌ها */}
+              {form.role === 'user' && (
+
+                <div className="user-form-section">
+
+                  <div className="user-permission-heading">
+                    <div>
+                      <h3>دسترسی‌های کاربر</h3>
+                      <p>
+                        دسترسی‌های موردنیاز این حساب را انتخاب کن.
+                      </p>
+                    </div>
+
+                    <span>
+                      {form.permissions.length.toLocaleString('fa-IR')}
+                      {' '}دسترسی انتخاب‌شده
+                    </span>
+                  </div>
+
+
+                  {isLoadingPermissions ? (
+
+                    <div className="user-permission-loading">
+                      در حال دریافت فهرست دسترسی‌ها...
+                    </div>
+
+                  ) : (
+
+                    <div className="user-permission-groups">
+
+                      {permissionGroups.map((group) => {
+
+                        const groupKeys = group.permissions.map(
+                          (permission) => permission.key
+                        );
+
+                        const allSelected = groupKeys.length > 0 &&
+                          groupKeys.every((key) =>
+                            form.permissions.includes(key)
+                          );
+
+                        return (
+                          <section
+                            className="user-permission-group"
+                            key={group.id}
+                          >
+
+                            <header>
+                              <strong>{group.label}</strong>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  togglePermissionGroup(group)
+                                }
+                              >
+                                {allSelected
+                                  ? 'لغو انتخاب همه'
+                                  : 'انتخاب همه'}
+                              </button>
+                            </header>
+
+                            <div className="user-permission-list">
+
+                              {group.permissions.map((permission) => (
+
+                                <label
+                                  className="user-permission-item"
+                                  key={permission.key}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={form.permissions.includes(
+                                      permission.key
+                                    )}
+                                    onChange={() =>
+                                      togglePermission(permission.key)
+                                    }
+                                  />
+
+                                  <span>{permission.label}</span>
+                                </label>
+
+                              ))}
+
+                            </div>
+
+                          </section>
+                        );
+                      })}
+
+                    </div>
+
+                  )}
+
+                </div>
+
+              )}
+
+
+              {form.role === 'admin' && (
+                <div className="user-admin-notice">
+                  این حساب به‌عنوان مدیر سیستم ایجاد می‌شود و تمام
+                  دسترسی‌های برنامه را خواهد داشت.
+                </div>
+              )}
+
+
+              {/* خطای فرم */}
+              {createError && (
+                <div className="user-form-error">
+                  {createError}
+                </div>
+              )}
+
+
+              {/* دکمه‌های فرم */}
+              <footer className="user-form-footer">
+
+                <button
+                  type="button"
+                  className="user-cancel-button"
+                  onClick={closeCreateModal}
+                  disabled={isSubmitting}
+                >
+                  انصراف
+                </button>
+
+                <button
+                  type="submit"
+                  className="user-submit-button"
+                  disabled={
+                    isSubmitting ||
+                    isLoadingPermissions && form.role === 'user'
+                  }
+                >
+                  {isSubmitting
+                    ? 'در حال ایجاد حساب...'
+                    : 'ایجاد حساب کاربری'}
+                </button>
+
+              </footer>
+
+            </form>
+
+          </section>
+
+        </div>
+
+      )}
 
     </div>
   );

@@ -265,10 +265,444 @@
   cursor: pointer;
 }
 
+
+/* دکمه ایجاد کاربر */
+.user-create-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 40px;
+  flex: 0 0 auto;
+  padding: 0 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #263b70;
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.user-create-button:hover {
+  background-color: #1e315f;
+}
+
+.user-create-button>span {
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* پیام موفقیت */
+.user-success-message {
+  padding: 11px 14px;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  background-color: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+/* پس‌زمینه پنجره */
+.user-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 20px;
+  background-color: rgb(15 23 42 / 48%);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+/* پنجره اصلی */
+.user-create-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 760px;
+  max-height: calc(100vh - 40px);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background-color: #fff;
+  box-shadow: 0 20px 60px rgb(15 23 42 / 20%);
+}
+
+/* سربرگ پنجره */
+.user-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 19px 22px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.user-modal-header h2 {
+  margin: 0;
+  color: #263b70;
+  font-size: 15px;
+}
+
+.user-modal-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.user-modal-close {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: none;
+  border-radius: 7px;
+  background-color: #f1f5f9;
+  color: #64748b;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.user-modal-close:hover {
+  background-color: #e2e8f0;
+}
+
+/* فرم */
+.user-create-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* بخش‌های فرم */
+.user-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 19px 22px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.user-form-section h3 {
+  margin: 0;
+  color: #263b70;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.user-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.user-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.user-form-field>span {
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.user-form-field>input {
+  width: 100%;
+  min-width: 0;
+  height: 39px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  outline: none;
+  background-color: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 11px;
+}
+
+.user-form-field>input:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+.user-form-field>small {
+  color: #94a3b8;
+  font-size: 9px;
+  line-height: 1.7;
+}
+
+/* انتخاب نقش */
+.user-role-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.user-role-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.user-role-option.selected {
+  border-color: #99f6e4;
+  background-color: #f0fdfa;
+}
+
+.user-role-option input {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 3px 0 0;
+  accent-color: #0f766e;
+}
+
+.user-role-option>span {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.user-role-option strong {
+  color: #334155;
+  font-size: 11px;
+}
+
+.user-role-option small {
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+/* عنوان بخش دسترسی‌ها */
+.user-permission-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.user-permission-heading p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.user-permission-heading>span {
+  flex: 0 0 auto;
+  color: #0f766e;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.user-permission-loading {
+  padding: 20px;
+  color: #64748b;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* گروه‌های دسترسی */
+.user-permission-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.user-permission-group {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.user-permission-group>header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #edf0f4;
+  background-color: #f8fafc;
+}
+
+.user-permission-group>header strong {
+  color: #334155;
+  font-size: 11px;
+}
+
+.user-permission-group>header button {
+  padding: 3px 0;
+  border: none;
+  background: transparent;
+  color: #0f766e;
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.user-permission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 12px;
+}
+
+.user-permission-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #475569;
+  font-size: 10px;
+  line-height: 1.8;
+  cursor: pointer;
+}
+
+.user-permission-item input {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 2px 0 0;
+  accent-color: #0f766e;
+}
+
+/* اطلاعیه مدیر سیستم */
+.user-admin-notice {
+  margin: 16px 22px 0;
+  padding: 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+/* خطای فرم */
+.user-form-error {
+  margin: 15px 22px 0;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+/* دکمه‌های پایانی */
+.user-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 14px 22px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #fff;
+}
+
+.user-cancel-button,
+.user-submit-button {
+  min-width: 110px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.user-cancel-button {
+  border: 1px solid #e2e8f0;
+  background-color: #fff;
+  color: #64748b;
+}
+
+.user-cancel-button:hover {
+  background-color: #f8fafc;
+}
+
+.user-submit-button {
+  border: none;
+  background-color: #263b70;
+  color: #fff;
+}
+
+.user-submit-button:hover {
+  background-color: #1e315f;
+}
+
+.user-submit-button:disabled,
+.user-cancel-button:disabled,
+.user-modal-close:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* واکنش‌گرایی پنجره */
+
 /* واکنش‌گرایی */
 @media (max-width: 900px) {
   .user-statistics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .user-modal-backdrop {
+    align-items: flex-start;
+    padding: 8px;
+  }
+
+  .user-create-modal {
+    max-height: calc(100vh - 16px);
+  }
+
+  .user-modal-header,
+  .user-form-section {
+    padding: 14px;
+  }
+
+  .user-form-grid,
+  .user-role-options,
+  .user-permission-groups {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .user-admin-notice,
+  .user-form-error {
+    margin-right: 14px;
+    margin-left: 14px;
+  }
+
+  .user-form-footer {
+    padding: 12px 14px;
+  }
+
+  .user-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .user-create-button {
+    flex: 1;
   }
 }
 
