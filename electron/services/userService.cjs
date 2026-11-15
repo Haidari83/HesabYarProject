@@ -710,35 +710,6 @@ function updateUser(database, actor, userId, input) {
       );
     }
 
-
-    // جلوگیری از تبدیل آخرین مدیر فعال به کاربر عادی
-    if (
-      existingUser.role === 'admin' &&
-      role !== 'admin' &&
-      existingUser.is_active
-    ) {
-
-      const otherAdmins = database.prepare(`
-
-        SELECT COUNT(*) AS adminCount
-
-        FROM users
-
-        WHERE role = 'admin'
-          AND is_active = 1
-          AND id <> ?
-
-      `).get(userId);
-
-      if (Number(otherAdmins.adminCount) === 0) {
-        throw new Error(
-          'سیستم باید حداقل یک مدیر فعال داشته باشد.'
-        );
-      }
-
-    }
-
-
     // دریافت دسترسی‌های فعلی
     const currentPermissions = database.prepare(`
 
@@ -967,33 +938,6 @@ function setUserActive(database, actor, userId, isActive) {
 
     }
 
-
-    // جلوگیری از غیرفعال کردن آخرین مدیر فعال
-    if (
-      targetUser.role === 'admin' &&
-      targetUser.is_active &&
-      !isActive
-    ) {
-
-      const otherAdmins = database.prepare(`
-
-        SELECT COUNT(*) AS adminCount
-
-        FROM users
-
-        WHERE role = 'admin'
-          AND is_active = 1
-          AND id <> ?
-
-      `).get(userId);
-
-      if (Number(otherAdmins.adminCount) === 0) {
-        throw new Error(
-          'آخرین مدیر فعال سیستم را نمی‌توان غیرفعال کرد.'
-        );
-      }
-
-    }
 
 
     // تغییر وضعیت حساب
