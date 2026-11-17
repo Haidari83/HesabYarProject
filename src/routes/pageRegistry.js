@@ -249,29 +249,8 @@ function createPageRegistry(
    فهرست مرکزی صفحات
 ========================= */
 
-// اطلاعات صفحات از ساختار اصلی منو استخراج می‌شود
-export const pageRegistry = {
-  ...createPageRegistry(navigationItems),
-
-  'inventory-stock-list': {
-    id: 'inventory-stock-list',
-    title: 'فهرست موجودی',
-    description: 'مشاهده و بررسی موجودی کالاهای انبار.',
-    requiredPermission: 'inventory.stock_list.view',
-    adminOnly: true,
-
-    breadcrumbs: ['داشبورد', 'محصولات و انبار', 'موجودی انبار'],
-  },
-  'inventory-entry': {
-    id: 'inventory-entry',
-    title: 'ورود کالا',
-    description: 'ثبت و مدیریت ورود کالا به انبار.',
-    requiredPermission: 'inventory.entry.create',
-    adminOnly: true,
-
-    breadcrumbs: ['داشبورد', 'محصولات و انبار', 'موجودی انبار'],
-  },
-};
+// استخراج اطلاعات تمام صفحات از ساختار منوی اصلی
+export const pageRegistry = createPageRegistry(navigationItems);
 
 
 // بررسی داشتن یک مجوز مشخص
