@@ -17,9 +17,21 @@ import UserManagement from './pages/Users/UserManagement';
 
 import {
   navigationItems,
-  pageRegistry
+  pageRegistry,
+  canAccessPage,
+  filterNavigationItems,
 } from './routes/pageRegistry';
 
+// پیدا کردن اولین صفحه‌ای که کاربر اجازه مشاهده آن را دارد
+function getFirstAccessiblePageId(user) {
+
+  const firstPage = Object.values(pageRegistry).find(
+    (page) => canAccessPage(user, page.id)
+  );
+
+  return firstPage?.id ?? null;
+
+}
 
 /* =========================
    برنامه اصلی حساب‌یار
@@ -27,12 +39,30 @@ import {
 
 function ApplicationShell({ currentUser, onLogout }) {
 
-  // شناسه صفحه‌ای که در حال حاضر نمایش داده می‌شود
-  const [activePageId, setActivePageId] = useState('dashboard');
+  // اولین صفحه مجاز کاربر
+  const [activePageId, setActivePageId] = useState(
+    () => getFirstAccessiblePageId(currentUser)
+  );
 
 
   // دریافت اطلاعات صفحه انتخاب‌شده
-  const currentPage = pageRegistry[activePageId];
+  const currentPage = activePageId
+    ? pageRegistry[activePageId]
+    : null;
+
+
+  // فهرست منوی قابل نمایش برای کاربر فعلی
+  const visibleNavigationItems = filterNavigationItems(
+    navigationItems,
+    currentUser
+  );
+
+
+  // بررسی مجوز صفحه فعال
+  const hasCurrentPageAccess = canAccessPage(
+    currentUser,
+    activePageId
+  );
 
 
   /* =========================
@@ -41,15 +71,29 @@ function ApplicationShell({ currentUser, onLogout }) {
 
   function handlePageSelect(page) {
 
-    // جلوگیری از انتخاب شناسه‌های ثبت‌نشده
-    if (!pageRegistry[page.id]) {
+    // امکان دریافت شناسه به‌صورت رشته یا شیء
+    const pageId =
+      typeof page === 'string'
+        ? page
+        : page?.id;
+
+
+    // جلوگیری از انتخاب صفحات ثبت‌نشده یا غیرمجاز
+    if (!canAccessPage(currentUser, pageId)) {
       return;
     }
 
-    // تغییر صفحه فعال
-    setActivePageId(page.id);
+
+    setActivePageId(pageId);
 
   }
+
+
+  // ادامه JSX در بخش بعدی
+
+  /* =========================
+     مدیریت تغییر صفحات
+  ========================= */
 
 
   return (
@@ -57,10 +101,10 @@ function ApplicationShell({ currentUser, onLogout }) {
     <AppLayout
 
       // ارسال ساختار منو به چارچوب اصلی
-      navigationItems={navigationItems}
+      navigationItems={visibleNavigationItems}
 
       // ارسال شناسه صفحه فعال
-      activeItem={activePageId}
+      activeItem={activePageId ?? ''}
 
       // دریافت انتخاب جدید از Sidebar
       onPageSelect={handlePageSelect}
@@ -71,47 +115,59 @@ function ApplicationShell({ currentUser, onLogout }) {
     >
 
       {/* قالب عمومی صفحه انتخاب‌شده */}
-
-
-      <PageLayout
-        title={currentPage.title}
-        description={currentPage.description}
-        breadcrumbs={currentPage.breadcrumbs}
-      >
-        {activePageId === 'dashboard' ? (
-          <Dashboard />
-        ) : activePageId === 'product-list' ? (
-          <ProductList />
-        ) : activePageId === 'categories' ? (
-          <CategoryList />
-        ) : activePageId === 'units' ? (
-          <UnitList />
-        ) : activePageId === 'inventory' ? (
-          <InventoryOverview onNavigate={setActivePageId} />
-        ) : activePageId === 'inventory-stock-list' ? (
-          <InventoryStockList />
-        ) : activePageId === 'inventory-entry' ? (
-          <InventoryEntry />
-        ) : activePageId === 'users' && currentUser.role === 'admin' ? (
-          <UserManagement />
-        ) : activePageId === 'users' ? (
-          <div>شما اجازه دسترسی به این بخش را ندارید.</div>
+      {currentPage && hasCurrentPageAccess ?
+        (
+          <PageLayout
+            title={currentPage.title}
+            description={currentPage.description}
+            breadcrumbs={currentPage.breadcrumbs}
+          >
+            {activePageId === 'dashboard' ? (
+              <Dashboard />
+            ) : activePageId === 'product-list' ? (
+              <ProductList />
+            ) : activePageId === 'categories' ? (
+              <CategoryList />
+            ) : activePageId === 'units' ? (
+              <UnitList />
+            ) : activePageId === 'inventory' ? (<InventoryOverview
+              onNavigate={handlePageSelect}
+              currentUser={currentUser}
+            />
+            ) : activePageId === 'inventory-stock-list' ? (
+              <InventoryStockList />
+            ) : activePageId === 'inventory-entry' ? (
+              <InventoryEntry />
+            ) : activePageId === 'users' ? (
+              <UserManagement />
+            ) : activePageId === 'users' ? (
+              <div>شما اجازه دسترسی به این بخش را ندارید.</div>
+            ) : (
+              <div className="page-demo-content">
+                <h2>{currentPage.title}</h2>
+                <p>{currentPage.description}</p>
+              </div>
+            )}
+          </PageLayout>
         ) : (
-          <div className="page-demo-content">
-            <h2>{currentPage.title}</h2>
-            <p>{currentPage.description}</p>
-          </div>
-        )}
-      </PageLayout>
 
+          <div className="page-demo-content">
+            <h2>دسترسی به صفحه امکان‌پذیر نیست.</h2>
+
+            <p>
+              {activePageId
+                ? 'برای مشاهده این صفحه مجوز لازم را نداری.'
+                : 'برای حساب کاربری فعلی هیچ صفحه مجازی تعریف نشده است.'}
+            </p>
+          </div>
+
+        )}
 
 
     </AppLayout>
 
   );
 }
-
-
 function App() {
 
   // وضعیت آغاز برنامه
