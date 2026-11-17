@@ -32,6 +32,39 @@ contextBridge.exposeInMainWorld('hesabyar', {
     // خروج از حساب کاربری
     logout: () =>
       ipcRenderer.invoke('auth:logout'),
+
+
+    // تغییر نام کاربری
+    changeUsername: (input) =>
+      ipcRenderer.invoke(
+        'auth:change-username',
+        input
+      ),
+
+
+    // تغییر گذرواژه اصلی
+    changePassword: (input) =>
+      ipcRenderer.invoke(
+        'auth:change-password',
+        input
+      ),
+
+
+    // تنظیم یا تغییر PIN
+    setPin: (input) =>
+      ipcRenderer.invoke(
+        'auth:set-pin',
+        input
+      ),
+
+
+    // حذف PIN
+    removePin: (input) =>
+      ipcRenderer.invoke(
+        'auth:remove-pin',
+        input
+      ),
+
   },
   users: {
 

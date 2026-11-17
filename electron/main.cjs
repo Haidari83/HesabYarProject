@@ -8,6 +8,7 @@ const {
   BrowserWindow,
   ipcMain,
   dialog,
+  safeStorage,
 } = require('electron');
 
 const {
@@ -15,6 +16,11 @@ const {
   authenticateUser,
   getSessionUser,
   recordLogout,
+
+  changeUsername,
+  changePassword,
+  setUserPin,
+  removeUserPin,
 } = require('./services/authService.cjs');
 
 const {
@@ -272,7 +278,7 @@ function registerIpcHandlers() {
   // ورود کاربر
   ipcMain.handle(
     'auth:login',
-    (event, credentials) => {
+    async (event, credentials) => {
 
       // بررسی معتبر بودن درخواست
       if (!isTrustedRenderer(event)) {
@@ -282,9 +288,10 @@ function registerIpcHandlers() {
       }
 
       // بررسی نام کاربری و گذرواژه در پایگاه داده
-      const result = authenticateUser(
+      const result = await authenticateUser(
         database,
-        credentials
+        credentials,
+        safeStorage
       );
 
       // فقط در صورت ورود موفق، نشست ایجاد می‌شود
@@ -370,6 +377,75 @@ function registerIpcHandlers() {
     }
   );
 
+
+  // تغییر نام کاربری حساب فعلی
+  ipcMain.handle(
+    'auth:change-username',
+    (event, input) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      return changeUsername(
+        database,
+        actor,
+        input
+      );
+
+    }
+  );
+
+
+  // تغییر گذرواژه اصلی حساب فعلی
+  ipcMain.handle(
+    'auth:change-password',
+    (event, input) => {
+
+      const actor = requireAuthenticatedSession(event);
+
+      return changePassword(
+        database,
+        actor,
+        input
+      );
+
+    }
+  );
+
+
+  // تنظیم یا تغییر PIN پنج‌رقمی
+  ipcMain.handle(
+    'auth:set-pin',
+    async (event, input) => {
+
+      const actor = requireAuthenticatedSession(event);
+
+      return setUserPin(
+        database,
+        actor,
+        input,
+        safeStorage
+      );
+
+    }
+  );
+
+
+  // حذف PIN حساب فعلی
+  ipcMain.handle(
+    'auth:remove-pin',
+    (event, input) => {
+
+      const actor = requireAuthenticatedSession(event);
+
+      return removeUserPin(
+        database,
+        actor,
+        input
+      );
+
+    }
+  );
 
   // دریافت فهرست مجوزهای قابل انتخاب
   ipcMain.handle(

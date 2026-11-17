@@ -3,7 +3,7 @@ const { DatabaseSync } = require('node:sqlite');
 
 
 // نسخه ساختار پایگاه داده
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 
 // ایجاد جداول اولیه سیستم کاربران
@@ -45,6 +45,16 @@ function createInitialSchema(database) {
         password_hash TEXT NOT NULL,
 
         password_salt TEXT NOT NULL,
+
+        /* اطلاعات امنیتی PIN */
+        pin_verifier TEXT,
+
+        pin_failed_attempts INTEGER NOT NULL DEFAULT 0
+          CHECK (pin_failed_attempts >= 0),
+
+        pin_locked_until TEXT,
+
+        pin_changed_at TEXT,
 
         role TEXT NOT NULL
           CHECK (role IN ('admin', 'user')),
@@ -251,11 +261,12 @@ function openDatabase(databasePath) {
     }
 
 
-    // ایجاد جداول در اولین اجرا
+    // ایجاد ساختار اولیه در اولین اجرا
     if (currentVersion === 0) {
-      createInitialSchema(database);
-    }
 
+      createInitialSchema(database);
+
+    }
 
     return database;
 
