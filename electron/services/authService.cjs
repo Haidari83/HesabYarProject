@@ -867,9 +867,6 @@ async function authenticateUser(
   }
 
 
-  let credentialIsValid = false;
-
-
   // ==================================
   // ورود با PIN
   // ==================================
@@ -910,10 +907,10 @@ async function authenticateUser(
       };
     }
 
-
+    let pinIsValid;
     try {
 
-      credentialIsValid = await verifyEncryptedPin(
+      pinIsValid = await verifyEncryptedPin(
         database,
         user,
         pin,
@@ -932,7 +929,7 @@ async function authenticateUser(
     }
 
 
-    if (!credentialIsValid) {
+    if (!pinIsValid) {
 
       const failure = recordFailedPinLogin(
         database,
@@ -991,13 +988,13 @@ async function authenticateUser(
     }
 
 
-    credentialIsValid = verifyPassword(
+    const passwordIsValid = verifyPassword(
       password,
       user
     );
 
 
-    if (!credentialIsValid) {
+    if (!passwordIsValid) {
 
       const failure = recordFailedLogin(
         database,
