@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+
 import './login.css';
 
 /* ************************
@@ -109,6 +110,10 @@ function Login({ onLogin }) {
   // اطلاعات ورودی کاربر
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [pin, setPin] = useState('');
+
+  // روش انتخاب‌شده برای ورود
+  const [loginMethod, setLoginMethod] = useState('password');
 
   // وضعیت نمایش یا مخفی بودن رمز
   const [showPassword, setShowPassword] = useState(false);
@@ -120,6 +125,19 @@ function Login({ onLogin }) {
   const [feedback, setFeedback] = useState('');
   const [feedbackType, setFeedbackType] = useState('info');
 
+  // تغییر روش ورود و پاک‌سازی اطلاعات قبلی
+  function handleMethodChange(method) {
+
+    setLoginMethod(method);
+
+    setPassword('');
+    setPin('');
+
+    setFeedback('');
+    setShowPassword(false);
+
+  }
+
   // ارسال اطلاعات برای احراز هویت
   async function handleSubmit(event) {
 
@@ -127,22 +145,50 @@ function Login({ onLogin }) {
 
     setFeedback('');
 
+
+    // بررسی نام کاربری
     if (!username.trim()) {
+
       setFeedbackType('error');
       setFeedback('لطفاً نام کاربری را وارد کن.');
+
       return;
+
     }
 
-    if (!password) {
+
+    // بررسی گذرواژه یا PIN
+    if (
+      loginMethod === 'password' &&
+      !password
+    ) {
+
       setFeedbackType('error');
       setFeedback('لطفاً گذرواژه را وارد کن.');
+
       return;
+
     }
+
+
+    if (
+      loginMethod === 'pin' &&
+      !/^[0-9]{5}$/.test(pin)
+    ) {
+
+      setFeedbackType('error');
+      setFeedback('PIN باید دقیقاً پنج رقم انگلیسی باشد.');
+
+      return;
+
+    }
+
 
     setIsSubmitting(true);
 
-    // تا زمان پایان بررسی، اطلاعات کاربر را نگه می‌داریم
+    // نگهداری کاربر پس از احراز هویت موفق
     let authenticatedUser = null;
+
 
     try {
 
@@ -150,16 +196,28 @@ function Login({ onLogin }) {
       const login = window.hesabyar?.auth?.login;
 
       if (typeof login !== 'function') {
+
         throw new Error(
           'ارتباط با سرویس احراز هویت برقرار نیست.'
         );
+
       }
 
-      // ارسال اطلاعات به Main Process
-      const result = await login({
-        username,
-        password,
-      });
+
+      // آماده‌سازی اطلاعات متناسب با روش ورود
+      const credentials = {
+        username: username.trim(),
+        method: loginMethod,
+
+        ...(loginMethod === 'password'
+          ? { password }
+          : { pin }),
+      };
+
+
+      // ارسال درخواست به Main Process
+      const result = await login(credentials);
+
 
       // بررسی نتیجه احراز هویت
       if (!result?.success) {
@@ -171,7 +229,12 @@ function Login({ onLogin }) {
           'ورود به حساب‌یار انجام نشد.'
         );
 
-        setPassword('');
+        // پاک‌سازی فقط اطلاعات محرمانه روش انتخاب‌شده
+        if (loginMethod === 'password') {
+          setPassword('');
+        } else {
+          setPin('');
+        }
 
       } else if (!result.user?.id) {
 
@@ -195,6 +258,7 @@ function Login({ onLogin }) {
       );
 
       setPassword('');
+      setPin('');
 
     } finally {
 
@@ -202,10 +266,12 @@ function Login({ onLogin }) {
 
     }
 
+
     // انتقال به محیط برنامه پس از ورود موفق
     if (authenticatedUser) {
 
       setPassword('');
+      setPin('');
 
       onLogin(authenticatedUser);
 
@@ -253,6 +319,44 @@ function Login({ onLogin }) {
               noValidate
             >
 
+              {/* انتخاب روش ورود */}
+              <div
+                className="login-method-switch"
+                role="group"
+                aria-label="روش ورود"
+              >
+
+                <button
+                  type="button"
+                  className={
+                    loginMethod === 'password'
+                      ? 'login-method-button active'
+                      : 'login-method-button'
+                  }
+                  onClick={() => handleMethodChange('password')}
+                  aria-pressed={loginMethod === 'password'}
+                  disabled={isSubmitting}
+                >
+                  ورود با گذرواژه
+                </button>
+
+
+                <button
+                  type="button"
+                  className={
+                    loginMethod === 'pin'
+                      ? 'login-method-button active'
+                      : 'login-method-button'
+                  }
+                  onClick={() => handleMethodChange('pin')}
+                  aria-pressed={loginMethod === 'pin'}
+                  disabled={isSubmitting}
+                >
+                  ورود با PIN
+                </button>
+
+              </div>
+
               {/* نام کاربری */}
               <div className="login-field">
 
@@ -288,46 +392,140 @@ function Login({ onLogin }) {
               </div>
 
 
-              {/* رمز عبور */}
-              <div className="login-field">
 
-                <label htmlFor="password">
-                  رمز عبور
-                </label>
+              {/* نمایش ورودی متناسب با روش ورود */}
 
-                <div className="login-input-wrapper">
+              {loginMethod === 'password' ? (
 
-                  <span className="login-input-icon">
-                    <LockIcon />
-                  </span>
+                /* ورود با گذرواژه اصلی */
+                <div className="login-field">
 
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="رمز عبور خود را وارد کنید"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setFeedback('');
-                    }}
-                    autoComplete="current-password"
-                    disabled={isSubmitting}
-                  />
+                  <label htmlFor="password">
+                    گذرواژه اصلی
+                  </label>
 
-                  {/* نمایش یا مخفی کردن رمز */}
+                  <div className="login-input-wrapper">
 
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(prev => !prev)}
-                  >
-                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                  </button>
+                    <span className="login-input-icon">
+                      <LockIcon />
+                    </span>
+
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="گذرواژه خود را وارد کنید"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setFeedback('');
+                      }}
+                      autoComplete="current-password"
+                      dir="ltr"
+                      disabled={isSubmitting}
+                    />
+
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword(prev => !prev)}
+                      aria-label={
+                        showPassword
+                          ? 'مخفی کردن گذرواژه'
+                          : 'نمایش گذرواژه'
+                      }
+                      title={
+                        showPassword
+                          ? 'مخفی کردن گذرواژه'
+                          : 'نمایش گذرواژه'
+                      }
+                    >
+                      {showPassword
+                        ? <EyeOffIcon />
+                        : <EyeIcon />}
+                    </button>
+
+                  </div>
 
                 </div>
 
-              </div>
+              ) : (
+
+                /* ورود با PIN پنج‌رقمی */
+                <div className="login-field">
+
+                  <label htmlFor="pin">
+                    PIN پنج‌رقمی
+                  </label>
+
+                  <div className="login-input-wrapper">
+
+                    <span className="login-input-icon">
+                      <LockIcon />
+                    </span>
+
+                    <input
+                      id="pin"
+                      name="pin"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="پنج رقم PIN را وارد کنید"
+                      value={pin}
+                      onChange={(e) => {
+
+                        const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+                        const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
+
+                        const normalizedPin = e.target.value
+                          .replace(/[۰-۹]/g, digit =>
+                            String(persianDigits.indexOf(digit))
+                          )
+                          .replace(/[٠-٩]/g, digit =>
+                            String(arabicDigits.indexOf(digit))
+                          )
+                          .replace(/[^0-9]/g, '')
+                          .slice(0, 5);
+
+                        setPin(normalizedPin);
+                        setFeedback('');
+
+                      }}
+                      autoComplete="off"
+                      dir="ltr"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={5}
+                      disabled={isSubmitting}
+                    />
+
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword(prev => !prev)}
+                      aria-label={
+                        showPassword
+                          ? 'مخفی کردن PIN'
+                          : 'نمایش PIN'
+                      }
+                      title={
+                        showPassword
+                          ? 'مخفی کردن PIN'
+                          : 'نمایش PIN'
+                      }
+                    >
+                      {showPassword
+                        ? <EyeOffIcon />
+                        : <EyeIcon />}
+                    </button>
+
+                  </div>
+
+                  <span className="login-pin-hint">
+                    PIN باید پنج رقم باشد.
+                  </span>
+
+                </div>
+
+              )}
 
 
               {/* پیام فرم */}
