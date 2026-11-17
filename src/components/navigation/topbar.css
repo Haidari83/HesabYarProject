@@ -238,6 +238,35 @@
     border-color var(--transition-fast);
 }
 
+
+/* دکمه مدیریت حساب و امنیت */
+
+.topbar__security-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #f8fafc;
+  color: var(--color-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.topbar__security-button:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+
 .topbar__logout-button:hover {
   border-color: #fca5a5;
   background: #fee2e2;

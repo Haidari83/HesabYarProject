@@ -37,7 +37,11 @@ function getFirstAccessiblePageId(user) {
    برنامه اصلی حساب‌یار
 ========================= */
 
-function ApplicationShell({ currentUser, onLogout }) {
+function ApplicationShell({
+  currentUser,
+  onLogout,
+  onUserUpdated,
+}) {
 
   // اولین صفحه مجاز کاربر
   const [activePageId, setActivePageId] = useState(
@@ -112,6 +116,8 @@ function ApplicationShell({ currentUser, onLogout }) {
       currentUser={currentUser}
 
       onLogout={onLogout}
+
+      onUserUpdated={onUserUpdated}
     >
 
       {/* قالب عمومی صفحه انتخاب‌شده */}
@@ -284,6 +290,16 @@ function App() {
 
   }
 
+  // به‌روزرسانی اطلاعات کاربر پس از تغییر مشخصات امنیتی
+  function handleUserUpdated(user) {
+
+    if (!user?.id) {
+      return;
+    }
+
+    setCurrentUser(user);
+
+  }
   // خروج از حساب کاربری
   async function handleLogout() {
 
@@ -363,6 +379,7 @@ function App() {
       <ApplicationShell
         currentUser={currentUser}
         onLogout={handleLogout}
+        onUserUpdated={handleUserUpdated}
       />
     );
   }

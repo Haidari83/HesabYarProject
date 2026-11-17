@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
+import AccountSecurityModal from '../account/AccountSecurityModal';
 import './topbar.css';
 
 /* =========================
@@ -78,7 +79,8 @@ function TopBar({
   onToggleSidebar,
   sidebarCollapsed = false,
   currentUser = null,
-  onLogout
+  onLogout,
+  onUserUpdated,
 }) {
 
   // اطلاعات نمایشی کاربر واردشده
@@ -104,6 +106,10 @@ function TopBar({
   // دریافت تاریخ روز با قالب فارسی
   const now = new Date();
 
+  // وضعیت باز بودن پنجره مدیریت امنیت
+  const [isSecurityModalOpen, setIsSecurityModalOpen] =
+    useState(false);
+
   const formattedDate = new Intl.DateTimeFormat('fa-AF', {
     weekday: 'long',
     year: 'numeric',
@@ -128,6 +134,20 @@ function TopBar({
     setActivePanel((currentPanel) =>
       currentPanel === panelName ? null : panelName
     );
+  }
+
+  // باز کردن پنجره مدیریت حساب و امنیت
+  function handleOpenSecurityModal() {
+
+    // بستن منوی پروفایل
+    setActivePanel(null);
+
+    // پاک کردن خطای احتمالی خروج
+    setLogoutError('');
+
+    // باز کردن پنجره مدیریت امنیت
+    setIsSecurityModalOpen(true);
+
   }
 
   // مدیریت خروج از حساب کاربری
@@ -373,6 +393,15 @@ function TopBar({
                     : 'خروج از حساب'}
                 </button>
 
+                <button
+                  type="button"
+                  className="topbar__security-button"
+                  onClick={handleOpenSecurityModal}
+                >
+                  <span>مدیریت حساب و امنیت</span>
+                  <span aria-hidden="true">←</span>
+                </button>
+
               </div>
             )}
 
@@ -382,6 +411,16 @@ function TopBar({
 
       </div>
 
+      {/* پنجره مدیریت حساب و امنیت */}
+      {isSecurityModalOpen && (
+
+        <AccountSecurityModal
+          currentUser={currentUser}
+          onClose={() => setIsSecurityModalOpen(false)}
+          onUserUpdated={onUserUpdated}
+        />
+
+      )}
     </header>
   );
 }

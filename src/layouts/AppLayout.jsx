@@ -17,7 +17,8 @@ function AppLayout({
   activeItem = 'dashboard',
   onPageSelect = () => { },
   currentUser = null,
-  onLogout = () => { }
+  onLogout = () => { },
+  onUserUpdated,
 }) {
 
   // وضعیت جمع‌شدن منوی کناری در دسکتاپ
@@ -133,6 +134,7 @@ function AppLayout({
         }
         currentUser={currentUser}
         onLogout={onLogout}
+        onUserUpdated={onUserUpdated}
       />
 
 

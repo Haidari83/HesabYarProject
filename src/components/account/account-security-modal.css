@@ -1,0 +1,543 @@
+/* =========================
+   پس‌زمینه پنجره مدیریت امنیت
+========================= */
+
+.account-security-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.38);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+
+/* =========================
+   پنجره اصلی
+========================= */
+
+.account-security-modal {
+  width: 100%;
+  max-width: 620px;
+  max-height: min(780px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.2);
+  animation: account-security-appear 180ms ease-out;
+}
+
+
+@keyframes account-security-appear {
+
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+}
+
+
+/* =========================
+   سربرگ پنجره
+========================= */
+
+.account-security-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 26px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.account-security-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.account-security-header h2 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.account-security-header p {
+  margin: 7px 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.8;
+}
+
+
+/* دکمه بستن */
+
+.account-security-close {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: 26px;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.account-security-close:hover {
+  background: #f1f5f9;
+  color: var(--color-danger);
+}
+
+.account-security-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* =========================
+   بدنه پنجره
+========================= */
+
+.account-security-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 26px;
+}
+
+
+/* =========================
+   مشخصات کاربر
+========================= */
+
+.account-security-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #fafbfc;
+}
+
+.account-security-avatar {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e0f2f1;
+  color: var(--color-accent);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.account-security-user-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-security-user-info strong {
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+}
+
+.account-security-user-info span {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.account-security-user-info small {
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+}
+
+
+/* =========================
+   گزینه‌های مدیریت امنیت
+========================= */
+
+.account-security-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.account-security-option {
+  width: 100%;
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-family: var(--font-family);
+  text-align: right;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.account-security-option:hover {
+  border-color: #cbd5e1;
+  background: #fafbfc;
+}
+
+.account-security-option-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: #f1f5f9;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  direction: ltr;
+}
+
+.account-security-option-content {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.account-security-option-content strong {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.account-security-option-content small {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.7;
+}
+
+.account-security-option-arrow {
+  color: var(--color-text-disabled);
+  font-size: 21px;
+}
+
+.account-security-status {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #ecfdf5;
+  color: #15803d;
+  font-size: var(--font-size-xs);
+}
+
+
+/* گزینه حذف PIN */
+
+.account-security-option.danger:hover {
+  border-color: #fecaca;
+  background: #fffafa;
+}
+
+.account-security-option.danger .account-security-option-icon {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.account-security-option.danger .account-security-option-content strong,
+.account-security-option.danger .account-security-option-arrow {
+  color: #b91c1c;
+}
+
+
+/* =========================
+   توضیحات امنیتی
+========================= */
+
+.account-security-note,
+.account-security-warning {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  line-height: 1.9;
+}
+
+.account-security-note {
+  background: #f8fafc;
+  color: var(--color-text-secondary);
+}
+
+.account-security-warning {
+  margin-top: 0;
+  margin-bottom: 20px;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+
+/* =========================
+   فرم عملیات امنیتی
+========================= */
+
+.account-security-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.account-security-form h3 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.account-security-back {
+  align-self: flex-start;
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.account-security-back:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+
+/* ورودی‌های فرم */
+
+.security-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.security-field label {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.security-field input {
+  width: 100%;
+  height: 48px;
+  padding: 0 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  outline: none;
+  background: #fafbfc;
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.security-field input:focus {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.09);
+}
+
+.security-field input::placeholder {
+  color: var(--color-text-disabled);
+}
+
+.account-security-help {
+  margin-top: -9px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.8;
+}
+
+
+/* =========================
+   دکمه‌های فرم
+========================= */
+
+.account-security-form-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.account-security-submit-button,
+.account-security-secondary-button {
+  min-width: 116px;
+  min-height: 42px;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.account-security-submit-button {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.account-security-submit-button:hover {
+  border-color: var(--color-primary-hover);
+  background: var(--color-primary-hover);
+}
+
+.account-security-submit-button.danger {
+  border-color: #b91c1c;
+  background: #b91c1c;
+}
+
+.account-security-submit-button.danger:hover {
+  border-color: #991b1b;
+  background: #991b1b;
+}
+
+.account-security-secondary-button {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.account-security-secondary-button:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.account-security-submit-button:disabled,
+.account-security-secondary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* =========================
+   پیام‌های عملیات
+========================= */
+
+.account-security-feedback {
+  padding: 11px 13px;
+  border: 1px solid;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  line-height: 1.8;
+}
+
+.account-security-feedback.success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.account-security-feedback.error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+
+/* =========================
+   پایین پنجره
+========================= */
+
+.account-security-footer {
+  padding: 13px 26px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
+
+
+/* =========================
+   واکنش‌گرایی
+========================= */
+
+@media (max-width: 600px) {
+
+  .account-security-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .account-security-modal {
+    max-height: 92vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+
+  .account-security-header {
+    padding: 20px 18px 16px;
+  }
+
+  .account-security-body {
+    padding: 18px;
+  }
+
+  .account-security-footer {
+    padding: 12px 18px;
+  }
+
+}
+
+@media (max-width: 360px) {
+
+  .account-security-option {
+    gap: 9px;
+    padding: 10px;
+  }
+
+  .account-security-option-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .account-security-status {
+    font-size: 10px;
+  }
+
+}
