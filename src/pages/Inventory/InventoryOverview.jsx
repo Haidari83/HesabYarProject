@@ -1,5 +1,5 @@
-
 import { useBusinessData } from '../../context/BusinessDataContext';
+import { canAccessPage } from '../../routes/pageRegistry';
 import './inventory-overview.css';
 
 // قالب‌بندی اعداد با ارقام فارسی
@@ -75,8 +75,28 @@ const quickActions = [
   },
 ];
 
-function InventoryOverview({ onNavigate }) {
+// فقط عملیات‌هایی که کاربر اجازه مشاهده آن‌ها را دارد
+function getVisibleQuickActions(user) {
+
+  return quickActions.filter((action) => {
+
+    // گزینه‌های نمایشی و غیرفعال بدون تغییر باقی می‌مانند
+    if (!action.pageId) {
+      return true;
+    }
+
+    return canAccessPage(
+      user,
+      action.pageId
+    );
+
+  });
+
+}
+
+function InventoryOverview({ onNavigate, currentUser }) {
   const { products, units } = useBusinessData();
+  const visibleQuickActions = getVisibleQuickActions(currentUser);
 
   // فقط کالاهای فعال در شاخص تعداد کالاهای فعال محاسبه می‌شوند
   const activeProducts = products.filter(
@@ -213,7 +233,7 @@ function InventoryOverview({ onNavigate }) {
         </div>
 
         <div className="inventory-quick-actions">
-          {quickActions.map((action) => (
+          {visibleQuickActions.map((action) => (
             <button
               type="button"
               className="inventory-quick-action"

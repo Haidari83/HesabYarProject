@@ -10,7 +10,8 @@ export const navigationItems = [
     id: 'dashboard',
     label: 'داشبورد',
     icon: 'dashboard',
-    description: 'نمای کلی وضعیت مالی و فعالیت‌های حساب‌یار.'
+    description: 'نمای کلی وضعیت مالی و فعالیت‌های حساب‌یار.',
+    requiredPermission: 'dashboard.view',
   },
 
   // محصولات و انبار
@@ -22,23 +23,39 @@ export const navigationItems = [
       {
         id: 'product-list',
         label: 'فهرست محصولات',
-        description: 'مدیریت و مشاهده فهرست محصولات.'
+        description: 'مدیریت و مشاهده فهرست محصولات.',
+        requiredPermission: 'products.view',
       },
       {
         id: 'categories',
         label: 'دسته‌بندی محصولات',
-        description: 'مدیریت دسته‌بندی محصولات.'
+        description: 'مدیریت دسته‌بندی محصولات.',
+        requiredPermission: 'categories.view',
       },
       {
         id: 'units',
         label: 'واحدهای اندازه‌گیری',
         description: 'مدیریت واحدها و تبدیل واحدهای اندازه‌گیری',
+        requiredPermission: 'units.view',
       },
       {
         id: 'inventory',
         label: 'موجودی انبار',
-        description: 'بررسی موجودی و وضعیت انبار.'
-      }
+        description: 'بررسی موجودی و وضعیت انبار.',
+        requiredPermission: 'inventory.view',
+      },
+      {
+        id: 'inventory-stock-list',
+        label: 'فهرست موجودی',
+        description: 'مشاهده و بررسی موجودی کالاهای انبار.',
+        requiredPermission: 'inventory.stock_list.view',
+      },
+      {
+        id: 'inventory-entry',
+        label: 'ورود کالا',
+        description: 'ثبت و مدیریت ورود کالا به انبار.',
+        requiredPermission: 'inventory.entry.create',
+      },
     ]
   },
 
@@ -47,11 +64,12 @@ export const navigationItems = [
     id: 'sales',
     label: 'فروش و فاکتورها',
     icon: 'sales',
+    adminOnly: true,
     children: [
       {
         id: 'sales-list',
         label: 'فهرست فاکتورهای فروش',
-        description: 'مشاهده و مدیریت فاکتورهای فروش.'
+        description: 'مشاهده و مدیریت فاکتورهای فروش.',
       },
       {
         id: 'new-sale',
@@ -66,6 +84,7 @@ export const navigationItems = [
     id: 'purchases',
     label: 'خرید',
     icon: 'purchases',
+    adminOnly: true,
     children: [
       {
         id: 'purchases-list',
@@ -85,6 +104,7 @@ export const navigationItems = [
     id: 'contacts',
     label: 'مشتریان و تأمین‌کنندگان',
     icon: 'contacts',
+    adminOnly: true,
     children: [
       {
         id: 'customers',
@@ -104,6 +124,7 @@ export const navigationItems = [
     id: 'accounts',
     label: 'بدهکاری و طلبکاری',
     icon: 'accounts',
+    adminOnly: true,
     children: [
       {
         id: 'debts',
@@ -123,6 +144,7 @@ export const navigationItems = [
     id: 'reports',
     label: 'گزارش‌ها',
     icon: 'reports',
+    adminOnly: true,
     children: [
       {
         id: 'sales-reports',
@@ -151,7 +173,9 @@ export const navigationItems = [
       {
         id: 'users',
         label: 'مدیریت کاربران',
-        description: 'ایجاد و مدیریت حساب‌های کاربری و دسترسی‌ها.'
+        description: 'ایجاد و مدیریت حساب‌های کاربری و دسترسی‌ها.',
+        adminOnly: true,
+
       }
     ]
   }
@@ -163,36 +187,52 @@ export const navigationItems = [
    ساخت فهرست صفحات
 ========================= */
 
+
 // تبدیل ساختار درختی منو به فهرست صفحات قابل نمایش
-function createPageRegistry(items, parentLabels = []) {
+function createPageRegistry(
+  items,
+  parentLabels = [],
+  parentAdminOnly = false
+) {
 
   const registry = {};
 
   items.forEach((item) => {
 
-    // اگر بخش دارای زیرمنو باشد، فرزندان آن را بررسی می‌کنیم
+    // محدودیت مدیریتی والد به فرزندان نیز منتقل می‌شود
+    const adminOnly =
+      parentAdminOnly || item.adminOnly === true;
+
+
+    // بررسی زیرمنوها
     if (item.children?.length) {
 
       const childRegistry = createPageRegistry(
         item.children,
-        [...parentLabels, item.label]
+        [...parentLabels, item.label],
+        adminOnly
       );
 
       Object.assign(registry, childRegistry);
 
     } else {
 
-      // ثبت اطلاعات هر صفحه
+      // ثبت اطلاعات و مجوز صفحه
       registry[item.id] = {
         id: item.id,
         title: item.label,
         description: item.description || '',
 
+        requiredPermission:
+          item.requiredPermission || null,
+
+        adminOnly,
+
         // مسیر صفحه از داشبورد تا صفحه فعلی
         breadcrumbs:
           item.id === 'dashboard'
             ? []
-            : ['داشبورد', ...parentLabels]
+            : ['داشبورد', ...parentLabels],
       };
 
     }
@@ -200,7 +240,9 @@ function createPageRegistry(items, parentLabels = []) {
   });
 
   return registry;
+
 }
+
 
 
 /* =========================
@@ -215,12 +257,127 @@ export const pageRegistry = {
     id: 'inventory-stock-list',
     title: 'فهرست موجودی',
     description: 'مشاهده و بررسی موجودی کالاهای انبار.',
+    requiredPermission: 'inventory.stock_list.view',
+    adminOnly: true,
+
     breadcrumbs: ['داشبورد', 'محصولات و انبار', 'موجودی انبار'],
   },
   'inventory-entry': {
     id: 'inventory-entry',
     title: 'ورود کالا',
     description: 'ثبت و مدیریت ورود کالا به انبار.',
+    requiredPermission: 'inventory.entry.create',
+    adminOnly: true,
+
     breadcrumbs: ['داشبورد', 'محصولات و انبار', 'موجودی انبار'],
   },
 };
+
+
+// بررسی داشتن یک مجوز مشخص
+export function hasPermission(user, permissionKey) {
+
+  if (!user) {
+    return false;
+  }
+
+  // مدیر سیستم تمام مجوزها را دارد
+  if (user.role === 'admin') {
+    return true;
+  }
+
+  return (
+    user.role === 'user' &&
+    Array.isArray(user.permissions) &&
+    user.permissions.includes(permissionKey)
+  );
+
+}
+
+
+// بررسی اجازه مشاهده یک صفحه
+export function canAccessPage(user, pageId) {
+
+  const page = pageRegistry[pageId];
+
+  if (!user || !page) {
+    return false;
+  }
+
+  // صفحات مخصوص مدیران
+  if (page.adminOnly && user.role !== 'admin') {
+    return false;
+  }
+
+  // بررسی مجوز اختصاصی صفحه
+  if (page.requiredPermission) {
+    return hasPermission(
+      user,
+      page.requiredPermission
+    );
+  }
+
+  // صفحات بدون مجوز مشخص فقط برای مدیر قابل نمایش هستند
+  return user.role === 'admin';
+
+}
+
+
+// فیلترکردن منو بر اساس مجوزهای کاربر
+export function filterNavigationItems(items, user) {
+
+  if (!user) {
+    return [];
+  }
+
+  return items.flatMap((item) => {
+
+    // محدودیت مدیریتی
+    if (
+      item.adminOnly &&
+      user.role !== 'admin'
+    ) {
+      return [];
+    }
+
+
+    // بررسی زیرمنوها
+    if (item.children?.length) {
+
+      const visibleChildren = filterNavigationItems(
+        item.children,
+        user
+      );
+
+      // اگر هیچ فرزند قابل نمایشی وجود ندارد،
+      // خود گروه نیز نمایش داده نمی‌شود.
+      if (visibleChildren.length === 0) {
+        return [];
+      }
+
+      return [{
+        ...item,
+        children: visibleChildren,
+      }];
+
+    }
+
+
+    // بررسی مجوز صفحه
+    if (item.requiredPermission) {
+
+      return hasPermission(
+        user,
+        item.requiredPermission
+      )
+        ? [item]
+        : [];
+
+    }
+
+    // صفحات بدون مجوز مشخص فقط برای مدیر نمایش داده می‌شوند
+    return user.role === 'admin' ? [item] : [];
+
+  });
+
+}
