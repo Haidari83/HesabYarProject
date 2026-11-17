@@ -570,31 +570,103 @@ function verifyCurrentPassword(database, user, currentPassword) {
 }
 
 
-// ثبت تلاش ناموفق ورود با PIN
+
+// ثبت اتمیک تلاش ناموفق ورود با PIN
 function recordFailedPinLogin(database, user) {
 
   const now = Date.now();
 
-  // اگر قفل قبلی منقضی شده باشد، شمارنده از نو آغاز می‌شود
-  const previousLockExpired =
-    user.pin_locked_until &&
-    Date.parse(user.pin_locked_until) <= now;
-
-  const previousAttempts = previousLockExpired
-    ? 0
-    : Number(user.pin_failed_attempts || 0);
-
-  const nextAttempts = previousAttempts + 1;
-
-  // پس از پنج تلاش ناموفق، PIN به مدت دو دقیقه قفل می‌شود
-  const lockedUntil = nextAttempts >= 5
-    ? new Date(now + 2 * 60 * 1000).toISOString()
-    : null;
-
+  // آغاز تراکنش انحصاری برای جلوگیری از تداخل درخواست‌ها
   database.exec('BEGIN IMMEDIATE');
 
   try {
 
+    // دریافت آخرین وضعیت PIN مستقیماً از پایگاه داده
+    const latestUser = database.prepare(`
+
+      SELECT
+        id,
+        username,
+        display_name,
+        pin_verifier,
+        pin_failed_attempts,
+        pin_locked_until
+
+      FROM users
+
+      WHERE id = ?
+
+    `).get(user.id);
+
+
+    // اگر کاربر وجود نداشته باشد یا PIN در حین بررسی تغییر کرده باشد،
+    // این تلاش نباید برای PIN جدید محاسبه شود.
+    if (
+      !latestUser ||
+      latestUser.pin_verifier !== user.pin_verifier
+    ) {
+
+      database.exec('COMMIT');
+
+      return {
+        locked: false,
+        ignored: true,
+      };
+
+    }
+
+
+    // بررسی قفل فعلی بر اساس آخرین اطلاعات پایگاه داده
+    const lockIsActive =
+      latestUser.pin_locked_until &&
+      Date.parse(latestUser.pin_locked_until) > now;
+
+
+    // اگر درخواست‌های هم‌زمان قبلی حساب را قفل کرده باشند،
+    // شمارنده دیگر افزایش پیدا نمی‌کند.
+    if (lockIsActive) {
+
+      writeUserAudit(
+        database,
+        latestUser,
+        'auth.pin_login_failed',
+        {
+          failedAttempts: Number(
+            latestUser.pin_failed_attempts || 0
+          ),
+          accountLocked: true,
+          attemptRejectedDuringLock: true,
+        }
+      );
+
+      database.exec('COMMIT');
+
+      return {
+        locked: true,
+      };
+
+    }
+
+
+    // اگر قفل قبلی منقضی شده باشد، شمارنده از صفر آغاز می‌شود
+    const previousLockExpired =
+      latestUser.pin_locked_until &&
+      Date.parse(latestUser.pin_locked_until) <= now;
+
+    const previousAttempts = previousLockExpired
+      ? 0
+      : Number(latestUser.pin_failed_attempts || 0);
+
+    const nextAttempts = previousAttempts + 1;
+
+
+    // پس از پنج تلاش ناموفق، PIN به مدت دو دقیقه قفل می‌شود
+    const lockedUntil = nextAttempts >= 5
+      ? new Date(now + 2 * 60 * 1000).toISOString()
+      : null;
+
+
+    // به‌روزرسانی شمارنده در همان تراکنش
     database.prepare(`
 
       UPDATE users
@@ -612,9 +684,10 @@ function recordFailedPinLogin(database, user) {
     );
 
 
+    // ثبت سابقه تلاش ناموفق
     writeUserAudit(
       database,
-      user,
+      latestUser,
       'auth.pin_login_failed',
       {
         failedAttempts: nextAttempts,
@@ -625,8 +698,14 @@ function recordFailedPinLogin(database, user) {
 
     database.exec('COMMIT');
 
+
+    return {
+      locked: Boolean(lockedUntil),
+    };
+
   } catch (error) {
 
+    // بازگرداندن تمام تغییرات در صورت بروز خطا
     try {
       database.exec('ROLLBACK');
     } catch {
@@ -636,10 +715,6 @@ function recordFailedPinLogin(database, user) {
     throw error;
 
   }
-
-  return {
-    locked: Boolean(lockedUntil),
-  };
 
 }
 
@@ -1697,7 +1772,7 @@ function getSessionUser(database, userId) {
       username,
       display_name,
       role,
-      must_change_password
+      must_change_password,
       pin_verifier
 
     FROM users
@@ -1721,6 +1796,7 @@ function getSessionUser(database, userId) {
     mustChangePassword: Boolean(
       user.must_change_password
     ),
+    hasPin: Boolean(user.pin_verifier),
     // دریافت مجوزهای فعلی از پایگاه داده
     permissions: getUserPermissionKeys(
       database,
