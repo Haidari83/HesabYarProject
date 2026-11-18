@@ -144,8 +144,8 @@
 }
 
 .account-security-avatar {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -157,11 +157,27 @@
   font-weight: 700;
 }
 
+/* نمایش تصویر واقعی پروفایل */
+
+.account-security-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
 .account-security-user-info {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.account-user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .account-security-user-info strong {
@@ -176,6 +192,79 @@
 
 .account-security-user-info small {
   color: var(--color-accent);
+  font-size: var(--font-size-xs);
+}
+
+/* =========================
+   مدیریت تصویر پروفایل
+========================= */
+
+.account-security-image-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.account-image-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.account-security-image-button,
+.account-security-image-save {
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+/* انتخاب یا تغییر تصویر */
+
+.account-security-image-button {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.account-security-image-button:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+/* ذخیره تصویر جدید */
+
+.account-security-image-save {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.account-security-image-save:hover {
+  filter: brightness(0.94);
+}
+
+/* وضعیت غیرفعال دکمه‌ها */
+
+.account-security-image-button:disabled,
+.account-security-image-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* توضیحات فرمت و حجم مجاز */
+
+.account-security-image-help {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
 }
 

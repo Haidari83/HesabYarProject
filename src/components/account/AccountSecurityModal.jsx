@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import './account-security-modal.css';
 
@@ -6,7 +6,7 @@ import './account-security-modal.css';
 // مقادیر اولیه فرم‌ها
 const INITIAL_FORM = {
   currentPassword: '',
-  nesDisplayName: '',
+  newDisplayName: '',
   newUsername: '',
   newPassword: '',
   confirmPassword: '',
@@ -85,6 +85,18 @@ function AccountSecurityModal({
   // پیام نتیجه عملیات
   const [feedback, setFeedback] = useState(null);
 
+  // مرجع ورودی انتخاب تصویر
+  const profileImageInputRef = useRef(null);
+
+  // پیش‌نمایش تصویر پروفایل
+  const [profileImagePreview, setProfileImagePreview] = useState(
+    currentUser?.profileImage || ''
+  );
+
+  // بررسی اینکه تصویر جدیدی برای ذخیره انتخاب شده است
+  const hasPendingProfileImage =
+    Boolean(profileImagePreview) &&
+    profileImagePreview !== (currentUser?.profileImage || '');
 
   // وضعیت تنظیم بودن PIN
   const hasPin = Boolean(currentUser?.hasPin);
@@ -137,6 +149,170 @@ function AccountSecurityModal({
 
   }
 
+  // انتخاب و پیش‌نمایش تصویر پروفایل
+  function handleProfileImageSelection(event) {
+
+    const file = event.target.files?.[0];
+
+    // امکان انتخاب دوباره همان فایل
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    // فرمت‌های مجاز تصویر
+    const allowedTypes = [
+      'image/png',
+      'image/jpeg',
+      'image/webp',
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+
+      setFeedback({
+        type: 'error',
+        message: 'فرمت عکس باید PNG، JPG یا WEBP باشد.',
+      });
+
+      return;
+
+    }
+
+    // محدودیت حجم تصویر به 4 مگابایت
+    const maxSize = 4 * 1024 * 1024;
+
+    if (file.size === 0 || file.size > maxSize) {
+
+      setFeedback({
+        type: 'error',
+        message: 'حجم عکس باید حداکثر ۲ مگابایت باشد.',
+      });
+
+      return;
+
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+
+      if (typeof reader.result !== 'string') {
+
+        setFeedback({
+          type: 'error',
+          message: 'خواندن تصویر با خطا مواجه شد.',
+        });
+
+        return;
+
+      }
+
+      // نمایش تصویر انتخاب‌شده پیش از ذخیره
+      setProfileImagePreview(reader.result);
+
+      setFeedback(null);
+
+    };
+
+    reader.onerror = () => {
+
+      setFeedback({
+        type: 'error',
+        message: 'خواندن فایل تصویر ناموفق بود.',
+      });
+
+    };
+
+    reader.readAsDataURL(file);
+
+  }
+
+  // ذخیره تصویر پروفایل در پایگاه داده
+  async function handleSaveProfileImage() {
+
+    if (
+      !hasPendingProfileImage ||
+      isSubmitting
+    ) {
+      return;
+    }
+
+    setFeedback(null);
+    setIsSubmitting(true);
+
+    try {
+
+      const auth = window.hesabyar?.auth;
+
+      if (typeof auth?.setProfileImage !== 'function') {
+
+        throw new Error(
+          'سرویس ذخیره تصویر پروفایل در دسترس نیست.'
+        );
+
+      }
+
+      // ارسال تصویر به Electron
+      const result = await auth.setProfileImage({
+        imageDataUrl: profileImagePreview,
+      });
+
+      if (!result?.success) {
+
+        throw new Error(
+          result?.message || 'ذخیره تصویر انجام نشد.'
+        );
+
+      }
+
+      // دریافت دوباره اطلاعات کاربر همراه تصویر ذخیره‌شده
+      let updatedUser = null;
+
+      try {
+
+        updatedUser = await auth.getCurrentSession();
+
+      } catch {
+        // در صورت شکست دریافت نشست، از نتیجه فعلی استفاده می‌کنیم
+      }
+
+      // آماده‌سازی اطلاعات جدید کاربر
+      const nextUser = updatedUser || {
+        ...currentUser,
+        profileImage: profileImagePreview,
+      };
+
+      // انتقال تصویر جدید به App و نوار بالایی
+      if (typeof onUserUpdated === 'function') {
+        onUserUpdated(nextUser);
+      }
+
+      // تثبیت تصویر ذخیره‌شده در پیش‌نمایش
+      setProfileImagePreview(
+        nextUser.profileImage || profileImagePreview
+      );
+
+      setFeedback({
+        type: 'success',
+        message: 'تصویر پروفایل با موفقیت ذخیره شد.',
+      });
+
+    } catch (error) {
+
+      setFeedback({
+        type: 'error',
+        message: error.message ||
+          'ذخیره تصویر پروفایل با خطا مواجه شد.',
+      });
+
+    } finally {
+
+      setIsSubmitting(false);
+
+    }
+
+  }
 
   // بستن پنجره با Escape
   useEffect(() => {
@@ -471,22 +647,91 @@ function AccountSecurityModal({
 
             <>
 
-              {/* مشخصات کاربر */}
+              {/* مشخصات و تصویر پروفایل کاربر */}
               <section className="account-security-user">
 
+                {/* ورودی مخفی انتخاب تصویر */}
+                <input
+                  ref={profileImageInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleProfileImageSelection}
+                  hidden
+                />
+
+                {/* تصویر یا حرف اول نام کاربر */}
                 <div className="account-security-avatar">
-                  {userName.trim().charAt(0) || 'ک'}
+
+                  {profileImagePreview ? (
+
+                    <img
+                      src={profileImagePreview}
+                      alt={`تصویر پروفایل ${userName}`}
+                    />
+
+                  ) : (
+
+                    userName.trim().charAt(0) || 'ک'
+
+                  )}
+
                 </div>
 
                 <div className="account-security-user-info">
 
-                  <strong>{userName}</strong>
+                  <div className='account-user-info'>
 
-                  <span>{userRole}</span>
+                    <strong>{userName}</strong>
 
-                  <small dir="ltr">
+                    <span>{userRole}</span>
+                  </div>
+
+
+                  {/* <small dir="ltr">
                     {currentUser?.username}
-                  </small>
+                  </small> */}
+
+                  {/* دکمه‌های مدیریت تصویر */}
+                  <div className="account-security-image-actions">
+
+                    <div
+                      className='account-image-wrapper'>
+
+                      <button
+                        type="button"
+                        className="account-security-image-button"
+                        onClick={() =>
+                          profileImageInputRef.current?.click()
+                        }
+                        disabled={isSubmitting}
+                      >
+                        {profileImagePreview
+                          ? 'تغییر تصویر'
+                          : 'انتخاب تصویر'}
+                      </button>
+
+                      {hasPendingProfileImage && (
+
+                        <button
+                          type="button"
+                          className="account-security-image-save"
+                          onClick={handleSaveProfileImage}
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting
+                            ? 'در حال ذخیره...'
+                            : 'ذخیره تصویر'}
+                        </button>
+
+                      )}
+
+                      <small className="account-security-image-help">
+                        PNG، JPG یا WEBP؛ حداکثر ۲ مگابایت
+                      </small>
+                    </div>
+
+                  </div>
+
 
                 </div>
 
