@@ -1,6 +1,4 @@
-
 import { useEffect, useState } from 'react';
-import Dashboard from '../../pages/Dashboard/Dashboard';
 
 import './account-security-modal.css';
 

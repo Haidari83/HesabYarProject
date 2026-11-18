@@ -1516,6 +1516,220 @@ function changeDisplayName(database, actor, input) {
 
 }
 
+// حداکثر حجم مجاز تصویر پروفایل
+const MAX_PROFILE_IMAGE_BYTES = 2 * 1024 * 1024;
+
+
+// اعتبارسنجی و تبدیل تصویر پروفایل
+function parseProfileImageDataUrl(dataUrl) {
+
+  if (typeof dataUrl !== 'string') {
+    throw new Error('تصویر ارسالی معتبر نیست.');
+  }
+
+  const match = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/i
+    .exec(dataUrl);
+
+  if (!match) {
+    throw new Error(
+      'فرمت عکس باید PNG، JPG یا WEBP باشد.'
+    );
+  }
+
+  const mimeType = match[1].toLowerCase();
+  const base64Data = match[2];
+
+  // جلوگیری از دریافت داده بیش از حد مجاز
+  const maxBase64Length = 4 * Math.ceil(
+    MAX_PROFILE_IMAGE_BYTES / 3
+  );
+
+  if (base64Data.length > maxBase64Length) {
+    throw new Error(
+      'حجم عکس نباید بیشتر از ۲ مگابایت باشد.'
+    );
+  }
+
+  const imageBuffer = Buffer.from(
+    base64Data,
+    'base64'
+  );
+
+  // بررسی حجم واقعی داده
+  if (
+    imageBuffer.length === 0 ||
+    imageBuffer.length > MAX_PROFILE_IMAGE_BYTES
+  ) {
+    throw new Error(
+      'حجم عکس باید حداکثر ۲ مگابایت باشد.'
+    );
+  }
+
+  // بررسی معتبر بودن ساختار Base64
+  if (imageBuffer.toString('base64') !== base64Data) {
+    throw new Error('داده تصویر معتبر نیست.');
+  }
+
+  // بررسی امضای واقعی فایل، نه فقط پسوند یا MIME ارسالی
+  const isPng =
+    imageBuffer.length >= 8 &&
+    imageBuffer.subarray(0, 8).equals(
+      Buffer.from([
+        0x89, 0x50, 0x4e, 0x47,
+        0x0d, 0x0a, 0x1a, 0x0a,
+      ])
+    );
+
+  const isJpeg =
+    imageBuffer.length >= 3 &&
+    imageBuffer[0] === 0xff &&
+    imageBuffer[1] === 0xd8 &&
+    imageBuffer[2] === 0xff;
+
+  const isWebp =
+    imageBuffer.length >= 12 &&
+    imageBuffer.toString('ascii', 0, 4) === 'RIFF' &&
+    imageBuffer.toString('ascii', 8, 12) === 'WEBP';
+
+  const signatureMatches =
+    (mimeType === 'image/png' && isPng) ||
+    (mimeType === 'image/jpeg' && isJpeg) ||
+    (mimeType === 'image/webp' && isWebp);
+
+  if (!signatureMatches) {
+    throw new Error(
+      'محتوای فایل با فرمت تصویر اعلام‌شده مطابقت ندارد.'
+    );
+  }
+
+  return {
+    imageBuffer,
+    mimeType,
+  };
+
+}
+
+
+// ذخیره تصویر پروفایل کاربر فعلی
+function setProfileImage(database, actor, input) {
+
+  if (
+    !input ||
+    typeof input !== 'object' ||
+    Array.isArray(input)
+  ) {
+    throw new Error('اطلاعات ارسالی معتبر نیست.');
+  }
+
+  const {
+    imageBuffer,
+    mimeType,
+  } = parseProfileImageDataUrl(input.imageDataUrl);
+
+  // دریافت حساب فعال کاربر
+  const user = getActiveSecurityUser(
+    database,
+    actor.id
+  );
+
+  if (!user) {
+    throw new Error('حساب کاربری فعال پیدا نشد.');
+  }
+
+  const updatedAt = new Date().toISOString();
+
+  database.exec('BEGIN IMMEDIATE');
+
+  try {
+
+    // بررسی مجدد حساب داخل تراکنش
+    const latestUser = getActiveSecurityUser(
+      database,
+      actor.id
+    );
+
+    if (!latestUser) {
+      throw new Error('حساب کاربری فعال پیدا نشد.');
+    }
+
+    // ذخیره تصویر در پایگاه داده
+    database.prepare(`
+      UPDATE users
+      SET
+        profile_image_data = ?,
+        profile_image_mime = ?,
+        updated_at = ?,
+        updated_by_user_id = ?
+      WHERE id = ?
+    `).run(
+      imageBuffer,
+      mimeType,
+      updatedAt,
+      actor.id,
+      user.id
+    );
+
+    // ثبت سابقه تغییر تصویر بدون ذخیره خود تصویر در گزارش
+    writeUserAudit(
+      database,
+      latestUser,
+      'auth.profile_image_changed',
+      {
+        mimeType,
+        sizeBytes: imageBuffer.length,
+      }
+    );
+
+    database.exec('COMMIT');
+
+    return {
+      success: true,
+      mimeType,
+      sizeBytes: imageBuffer.length,
+    };
+
+  } catch (error) {
+
+    try {
+      database.exec('ROLLBACK');
+    } catch {
+      // نادیده‌گرفتن خطای احتمالی بازگشت تراکنش
+    }
+
+    throw error;
+
+  }
+
+}
+
+
+// دریافت تصویر پروفایل کاربر
+function getProfileImage(database, userId) {
+
+  const image = database.prepare(`
+    SELECT
+      profile_image_data,
+      profile_image_mime
+    FROM users
+    WHERE id = ?
+      AND is_active = 1
+  `).get(userId);
+
+  if (
+    !image ||
+    !image.profile_image_data ||
+    !image.profile_image_mime
+  ) {
+    return null;
+  }
+
+  const imageBuffer = Buffer.from(
+    image.profile_image_data
+  );
+
+  return `data:${image.profile_image_mime};base64,${imageBuffer.toString('base64')}`;
+
+}
 
 // تغییر گذرواژه اصلی حساب فعلی
 function changePassword(database, actor, input) {
@@ -2004,4 +2218,7 @@ module.exports = {
   changePassword,
   setUserPin,
   removeUserPin,
+
+  setProfileImage,
+  getProfileImage,
 };

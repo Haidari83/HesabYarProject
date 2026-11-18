@@ -3,7 +3,7 @@ const { DatabaseSync } = require('node:sqlite');
 
 
 // نسخه ساختار پایگاه داده
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 
 // ایجاد جداول اولیه سیستم کاربران
@@ -41,6 +41,11 @@ function createInitialSchema(database) {
         username TEXT NOT NULL COLLATE NOCASE UNIQUE,
 
         display_name TEXT NOT NULL,
+
+        /* تصویر پروفایل کاربر */
+        profile_image_data BLOB,
+
+        profile_image_mime TEXT,
 
         password_hash TEXT NOT NULL,
 
@@ -230,6 +235,61 @@ function openDatabase(databasePath) {
 
   try {
 
+    // ارتقای ساختار پایگاه داده از نسخه ۲ به ۳
+    function migrateToVersion3(database) {
+
+      database.exec('BEGIN IMMEDIATE');
+
+      try {
+
+        // دریافت ستون‌های فعلی جدول کاربران
+        const columns = database
+          .prepare('PRAGMA table_info(users)')
+          .all();
+
+        const columnNames = new Set(
+          columns.map(column => column.name)
+        );
+
+        // افزودن ستون داده تصویر در صورت نبودن آن
+        if (!columnNames.has('profile_image_data')) {
+
+          database.exec(`
+        ALTER TABLE users
+        ADD COLUMN profile_image_data BLOB
+      `);
+
+        }
+
+        // افزودن نوع تصویر در صورت نبودن آن
+        if (!columnNames.has('profile_image_mime')) {
+
+          database.exec(`
+        ALTER TABLE users
+        ADD COLUMN profile_image_mime TEXT
+      `);
+
+        }
+
+        // ثبت نسخه جدید ساختار
+        database.exec('PRAGMA user_version = 3');
+
+        database.exec('COMMIT');
+
+      } catch (error) {
+
+        try {
+          database.exec('ROLLBACK');
+        } catch {
+          // نادیده‌گرفتن خطای احتمالی بازگشت تراکنش
+        }
+
+        throw error;
+
+      }
+
+    }
+
     // فعال‌کردن کنترل ارتباط میان جداول
     database.exec('PRAGMA foreign_keys = ON');
 
@@ -261,10 +321,26 @@ function openDatabase(databasePath) {
     }
 
 
-    // ایجاد ساختار اولیه در اولین اجرا
+    // ایجاد پایگاه داده در اولین اجرا
     if (currentVersion === 0) {
 
       createInitialSchema(database);
+
+    }
+
+    // ارتقای پایگاه داده موجود از نسخه ۲ به ۳
+    else if (currentVersion === 2) {
+
+      migrateToVersion3(database);
+
+    }
+
+    // جلوگیری از استفاده از نسخه‌های قدیمی پشتیبانی‌نشده
+    else if (currentVersion !== SCHEMA_VERSION) {
+
+      throw new Error(
+        'نسخه ساختار پایگاه داده پشتیبانی نمی‌شود.'
+      );
 
     }
 

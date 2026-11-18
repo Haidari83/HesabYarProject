@@ -41,13 +41,19 @@ contextBridge.exposeInMainWorld('hesabyar', {
         input
       ),
 
-    // تغییر نام نمایشی
+    // تغییر نام کاربر
     changeDisplayName: (input) =>
       ipcRenderer.invoke(
         'auth:change-display-name',
         input
       ),
 
+    // ذخیره تصویر پروفایل
+    setProfileImage: (input) =>
+      ipcRenderer.invoke(
+        'auth:set-profile-image',
+        input
+      ),
     // تغییر گذرواژه اصلی
     changePassword: (input) =>
       ipcRenderer.invoke(

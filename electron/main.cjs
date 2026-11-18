@@ -22,6 +22,9 @@ const {
   changeDisplayName,
   setUserPin,
   removeUserPin,
+
+  setProfileImage,
+  getProfileImage,
 } = require('./services/authService.cjs');
 
 const {
@@ -302,6 +305,11 @@ function registerIpcHandlers() {
           userId: result.user.id,
         };
 
+        result.user.profileImage = getProfileImage(
+          database,
+          result.user.id
+        );
+
       }
 
       return result;
@@ -341,7 +349,13 @@ function registerIpcHandlers() {
 
       }
 
-      return currentUser;
+      return {
+        ...currentUser,
+        profileImage: getProfileImage(
+          database,
+          currentUser.id
+        ),
+      };
 
     }
   );
@@ -396,7 +410,7 @@ function registerIpcHandlers() {
     }
   );
 
-  // تغییر نام نمایشی حساب فعلی
+  // تغییر نام کاربر حساب فعلی
   ipcMain.handle(
     'auth:change-display-name',
     (event, input) => {
@@ -412,6 +426,22 @@ function registerIpcHandlers() {
     }
   );
 
+  // ذخیره تصویر پروفایل حساب فعلی
+  ipcMain.handle(
+    'auth:set-profile-image',
+    (event, input) => {
+
+      // فقط کاربر دارای نشست معتبر اجازه تغییر عکس خود را دارد
+      const actor = requireAuthenticatedSession(event);
+
+      return setProfileImage(
+        database,
+        actor,
+        input
+      );
+
+    }
+  );
   // تغییر گذرواژه اصلی حساب فعلی
   ipcMain.handle(
     'auth:change-password',
