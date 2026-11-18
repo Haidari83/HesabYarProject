@@ -153,16 +153,16 @@ function validateNewUserInput(input) {
   }
 
 
-  if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
+  if (!/^[a-z0-9._-]{2,32}$/.test(username)) {
     throw new Error(
-      'نام کاربری باید بین ۳ تا ۳۲ نویسه و فقط شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.'
+      'نام کاربری باید بین ۲ تا ۳۲ نویسه و فقط شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.'
     );
   }
 
 
-  if (password.length < 12 || password.length > 128) {
+  if (password.length < 8 || password.length > 128) {
     throw new Error(
-      'گذرواژه باید حداقل ۱۲ و حداکثر ۱۲۸ نویسه باشد.'
+      'گذرواژه باید حداقل ۸ و حداکثر ۱۲۸ نویسه باشد.'
     );
   }
 

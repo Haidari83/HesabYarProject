@@ -382,6 +382,16 @@ function TopBar({
                   </p>
                 )}
 
+
+                <button
+                  type="button"
+                  className="topbar__security-button"
+                  onClick={handleOpenSecurityModal}
+                >
+                  <span>مدیریت حساب و امنیت</span>
+                  <span aria-hidden="true">←</span>
+                </button>
+
                 <button
                   type="button"
                   className="topbar__logout-button"
@@ -391,15 +401,6 @@ function TopBar({
                   {isLoggingOut
                     ? 'در حال خروج...'
                     : 'خروج از حساب'}
-                </button>
-
-                <button
-                  type="button"
-                  className="topbar__security-button"
-                  onClick={handleOpenSecurityModal}
-                >
-                  <span>مدیریت حساب و امنیت</span>
-                  <span aria-hidden="true">←</span>
                 </button>
 
               </div>

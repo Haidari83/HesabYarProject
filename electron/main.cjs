@@ -19,6 +19,7 @@ const {
 
   changeUsername,
   changePassword,
+  changeDisplayName,
   setUserPin,
   removeUserPin,
 } = require('./services/authService.cjs');
@@ -395,6 +396,21 @@ function registerIpcHandlers() {
     }
   );
 
+  // تغییر نام نمایشی حساب فعلی
+  ipcMain.handle(
+    'auth:change-display-name',
+    (event, input) => {
+
+      const actor = requireAuthenticatedSession(event);
+
+      return changeDisplayName(
+        database,
+        actor,
+        input
+      );
+
+    }
+  );
 
   // تغییر گذرواژه اصلی حساب فعلی
   ipcMain.handle(

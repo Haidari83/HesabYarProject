@@ -170,16 +170,6 @@
   cursor: not-allowed;
 }
 
-
-/* توضیح ورودی PIN */
-
-.login-pin-hint {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
-  line-height: 1.7;
-}
-
-
 .login-field {
   display: flex;
   flex-direction: column;

@@ -51,19 +51,19 @@ function validateInitialAdminInput(input) {
 
 
   // نام کاربری با حروف انگلیسی و اعداد تعریف می‌شود
-  if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
+  if (!/^[a-z0-9._-]{2,32}$/.test(username)) {
     throw new Error(
-      'نام کاربری باید بین ۳ تا ۳۲ نویسه و شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.'
+      'نام کاربری باید بین ۲ تا ۳۲ نویسه و شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.'
     );
   }
 
 
   if (
-    password.length < 12 ||
+    password.length < 8 ||
     password.length > 128
   ) {
     throw new Error(
-      'گذرواژه باید حداقل ۱۲ و حداکثر ۱۲۸ نویسه باشد.'
+      'گذرواژه باید حداقل ۸ و حداکثر ۱۲۸ نویسه باشد.'
     );
   }
 
@@ -952,7 +952,7 @@ async function authenticateUser(
         ? input.pin
         : '';
 
-    if (!/^[0-9]{5}$/.test(pin)) {
+    if (!/^[0-9]{4,8}$/.test(pin)) {
       return {
         success: false,
         code: 'INVALID_CREDENTIALS',
@@ -1380,6 +1380,143 @@ function changeUsername(database, actor, input) {
 }
 
 
+// تغییر نام نمایشی حساب فعلی
+function changeDisplayName(database, actor, input) {
+
+  if (
+    !input ||
+    typeof input !== 'object' ||
+    Array.isArray(input)
+  ) {
+    throw new Error('اطلاعات ارسالی معتبر نیست.');
+  }
+
+  const currentPassword = input.currentPassword;
+
+  const newDisplayName =
+    typeof input.newDisplayName === 'string'
+      ? input.newDisplayName.trim()
+      : '';
+
+
+  // بررسی اعتبار نام نمایشی
+  if (
+    newDisplayName.length < 2 ||
+    newDisplayName.length > 80
+  ) {
+    throw new Error(
+      'نام نمایشی باید بین ۲ تا ۸۰ نویسه باشد.'
+    );
+  }
+
+
+  // دریافت اطلاعات امنیتی حساب فعال
+  const user = getActiveSecurityUser(
+    database,
+    actor.id
+  );
+
+  if (!user) {
+    throw new Error('حساب کاربری فعال پیدا نشد.');
+  }
+
+
+  // تأیید گذرواژه فعلی
+  verifyCurrentPassword(
+    database,
+    user,
+    currentPassword
+  );
+
+
+  // جلوگیری از ثبت تغییر غیرضروری
+  if (newDisplayName === user.display_name) {
+    return {
+      success: true,
+      displayName: user.display_name,
+      changed: false,
+    };
+  }
+
+
+  const updatedAt = new Date().toISOString();
+
+  database.exec('BEGIN IMMEDIATE');
+
+  try {
+
+    // دریافت دوباره اطلاعات حساب برای جلوگیری از تداخل تغییرات
+    const latestUser = getActiveSecurityUser(
+      database,
+      actor.id
+    );
+
+    if (
+      !latestUser ||
+      latestUser.password_hash !== user.password_hash ||
+      latestUser.password_salt !== user.password_salt
+    ) {
+      throw new Error(
+        'اطلاعات حساب در حین عملیات تغییر کرده است. دوباره تلاش کن.'
+      );
+    }
+
+
+    // به‌روزرسانی نام نمایشی
+    database.prepare(`
+
+      UPDATE users
+
+      SET
+        display_name = ?,
+        updated_at = ?,
+        updated_by_user_id = ?
+
+      WHERE id = ?
+
+    `).run(
+      newDisplayName,
+      updatedAt,
+      actor.id,
+      user.id
+    );
+
+
+    // ثبت سابقه تغییر نام نمایشی
+    writeUserAudit(
+      database,
+      user,
+      'auth.display_name_changed',
+      {
+        previousDisplayName: user.display_name,
+        newDisplayName,
+      }
+    );
+
+
+    database.exec('COMMIT');
+
+    return {
+      success: true,
+      displayName: newDisplayName,
+      changed: true,
+    };
+
+  } catch (error) {
+
+    try {
+      database.exec('ROLLBACK');
+    } catch {
+      // نادیده‌گرفتن خطای احتمالی بازگشت تراکنش
+    }
+
+    throw error;
+
+  }
+
+}
+
+
 // تغییر گذرواژه اصلی حساب فعلی
 function changePassword(database, actor, input) {
 
@@ -1420,12 +1557,12 @@ function changePassword(database, actor, input) {
 
 
   if (
-    newPassword.length < 12 ||
+    newPassword.length < 8 ||
     newPassword.length > 128
   ) {
     throw new Error(
-      'گذرواژه جدید باید حداقل ۱۲ و حداکثر ۱۲۸ نویسه باشد.'
-    );
+      'گذرواژه باید حداقل ۸ و حداکثر ۱۲۸ نویسه باشد.'
+    )
   }
 
   if (newPassword !== confirmPassword) {
@@ -1555,9 +1692,9 @@ async function setUserPin(
   );
 
 
-  if (!/^[0-9]{5}$/.test(pin)) {
+  if (!/^[0-9]{4,8}$/.test(pin)) {
     throw new Error(
-      'PIN باید دقیقاً پنج رقم انگلیسی باشد.'
+      'PIN باید بین ۴ تا ۸ رقم انگلیسی باشد.'
     );
   }
 
@@ -1863,6 +2000,7 @@ module.exports = {
   createPasswordHash,
 
   changeUsername,
+  changeDisplayName,
   changePassword,
   setUserPin,
   removeUserPin,

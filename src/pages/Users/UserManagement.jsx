@@ -332,8 +332,8 @@ function UserManagement() {
       return;
     }
 
-    if (form.password.length < 12) {
-      setCreateError('گذرواژه باید حداقل ۱۲ نویسه داشته باشد.');
+    if (form.password.length < 8) {
+      setCreateError('گذرواژه باید حداقل ۸ نویسه داشته باشد.');
       return;
     }
 
@@ -863,8 +863,8 @@ function UserManagement() {
                       name="username"
                       value={form.username}
                       onChange={handleFormChange}
-                      placeholder="مثلاً ali.ahmadi"
-                      minLength={3}
+                      placeholder="مثلاً admin"
+                      minLength={2}
                       maxLength={32}
                       autoComplete="off"
                       dir="ltr"
@@ -886,12 +886,12 @@ function UserManagement() {
                           name="password"
                           value={form.password}
                           onChange={handleFormChange}
-                          minLength={12}
+                          minLength={8}
                           maxLength={128}
                           autoComplete="new-password"
                           required
                         />
-                        <small>حداقل ۱۲ نویسه.</small>
+                        <small>حداقل ۸ نویسه.</small>
                       </label>
 
                       {/* فیلد تکرار گذرواژه */}
@@ -902,7 +902,7 @@ function UserManagement() {
                           name="confirmPassword"
                           value={form.confirmPassword}
                           onChange={handleFormChange}
-                          minLength={12}
+                          minLength={8}
                           maxLength={128}
                           autoComplete="new-password"
                           required

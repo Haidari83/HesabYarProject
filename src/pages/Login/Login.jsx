@@ -173,11 +173,11 @@ function Login({ onLogin }) {
 
     if (
       loginMethod === 'pin' &&
-      !/^[0-9]{5}$/.test(pin)
+      !/^[0-9]{4,8}$/.test(pin)
     ) {
 
       setFeedbackType('error');
-      setFeedback('PIN باید دقیقاً پنج رقم انگلیسی باشد.');
+      setFeedback('PIN باید دقیقاً بین 4 تا 8 رقم انگلیسی باشد.');
 
       return;
 
@@ -455,7 +455,7 @@ function Login({ onLogin }) {
                 <div className="login-field">
 
                   <label htmlFor="pin">
-                    PIN پنج‌رقمی
+                    PIN
                   </label>
 
                   <div className="login-input-wrapper">
@@ -468,7 +468,7 @@ function Login({ onLogin }) {
                       id="pin"
                       name="pin"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="پنج رقم PIN را وارد کنید"
+                      placeholder="PIN را وارد کنید"
                       value={pin}
                       onChange={(e) => {
 
@@ -483,7 +483,7 @@ function Login({ onLogin }) {
                             String(arabicDigits.indexOf(digit))
                           )
                           .replace(/[^0-9]/g, '')
-                          .slice(0, 5);
+                          .slice(0, 8);
 
                         setPin(normalizedPin);
                         setFeedback('');
@@ -493,7 +493,7 @@ function Login({ onLogin }) {
                       dir="ltr"
                       inputMode="numeric"
                       pattern="[0-9]*"
-                      maxLength={5}
+                      maxLength={8}
                       disabled={isSubmitting}
                     />
 
@@ -518,10 +518,6 @@ function Login({ onLogin }) {
                     </button>
 
                   </div>
-
-                  <span className="login-pin-hint">
-                    PIN باید پنج رقم باشد.
-                  </span>
 
                 </div>
 

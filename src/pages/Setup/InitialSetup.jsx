@@ -37,8 +37,8 @@ function InitialSetup({ onComplete }) {
       return;
     }
 
-    if (password.length < 12) {
-      setError('گذرواژه باید حداقل ۱۲ نویسه باشد.');
+    if (password.length < 8) {
+      setError('گذرواژه باید حداقل ۸ نویسه داشته باشد.');
       return;
     }
 
@@ -261,7 +261,7 @@ function InitialSetup({ onComplete }) {
                         autoComplete="username"
                         autoCapitalize="none"
                         spellCheck={false}
-                        minLength={3}
+                        minLength={2}
                         maxLength={32}
                         dir="ltr"
                         required
@@ -291,9 +291,9 @@ function InitialSetup({ onComplete }) {
                         onChange={(event) =>
                           setPassword(event.target.value)
                         }
-                        placeholder="حداقل ۱۲ نویسه"
+                        placeholder="حداقل ۸ نویسه"
                         autoComplete="new-password"
-                        minLength={12}
+                        minLength={8}
                         maxLength={128}
                         required
                       />

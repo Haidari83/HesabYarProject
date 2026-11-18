@@ -41,6 +41,12 @@ contextBridge.exposeInMainWorld('hesabyar', {
         input
       ),
 
+    // تغییر نام نمایشی
+    changeDisplayName: (input) =>
+      ipcRenderer.invoke(
+        'auth:change-display-name',
+        input
+      ),
 
     // تغییر گذرواژه اصلی
     changePassword: (input) =>

@@ -112,13 +112,21 @@ function AccountSecurityModal({
   // تغییر مقدار ورودی‌ها
   function handleFieldChange(field, value) {
 
-    // PIN فقط شامل پنج رقم انگلیسی است
+    // تبدیل ارقام فارسی و عربی به انگلیسی و محدود کردن PIN به هشت رقم
     if (field === 'pin' || field === 'confirmPin') {
 
-      value = value
-        .replace(/[^0-9]/g, '')
-        .slice(0, 5);
+      const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+      const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
 
+      value = value
+        .replace(/[۰-۹]/g, digit =>
+          String(persianDigits.indexOf(digit))
+        )
+        .replace(/[٠-٩]/g, digit =>
+          String(arabicDigits.indexOf(digit))
+        )
+        .replace(/[^0-9]/g, '')
+        .slice(0, 8);
     }
 
     setFormData((previous) => ({
@@ -546,8 +554,8 @@ function AccountSecurityModal({
 
                     <small>
                       {hasPin
-                        ? 'PIN پنج‌رقمی حساب فعال است.'
-                        : 'برای ورود سریع، PIN پنج‌رقمی تنظیم کنید.'}
+                        ? 'PIN حساب فعال است.'
+                        : 'برای ورود سریع، PIN تنظیم کنید.'}
                     </small>
 
                   </span>
@@ -700,7 +708,7 @@ function AccountSecurityModal({
                   />
 
                   <small className="account-security-help">
-                    گذرواژه جدید باید حداقل ۱۲ و حداکثر ۱۲۸ نویسه داشته باشد.
+                    گذرواژه جدید باید حداقل ۸ و حداکثر ۱۲۸ نویسه داشته باشد.
                   </small>
 
                 </>
@@ -716,7 +724,7 @@ function AccountSecurityModal({
 
                   <SecurityField
                     id="pin"
-                    label="PIN پنج‌رقمی جدید"
+                    label="PIN جدید (۴ تا ۸ رقم)"
                     type="password"
                     value={formData.pin}
                     onChange={(event) =>
@@ -725,10 +733,10 @@ function AccountSecurityModal({
                         event.target.value
                       )
                     }
-                    placeholder="پنج رقم انگلیسی"
+                    placeholder="PIN جدید"
                     autoComplete="new-password"
                     dir="ltr"
-                    maxLength={5}
+                    maxLength={8}
                     inputMode="numeric"
                   />
 
@@ -746,13 +754,9 @@ function AccountSecurityModal({
                     placeholder="PIN را دوباره وارد کنید"
                     autoComplete="new-password"
                     dir="ltr"
-                    maxLength={5}
+                    maxLength={8}
                     inputMode="numeric"
                   />
-
-                  <small className="account-security-help">
-                    PIN باید دقیقاً پنج رقم انگلیسی باشد.
-                  </small>
 
                 </>
 
