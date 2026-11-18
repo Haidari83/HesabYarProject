@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import Dashboard from '../../pages/Dashboard/Dashboard';
 
 import './account-security-modal.css';
 
@@ -7,6 +8,7 @@ import './account-security-modal.css';
 // مقادیر اولیه فرم‌ها
 const INITIAL_FORM = {
   currentPassword: '',
+  nesDisplayName: '',
   newUsername: '',
   newPassword: '',
   confirmPassword: '',
@@ -17,6 +19,7 @@ const INITIAL_FORM = {
 
 // عنوان هر عملیات
 const ACTION_TITLES = {
+  displayName: 'تغییر نام',
   username: 'تغییر نام کاربری',
   password: 'تغییر گذرواژه اصلی',
   pin: 'تنظیم یا تغییر PIN',
@@ -175,6 +178,9 @@ function AccountSecurityModal({
     const fallbackUser = {
       ...currentUser,
 
+      ...(action === 'displayName' && {
+        displayName: result.displayName || formData.newDisplayName,
+      }),
       ...(action === 'username' && {
         username: result.username || formData.newUsername,
       }),
@@ -225,6 +231,14 @@ function AccountSecurityModal({
 
       // انتخاب عملیات بر اساس فرم فعال
       switch (activeAction) {
+        case 'displayName':
+
+          result = await auth.changeDisplayName({
+            currentPassword: formData.currentPassword,
+            newDisplayName: formData.newDisplayName,
+          });
+
+          break;
 
         case 'username':
 
@@ -285,6 +299,7 @@ function AccountSecurityModal({
 
       // به‌روزرسانی نشست برای عملیات مؤثر بر اطلاعات نمایشی
       if (
+        activeAction === 'displayName' ||
         activeAction === 'username' ||
         activeAction === 'pin' ||
         activeAction === 'removePin'
@@ -300,6 +315,7 @@ function AccountSecurityModal({
 
       // پیام موفقیت
       const successMessages = {
+        displayName: 'نام با موفقیت تغییر کرد.',
         username: 'نام کاربری با موفقیت تغییر کرد.',
         password: 'گذرواژه اصلی با موفقیت تغییر کرد.',
         pin: 'PIN با موفقیت ذخیره شد.',
@@ -481,6 +497,53 @@ function AccountSecurityModal({
 
               {/* عملیات امنیتی */}
               <div className="account-security-options">
+                <button
+                  type="button"
+                  className="account-security-option"
+                  onClick={() => openAction('displayName')}
+                >
+
+                  <span className="account-security-option-icon">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      {/* سر شخص */}
+                      <circle cx="9.5" cy="8" r="3.5" />
+
+                      {/* شانه‌ها و بدن شخص */}
+                      <path d="M3.5 20c.4-3.7 2.7-6 6-6 1.5 0 2.8.5 3.8 1.4" />
+
+                      {/* مداد ویرایش */}
+                      <path d="m14 17.5 5.2-5.2a1.4 1.4 0 0 1 2 2L16 19.5l-3.5 1z" />
+
+                      {/* نوک مداد */}
+                      <path d="m17.8 13.7 2 2" />
+                    </svg>
+                  </span>
+
+                  <span className="account-security-option-content">
+
+                    <strong>نام</strong>
+
+                    <small>
+                      {'تغییر نام کاربر'}
+                    </small>
+
+                  </span>
+
+                  <span className="account-security-option-arrow">
+                    ←
+                  </span>
+
+                </button>
 
                 <button
                   type="button"
@@ -633,7 +696,34 @@ function AccountSecurityModal({
               <h3>
                 {ACTION_TITLES[activeAction]}
               </h3>
+              {activeAction === 'displayName' && (
 
+                <>
+
+                  {renderCurrentPasswordField()}
+
+                  <SecurityField
+                    id="newDisplayName"
+                    label="نام جدید"
+                    value={formData.newDisplayName}
+                    onChange={(event) =>
+                      handleFieldChange(
+                        'newDisplayName',
+                        event.target.value
+                      )
+                    }
+                    placeholder="نام جدید را وارد کنید"
+                    autoComplete="name"
+                    maxLength={80}
+                  />
+
+                  <small className="account-security-help">
+                    نام نمایشی باید بین ۲ تا ۸۰ نویسه باشد.
+                  </small>
+
+                </>
+
+              )}
 
               {activeAction === 'username' && (
 
@@ -658,7 +748,7 @@ function AccountSecurityModal({
                   />
 
                   <small className="account-security-help">
-                    نام کاربری باید بین ۳ تا ۳۲ نویسه و شامل
+                    نام کاربری باید بین ۲ تا ۳۲ نویسه و شامل
                     حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.
                   </small>
 
