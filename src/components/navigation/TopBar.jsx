@@ -105,6 +105,25 @@ function ChevronDownIcon() {
   );
 }
 
+// آیکون خروج از حساب کاربری
+function LogoutIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+      <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
+    </svg>
+  );
+}
+
 /* =========================
    کامپوننت نوار بالایی
 ========================= */
@@ -404,49 +423,67 @@ function TopBar({
 
             {activePanel === 'profile' && (
               <div
-                className="topbar__popover"
+                className="topbar__popover topbar__popover--profile"
                 id="profile-panel"
                 role="dialog"
                 aria-label="اطلاعات کاربر"
               >
 
-                <h3>{userName}</h3>
+                {/* سربرگ زیرمنوی پروفایل */}
+                <div className="topbar__profile-menu-header">
 
-                <p>
-                  نام کاربری: <span dir="ltr">{username}</span>
-                </p>
+                  <strong>{userName}</strong>
 
-                <p>{userRole}</p>
+                  <span>
+                    {userRole}
+                    {username && ` · ${username}`}
+                  </span>
 
-                {logoutError && (
-                  <p
-                    className="topbar__logout-error"
-                    role="alert"
+                </div>
+
+
+                {/* گزینه‌های زیرمنوی پروفایل */}
+                <div className="topbar__profile-menu-items">
+
+                  {/* اطلاعات حساب کاربری */}
+                  <button
+                    type="button"
+                    className="topbar__profile-menu-item"
+                    onClick={handleOpenSecurityModal}
                   >
-                    {logoutError}
-                  </p>
-                )}
+                    <ProfileUserIcon />
+                    <span>مدیریت حساب کاربری</span>
+                  </button>
 
 
-                <button
-                  type="button"
-                  className="topbar__security-button"
-                  onClick={handleOpenSecurityModal}
-                >
-                  <span>مدیریت حساب و امنیت</span>
-                  <span aria-hidden="true">←</span>
-                </button>
+                  {/* خطای احتمالی خروج */}
+                  {logoutError && (
+                    <p
+                      className="topbar__logout-error"
+                      role="alert"
+                    >
+                      {logoutError}
+                    </p>
+                  )}
 
-                <button
-                  type="button"
-                  className="topbar__logout-button"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                >
-                  {isLoggingOut
-                    ? 'در حال خروج...'
-                    : 'خروج از حساب'}
-                </button>
+
+                  {/* خروج از حساب کاربری */}
+                  <button
+                    type="button"
+                    className="topbar__profile-menu-item topbar__profile-menu-item--danger"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    <LogoutIcon />
+
+                    <span>
+                      {isLoggingOut
+                        ? 'در حال خروج...'
+                        : 'خروج از حساب کاربری'}
+                    </span>
+                  </button>
+
+                </div>
 
               </div>
             )}
