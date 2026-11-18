@@ -70,6 +70,40 @@ function SettingsIcon() {
   );
 }
 
+// آیکون کاربر
+function ProfileUserIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M4.5 20c.5-3.5 3.2-5.8 7.5-5.8s7 2.3 7.5 5.8" />
+    </svg>
+  );
+}
+
+// آیکون فلش پایین
+function ChevronDownIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m7 10 5 5 5-5" />
+    </svg>
+  );
+}
 
 /* =========================
    کامپوننت نوار بالایی
@@ -339,20 +373,31 @@ function TopBar({
               aria-controls="profile-panel"
             >
 
-              <span className="topbar__avatar">
-                {userName.trim().charAt(0) || 'ک'}
+              {/* آیکون کاربر و وضعیت نشست */}
+              <span className="topbar__profile-symbol">
+
+                <ProfileUserIcon />
+
+                <span
+                  className="topbar__profile-status"
+                  title="نشست فعال"
+                  aria-label="نشست فعال"
+                >
+                  <svg viewBox="0 0 12 12" aria-hidden="true">
+                    <path d="m2.5 6.2 2.1 2.1 4.8-5" />
+                  </svg>
+                </span>
+
               </span>
 
-              <span className="topbar__profile-info">
+              {/* نام نمایشی کاربر */}
+              <span className="topbar__profile-name">
+                {userName}
+              </span>
 
-                <span className="topbar__profile-name">
-                  {userName}
-                </span>
-
-                <span className="topbar__profile-role">
-                  {userRole}
-                </span>
-
+              {/* فلش باز شدن منو */}
+              <span className="topbar__profile-chevron">
+                <ChevronDownIcon />
               </span>
 
             </button>
