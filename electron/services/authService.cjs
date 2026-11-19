@@ -956,7 +956,7 @@ async function authenticateUser(
       return {
         success: false,
         code: 'INVALID_CREDENTIALS',
-        message: 'PIN باید دقیقاً پنج رقم انگلیسی باشد.',
+        message: 'PIN باید بین ۴ تا ۸ رقم انگلیسی باشد.',
       };
     }
 

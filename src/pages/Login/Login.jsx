@@ -177,7 +177,7 @@ function Login({ onLogin }) {
     ) {
 
       setFeedbackType('error');
-      setFeedback('PIN باید دقیقاً بین 4 تا 8 رقم انگلیسی باشد.');
+      setFeedback('PIN باید بین 4 تا 8 رقم انگلیسی باشد.');
 
       return;
 
