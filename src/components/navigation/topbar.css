@@ -289,7 +289,13 @@
   text-align: right;
 }
 
-.topbar__profile-menu-header strong {
+.topbar__profile-menu-header>div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar__profile-menu-header>div>strong {
   color: var(--color-text);
   font-size: var(--font-size-md);
   font-weight: 600;

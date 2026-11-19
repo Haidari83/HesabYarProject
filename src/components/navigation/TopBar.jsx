@@ -432,10 +432,13 @@ function TopBar({
                 {/* سربرگ زیرمنوی پروفایل */}
                 <div className="topbar__profile-menu-header">
 
-                  <strong>{userName}</strong>
+                  <div>
+                    <strong>{userName}</strong>
 
+                    <small>{userRole}</small>
+                  </div>
                   <span>
-                    {userRole}
+                    نام کاربری:
                     {username && ` · ${username}`}
                   </span>
 
