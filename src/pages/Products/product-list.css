@@ -1178,8 +1178,170 @@
   color: #c2410c;
 }
 
-/* سازگاری پنجره ویرایش با صفحات کوچک */
-@media (max-width: 600px) {
+/* کارت آماری چهارم برای محصولات دارای واحد بسته‌بندی */
+.product-statistics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.package-icon {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
+/* وضعیت بارگذاری و خطای دریافت اطلاعات */
+.product-state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 35px 20px;
+  border: 1px solid var(--product-border);
+  border-radius: 12px;
+  background-color: #fff;
+  color: var(--product-muted);
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.9;
+}
+
+.product-state-message strong {
+  color: var(--product-text);
+  font-size: 14px;
+}
+
+.product-state-message p {
+  margin: 0;
+}
+
+.product-state-error {
+  border-color: #fecaca;
+  background-color: #fffafa;
+}
+
+.product-retry-button {
+  min-height: 37px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 7px;
+  background-color: var(--product-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+}
+
+.product-permission-note {
+  padding: 11px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+/* نمایش نام و نماد واحد پایه */
+.product-base-unit {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.product-base-unit strong {
+  color: var(--product-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.product-base-unit small {
+  color: var(--product-muted);
+  font-size: 10px;
+  direction: ltr;
+  text-align: right;
+}
+
+/* نمایش واحدهای اختصاصی هر محصول */
+.product-unit-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: 190px;
+  white-space: normal;
+}
+
+.product-unit-tags span {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 7px;
+  border-radius: 5px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.product-unit-tags span.standard {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.product-unit-tags span.package {
+  background-color: #fff7ed;
+  color: #c2410c;
+}
+
+/* نمایش قیمت‌های چندارزی */
+.product-price-cell {
+  min-width: 125px;
+  white-space: normal;
+}
+
+.product-price-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.product-price-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.product-price-currency {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 9px;
+  direction: ltr;
+}
+
+.product-price-item strong {
+  color: var(--product-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.product-price-item small {
+  color: var(--product-muted);
+  font-size: 10px;
+}
+
+.product-price-empty {
+  color: var(--product-muted);
+  font-size: 10px;
+}
+
+/* سازگاری کارت‌های آماری با نمایشگر کوچک */
+@media (max-width: 1050px) {
+  .product-statistics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
   .product-edit-form {
     grid-template-columns: minmax(0, 1fr);
     padding: 16px;
@@ -1196,5 +1358,18 @@
   .product-table-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .product-statistics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .product-price-cell {
+    min-width: 115px;
+  }
+
+  .product-unit-tags {
+    max-width: 150px;
   }
 }

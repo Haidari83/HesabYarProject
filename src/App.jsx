@@ -131,7 +131,7 @@ function ApplicationShell({
             {activePageId === 'dashboard' ? (
               <Dashboard />
             ) : activePageId === 'product-list' ? (
-              <ProductList />
+              <ProductList currentUser={currentUser} />
             ) : activePageId === 'categories' ? (
               <CategoryList currentUser={currentUser} />
             ) : activePageId === 'units' ? (
