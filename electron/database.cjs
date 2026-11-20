@@ -3,7 +3,7 @@ const { DatabaseSync } = require('node:sqlite');
 const { randomUUID } = require('node:crypto');
 
 // آخرین نسخه ساختار پایگاه داده
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 // نسخه ساختار اولیه‌ای که جدول‌های کاربران را ایجاد می‌کند
 const INITIAL_SCHEMA_VERSION = 3;
@@ -822,6 +822,910 @@ function migrateToVersion4(database) {
 }
 
 
+/* =========================================
+   مهاجرت ساختار پایگاه داده از نسخه ۴ به ۵
+   ایجاد ساختار کالاها، واحدهای کالا و قیمت‌ها
+========================================= */
+
+function migrateToVersion5(database) {
+
+  // آغاز تراکنش مهاجرت
+  database.exec('BEGIN IMMEDIATE');
+
+  try {
+
+    database.exec(`
+
+      /* =====================================
+         جدول اصلی کالاها
+      ===================================== */
+
+      CREATE TABLE IF NOT EXISTS products (
+
+        id TEXT PRIMARY KEY,
+
+        code TEXT NOT NULL COLLATE NOCASE UNIQUE
+          CHECK (
+            length(trim(code)) > 0
+            AND code = trim(code)
+          ),
+
+        name TEXT NOT NULL
+          CHECK (length(trim(name)) > 0),
+
+        normalized_name TEXT NOT NULL
+          CHECK (length(trim(normalized_name)) > 0),
+
+        category_id TEXT NOT NULL,
+
+        base_unit_id TEXT NOT NULL,
+
+        /* دقت نگهداری مقدار کالا در واحد مبنا */
+        base_quantity_decimal_places INTEGER NOT NULL
+          CHECK (
+            base_quantity_decimal_places BETWEEN 0 AND 6
+          ),
+
+        is_active INTEGER NOT NULL DEFAULT 1
+          CHECK (is_active IN (0, 1)),
+
+        created_at TEXT NOT NULL,
+
+        created_by_user_id TEXT NOT NULL,
+
+        updated_at TEXT,
+
+        updated_by_user_id TEXT,
+
+        /* اطلاعات ویرایش باید هم‌زمان ثبت شوند */
+        CHECK (
+          (
+            updated_at IS NULL
+            AND updated_by_user_id IS NULL
+          )
+          OR
+          (
+            updated_at IS NOT NULL
+            AND updated_by_user_id IS NOT NULL
+          )
+        ),
+
+        FOREIGN KEY (category_id)
+          REFERENCES categories(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (base_unit_id)
+          REFERENCES units(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (created_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (updated_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT
+
+      );
+
+
+      /* =====================================
+         جدول واحدهای مجاز هر کالا
+      ===================================== */
+
+      CREATE TABLE IF NOT EXISTS product_units (
+
+        id TEXT PRIMARY KEY,
+
+        product_id TEXT NOT NULL,
+
+        unit_id TEXT NOT NULL,
+
+        /* مشخص می‌کند این ردیف واحد مبنای کالاست */
+        is_base_unit INTEGER NOT NULL DEFAULT 0
+          CHECK (is_base_unit IN (0, 1)),
+
+        /* نسبت تبدیل واحد بسته‌بندی به واحد مبنا */
+        conversion_num INTEGER,
+
+        conversion_den INTEGER,
+
+        /* حداکثر دقت مجاز ورود مقدار با این واحد */
+        input_decimal_places INTEGER NOT NULL
+          CHECK (
+            input_decimal_places BETWEEN 0 AND 6
+          ),
+
+        is_active INTEGER NOT NULL DEFAULT 1
+          CHECK (is_active IN (0, 1)),
+
+        created_at TEXT NOT NULL,
+
+        created_by_user_id TEXT NOT NULL,
+
+        deactivated_at TEXT,
+
+        deactivated_by_user_id TEXT,
+
+        /* شناسه واحد همراه با شناسه کالا یکتا است */
+        UNIQUE (id, product_id),
+
+        /* نسبت تبدیل یا باید کاملاً خالی باشد یا مثبت و صحیح */
+        CHECK (
+
+          (
+            conversion_num IS NULL
+            AND conversion_den IS NULL
+          )
+
+          OR
+
+          (
+            typeof(conversion_num) = 'integer'
+            AND conversion_num > 0
+
+            AND typeof(conversion_den) = 'integer'
+            AND conversion_den > 0
+          )
+
+        ),
+
+        /* اطلاعات غیرفعال‌سازی باید کامل ثبت شوند */
+        CHECK (
+
+          (
+            is_active = 1
+            AND deactivated_at IS NULL
+            AND deactivated_by_user_id IS NULL
+          )
+
+          OR
+
+          (
+            is_active = 0
+            AND deactivated_at IS NOT NULL
+            AND deactivated_by_user_id IS NOT NULL
+          )
+
+        ),
+
+        FOREIGN KEY (product_id)
+          REFERENCES products(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (unit_id)
+          REFERENCES units(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (created_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (deactivated_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT
+
+      );
+
+
+      /* =====================================
+         جدول سوابق قیمت کالا
+      ===================================== */
+
+      CREATE TABLE IF NOT EXISTS product_prices (
+
+        id TEXT PRIMARY KEY,
+
+        product_id TEXT NOT NULL,
+
+        product_unit_id TEXT NOT NULL,
+
+        currency_code TEXT NOT NULL,
+
+        price_type TEXT NOT NULL
+          CHECK (
+            price_type IN ('purchase', 'sale')
+          ),
+
+        /* قیمت با مقیاس یک میلیون ذخیره می‌شود */
+        unit_price_scaled INTEGER NOT NULL
+          CHECK (
+            typeof(unit_price_scaled) = 'integer'
+            AND unit_price_scaled >= 0
+          ),
+
+        is_current INTEGER NOT NULL DEFAULT 1
+          CHECK (is_current IN (0, 1)),
+
+        created_at TEXT NOT NULL,
+
+        created_by_user_id TEXT NOT NULL,
+
+        note TEXT,
+
+        FOREIGN KEY (product_id)
+          REFERENCES products(id)
+          ON DELETE RESTRICT,
+
+        /* جلوگیری از اتصال قیمت به واحد کالای دیگر */
+        FOREIGN KEY (product_unit_id, product_id)
+          REFERENCES product_units(id, product_id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (currency_code)
+          REFERENCES currencies(code)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (created_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT
+
+      );
+
+
+      /* =====================================
+         شاخص‌های جست‌وجو و جلوگیری از تکرار
+      ===================================== */
+
+      CREATE INDEX IF NOT EXISTS
+      idx_products_normalized_name
+
+      ON products(normalized_name);
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_products_category_active
+
+      ON products(category_id, is_active);
+
+
+      CREATE UNIQUE INDEX IF NOT EXISTS
+      ux_product_units_active_product_unit
+
+      ON product_units(product_id, unit_id)
+
+      WHERE is_active = 1;
+
+
+      /* هر کالا فقط یک واحد مبنای فعال می‌تواند داشته باشد */
+      CREATE UNIQUE INDEX IF NOT EXISTS
+      ux_product_units_one_active_base
+
+      ON product_units(product_id)
+
+      WHERE is_active = 1 AND is_base_unit = 1;
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_product_units_product_active
+
+      ON product_units(product_id, is_active);
+
+
+      /* جلوگیری از ثبت دو قیمت جاری یکسان */
+      CREATE UNIQUE INDEX IF NOT EXISTS
+      ux_product_prices_current
+
+      ON product_prices(
+        product_id,
+        product_unit_id,
+        currency_code,
+        price_type
+      )
+
+      WHERE is_current = 1;
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_product_prices_history
+
+      ON product_prices(
+        product_id,
+        price_type,
+        created_at DESC
+      );
+
+
+      /* =====================================
+         کنترل اعتبار کالا
+      ===================================== */
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_products_validate_insert
+
+      BEFORE INSERT ON products
+
+      BEGIN
+
+        /* دسته‌بندی کالا باید فعال باشد */
+        SELECT CASE
+
+          WHEN NOT EXISTS (
+
+            SELECT 1
+            FROM categories
+
+            WHERE id = NEW.category_id
+              AND is_active = 1
+
+          )
+
+          THEN RAISE(
+            ABORT,
+            'Product category must be active.'
+          )
+
+        END;
+
+
+        /* واحد مبنا باید استاندارد و فعال باشد */
+        SELECT CASE
+
+          WHEN NOT EXISTS (
+
+            SELECT 1
+            FROM units
+
+            WHERE id = NEW.base_unit_id
+              AND unit_kind = 'standard'
+              AND is_active = 1
+
+          )
+
+          THEN RAISE(
+            ABORT,
+            'Product base unit must be an active standard unit.'
+          )
+
+        END;
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_products_validate_update
+
+      BEFORE UPDATE OF category_id, base_unit_id
+      ON products
+
+      BEGIN
+
+        /* دسته‌بندی جدید باید فعال باشد */
+        SELECT CASE
+
+          WHEN NEW.category_id <> OLD.category_id
+
+            AND NOT EXISTS (
+
+              SELECT 1
+              FROM categories
+
+              WHERE id = NEW.category_id
+                AND is_active = 1
+
+            )
+
+          THEN RAISE(
+            ABORT,
+            'Product category must be active.'
+          )
+
+        END;
+
+
+        /* واحد مبنای جدید باید استاندارد و فعال باشد */
+        SELECT CASE
+
+          WHEN NEW.base_unit_id <> OLD.base_unit_id
+
+            AND NOT EXISTS (
+
+              SELECT 1
+              FROM units
+
+              WHERE id = NEW.base_unit_id
+                AND unit_kind = 'standard'
+                AND is_active = 1
+
+            )
+
+          THEN RAISE(
+            ABORT,
+            'Product base unit must be an active standard unit.'
+          )
+
+        END;
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_products_no_delete
+
+      BEFORE DELETE ON products
+
+      BEGIN
+
+        /* کالاها حذف فیزیکی نمی‌شوند */
+        SELECT RAISE(
+          ABORT,
+          'Products cannot be deleted; deactivate them instead.'
+        );
+
+      END;
+
+
+      /* =====================================
+         اعتبارسنجی واحدهای هر کالا
+      ===================================== */
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_units_validate_insert
+
+      BEFORE INSERT ON product_units
+
+      BEGIN
+
+        /* فقط به کالای فعال می‌توان واحد جدید افزود */
+        SELECT CASE
+
+          WHEN NOT EXISTS (
+
+            SELECT 1
+            FROM products
+
+            WHERE id = NEW.product_id
+              AND is_active = 1
+
+          )
+
+          THEN RAISE(
+            ABORT,
+            'Product must be active when adding a product unit.'
+          )
+
+        END;
+
+
+        /* واحد عمومی باید فعال باشد */
+        SELECT CASE
+
+          WHEN NEW.is_active <> 1
+
+            OR NOT EXISTS (
+
+              SELECT 1
+              FROM units
+
+              WHERE id = NEW.unit_id
+                AND is_active = 1
+
+            )
+
+          THEN RAISE(
+            ABORT,
+            'A new product unit must use an active unit.'
+          )
+
+        END;
+
+
+        /* واحد مبنا باید با واحد مبنای خود کالا برابر باشد */
+        SELECT CASE
+
+          WHEN NEW.is_base_unit = 1
+
+            AND NOT EXISTS (
+
+              SELECT 1
+
+              FROM products p
+
+              JOIN units u
+                ON u.id = p.base_unit_id
+
+              WHERE p.id = NEW.product_id
+                AND p.base_unit_id = NEW.unit_id
+                AND u.unit_kind = 'standard'
+                AND NEW.conversion_num = 1
+                AND NEW.conversion_den = 1
+
+            )
+
+          THEN RAISE(
+            ABORT,
+            'The base product unit must match the product base unit and use ratio 1/1.'
+          )
+
+        END;
+
+
+        /* واحد مبنا نباید به‌عنوان واحد فرعی ثبت شود */
+        SELECT CASE
+
+          WHEN NEW.is_base_unit = 0
+
+            AND EXISTS (
+
+              SELECT 1
+              FROM products
+
+              WHERE id = NEW.product_id
+                AND base_unit_id = NEW.unit_id
+
+            )
+
+          THEN RAISE(
+            ABORT,
+            'The product base unit must be marked as the base row.'
+          )
+
+        END;
+
+
+        /* واحدهای استاندارد فرعی باید هم‌بُعد با واحد مبنا باشند */
+        /* ضریب آن‌ها مستقیماً از جدول units محاسبه می‌شود */
+        SELECT CASE
+
+          WHEN EXISTS (
+
+            SELECT 1
+
+            FROM products p
+
+            JOIN units candidate
+              ON candidate.id = NEW.unit_id
+
+            JOIN units base
+              ON base.id = p.base_unit_id
+
+            WHERE p.id = NEW.product_id
+
+              AND candidate.unit_kind = 'standard'
+
+              AND (
+
+                candidate.dimension_code <> base.dimension_code
+
+                OR (
+
+                  NEW.is_base_unit = 0
+
+                  AND (
+
+                    NEW.conversion_num IS NOT NULL
+                    OR NEW.conversion_den IS NOT NULL
+
+                  )
+
+                )
+
+              )
+
+          )
+
+          THEN RAISE(
+            ABORT,
+            'Standard product units must share the base dimension and must not store a product conversion ratio.'
+          )
+
+        END;
+
+
+        /* واحد بسته‌بندی حتماً به ضریب تبدیل اختصاصی نیاز دارد */
+        SELECT CASE
+
+          WHEN EXISTS (
+
+            SELECT 1
+            FROM units
+
+            WHERE id = NEW.unit_id
+              AND unit_kind = 'package'
+
+          )
+
+          AND (
+
+            NEW.is_base_unit = 1
+
+            OR NEW.conversion_num IS NULL
+            OR NEW.conversion_den IS NULL
+            OR NEW.conversion_num <= 0
+            OR NEW.conversion_den <= 0
+
+          )
+
+          THEN RAISE(
+            ABORT,
+            'Package units require a positive product-specific conversion ratio and cannot be the base unit.'
+          )
+
+        END;
+
+      END;
+
+
+      /* =====================================
+         حفاظت از سوابق واحدهای کالا
+      ===================================== */
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_units_immutable_fields
+
+      BEFORE UPDATE OF
+        product_id,
+        unit_id,
+        is_base_unit,
+        conversion_num,
+        conversion_den,
+        input_decimal_places,
+        created_at,
+        created_by_user_id
+
+      ON product_units
+
+      BEGIN
+
+        /* تغییر تعریف واحد با ویرایش مجاز نیست */
+        /* باید نسخه قبلی غیرفعال و نسخه جدید ایجاد شود */
+        SELECT RAISE(
+          ABORT,
+          'Product unit definitions are immutable; create a new version instead.'
+        );
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_units_no_reactivation
+
+      BEFORE UPDATE OF is_active ON product_units
+
+      WHEN OLD.is_active = 0 AND NEW.is_active = 1
+
+      BEGIN
+
+        /* واحد غیرفعال دوباره فعال نمی‌شود */
+        SELECT RAISE(
+          ABORT,
+          'An inactive product unit cannot be reactivated; create a new version instead.'
+        );
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_units_prevent_current_base_deactivation
+
+      BEFORE UPDATE OF is_active ON product_units
+
+      WHEN OLD.is_active = 1
+        AND NEW.is_active = 0
+        AND OLD.is_base_unit = 1
+
+        AND EXISTS (
+
+          SELECT 1
+          FROM products
+
+          WHERE id = OLD.product_id
+            AND base_unit_id = OLD.unit_id
+
+        )
+
+      BEGIN
+
+        /* واحد مبنای جاری تا زمان تغییر واحد مبنای کالا غیرفعال نمی‌شود */
+        SELECT RAISE(
+          ABORT,
+          'The current base unit cannot be deactivated before changing the product base unit.'
+        );
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_units_deactivation_metadata_immutable
+
+      BEFORE UPDATE OF
+        deactivated_at,
+        deactivated_by_user_id
+
+      ON product_units
+
+      WHEN OLD.deactivated_at IS NOT NULL
+
+      BEGIN
+
+        /* زمان و ثبت‌کننده غیرفعال‌سازی تغییر نمی‌کنند */
+        SELECT RAISE(
+          ABORT,
+          'Product unit deactivation history is immutable.'
+        );
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_units_no_delete
+
+      BEFORE DELETE ON product_units
+
+      BEGIN
+
+        /* سوابق تعریف واحد کالا حذف فیزیکی نمی‌شوند */
+        SELECT RAISE(
+          ABORT,
+          'Product unit history cannot be deleted.'
+        );
+
+      END;
+
+
+      /* =====================================
+         اعتبارسنجی قیمت‌های کالا
+      ===================================== */
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_prices_validate_insert
+
+      BEFORE INSERT ON product_prices
+
+      BEGIN
+
+        /* قیمت فقط برای کالا، واحد و ارز فعال ثبت می‌شود */
+        SELECT CASE
+
+          WHEN NOT EXISTS (
+
+            SELECT 1
+
+            FROM products p
+
+            JOIN product_units pu
+              ON pu.product_id = p.id
+
+            JOIN currencies c
+              ON c.code = NEW.currency_code
+
+            WHERE p.id = NEW.product_id
+              AND p.is_active = 1
+
+              AND pu.id = NEW.product_unit_id
+              AND pu.is_active = 1
+
+              AND c.is_active = 1
+
+          )
+
+          THEN RAISE(
+            ABORT,
+            'A price requires an active product, active product unit and active currency.'
+          )
+
+        END;
+
+      END;
+
+
+      /* =====================================
+         حفاظت از تاریخچه قیمت‌ها
+      ===================================== */
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_prices_immutable_fields
+
+      BEFORE UPDATE OF
+        id,
+        product_id,
+        product_unit_id,
+        currency_code,
+        price_type,
+        unit_price_scaled,
+        created_at,
+        created_by_user_id,
+        note
+
+      ON product_prices
+
+      BEGIN
+
+        /* قیمت قبلی ویرایش نمی‌شود؛ قیمت جدید ثبت خواهد شد */
+        SELECT RAISE(
+          ABORT,
+          'Price history is immutable; create a new price record instead.'
+        );
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_prices_no_reactivation
+
+      BEFORE UPDATE OF is_current ON product_prices
+
+      WHEN OLD.is_current = 0 AND NEW.is_current = 1
+
+      BEGIN
+
+        /* قیمت تاریخی دوباره به قیمت جاری تبدیل نمی‌شود */
+        SELECT RAISE(
+          ABORT,
+          'A historical price cannot become current again; create a new price record instead.'
+        );
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_prices_no_delete
+
+      BEFORE DELETE ON product_prices
+
+      BEGIN
+
+        /* سوابق قیمت حذف فیزیکی نمی‌شوند */
+        SELECT RAISE(
+          ABORT,
+          'Product price history cannot be deleted.'
+        );
+
+      END;
+
+
+      /* =====================================
+         غیرفعال‌سازی قیمت‌های واحد غیرفعال‌شده
+      ===================================== */
+
+      CREATE TRIGGER IF NOT EXISTS
+      trg_product_units_deactivate_current_prices
+
+      AFTER UPDATE OF is_active ON product_units
+
+      WHEN OLD.is_active = 1 AND NEW.is_active = 0
+
+      BEGIN
+
+        /* قیمت‌های جاری واحد غیرفعال‌شده تاریخی می‌شوند */
+        UPDATE product_prices
+
+        SET is_current = 0
+
+        WHERE product_unit_id = OLD.id
+          AND is_current = 1;
+
+      END;
+
+    `);
+
+
+    // ثبت نسخه پنجم پس از ایجاد موفق تمام ساختارها
+    database.exec('PRAGMA user_version = 5');
+
+    // تأیید نهایی تراکنش مهاجرت
+    database.exec('COMMIT');
+
+  } catch (error) {
+
+    // در صورت بروز خطا تمام تغییرات این مهاجرت لغو می‌شوند
+    try {
+
+      database.exec('ROLLBACK');
+
+    } catch {
+
+      // نادیده‌گرفتن خطای احتمالی هنگام بازگشت تراکنش
+
+    }
+
+    // انتقال خطای اصلی به بخش راه‌اندازی برنامه
+    throw error;
+
+  }
+
+}
+
 
 // اتصال به پایگاه داده یا ایجاد آن
 function openDatabase(databasePath) {
@@ -917,36 +1821,52 @@ function openDatabase(databasePath) {
 
 
 
+
     // ایجاد پایگاه داده در اولین اجرا
     if (currentVersion === 0) {
 
-      // ابتدا ساختار پایه کاربران در نسخه ۳ ایجاد می‌شود
+      // ایجاد ساختار اولیه کاربران در نسخه ۳
       createInitialSchema(database);
 
-      // سپس جداول اطلاعات پایه به نسخه ۴ اضافه می‌شوند
+      // ایجاد ارزها، واحدها و دسته‌بندی‌ها در نسخه ۴
       migrateToVersion4(database);
+
+      // ایجاد ساختار کالاها در نسخه ۵
+      migrateToVersion5(database);
 
     }
 
-    // ارتقای پایگاه داده نسخه ۲ به نسخه ۴
+    // ارتقای پایگاه داده نسخه ۲ به نسخه ۵
     else if (currentVersion === 2) {
 
-      // ابتدا پایگاه داده از نسخه ۲ به نسخه ۳ ارتقا می‌یابد
+      // ابتدا ارتقا به نسخه ۳
       migrateToVersion3(database);
 
-      // سپس مهاجرت نسخه ۴ اجرا می‌شود
+      // سپس ارتقا به نسخه ۴
       migrateToVersion4(database);
+
+      // در پایان ارتقا به نسخه ۵
+      migrateToVersion5(database);
 
     }
 
-    // ارتقای پایگاه داده نسخه ۳ به نسخه ۴
+    // ارتقای پایگاه داده نسخه ۳ به نسخه ۵
     else if (currentVersion === 3) {
 
       migrateToVersion4(database);
 
+      migrateToVersion5(database);
+
     }
 
-    // اگر نسخه فعلی با آخرین نسخه برابر باشد، نیازی به مهاجرت نیست
+    // ارتقای پایگاه داده نسخه ۴ به نسخه ۵
+    else if (currentVersion === 4) {
+
+      migrateToVersion5(database);
+
+    }
+
+    // نسخه ۵ آخرین نسخه است؛ نیازی به مهاجرت ندارد
     else if (currentVersion !== SCHEMA_VERSION) {
 
       throw new Error(
