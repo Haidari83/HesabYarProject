@@ -133,7 +133,7 @@ function ApplicationShell({
             ) : activePageId === 'product-list' ? (
               <ProductList />
             ) : activePageId === 'categories' ? (
-              <CategoryList />
+              <CategoryList currentUser={currentUser} />
             ) : activePageId === 'units' ? (
               <UnitList />
             ) : activePageId === 'inventory' ? (<InventoryOverview

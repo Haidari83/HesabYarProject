@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useBusinessData } from '../../context/BusinessDataContext';
 import './category-list.css';
 
@@ -21,10 +21,6 @@ function formatNumber(value) {
   return new Intl.NumberFormat('fa-IR').format(value);
 }
 
-// تولید شناسه آزمایشی دسته‌بندی
-function generateCategoryId() {
-  return `CAT-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 // ساخت ردیف خالی برای ثبت گروهی
 function createEmptyRow() {
@@ -40,21 +36,41 @@ function createEmptyRows(count = 5) {
   return Array.from({ length: count }, createEmptyRow);
 }
 
-function CategoryList() {
+function CategoryList({ currentUser }) {
+
   const {
     categories,
     setCategories,
-    products,
   } = useBusinessData();
+
 
   // وضعیت جست‌وجو و فیلتر
   const [search, setSearch] = useState('');
+
   const [statusFilter, setStatusFilter] = useState('all');
+
+
+  // وضعیت دریافت اطلاعات از SQLite
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [loadError, setLoadError] = useState('');
+
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+
+  // وضعیت اجرای عملیات ثبت، ویرایش یا حذف
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [operationError, setOperationError] = useState('');
+
 
   // وضعیت پنجره ثبت و ویرایش
   const [isFormOpen, setIsFormOpen] = useState(false);
+
   const [formMode, setFormMode] = useState('single');
+
   const [editingId, setEditingId] = useState(null);
+
 
   // اطلاعات فرم تکی
   const [singleForm, setSingleForm] = useState({
@@ -62,39 +78,147 @@ function CategoryList() {
     description: '',
   });
 
-  // اطلاعات فرم گروهی
-  const [bulkRows, setBulkRows] = useState(() => createEmptyRows(5));
 
-  // خطاها
+  // اطلاعات فرم گروهی
+  const [bulkRows, setBulkRows] = useState(
+    () => createEmptyRows(5)
+  );
+
+
+  // خطاهای فرم‌ها
   const [singleError, setSingleError] = useState('');
+
   const [bulkErrors, setBulkErrors] = useState({});
+
   const [bulkError, setBulkError] = useState('');
 
-  // پنجره‌های تأیید عملیات
+
+  // پنجره تأیید عملیات
   const [confirmAction, setConfirmAction] = useState(null);
+
 
   // پیام موفقیت
   const [successMessage, setSuccessMessage] = useState('');
 
-  // محاسبه تعداد کالاهای هر دسته‌بندی
-  const productCounts = useMemo(() => {
-    const counts = new Map();
 
-    products.forEach((product) => {
-      if (!product.categoryId) return;
+  {/* نمایش خطای عملیات مدیریتی */ }
+  {
+    operationError && (
 
-      counts.set(
-        product.categoryId,
-        (counts.get(product.categoryId) || 0) + 1
-      );
-    });
+      <div
+        className="category-form-error"
+        role="alert"
+      >
 
-    return counts;
-  }, [products]);
+        {operationError}
 
-  // محاسبه آمار دسته‌بندی‌ها
+      </div>
+
+    )
+  }
+
+
+  // تشخیص داشتن مجوز مدیریت دسته‌بندی‌ها
+  const canManageCategories =
+    currentUser?.role === 'admin' ||
+    currentUser?.permissions?.includes('categories.manage') === true;
+
+
+  // دریافت اطلاعات واقعی دسته‌بندی‌ها از SQLite
+  useEffect(() => {
+
+    let isActive = true;
+
+
+    async function loadCategories() {
+
+      setIsLoading(true);
+
+      setLoadError('');
+
+
+      try {
+
+        // دریافت API تعریف‌شده در Preload
+        const listCategories =
+          window.hesabyar?.categories?.list;
+
+
+        if (typeof listCategories !== 'function') {
+
+          throw new Error(
+            'سرویس دریافت دسته‌بندی‌ها در دسترس نیست.'
+          );
+
+        }
+
+
+        // درخواست فهرست دسته‌بندی‌ها از Main Process
+        const result = await listCategories();
+
+
+        // بررسی معتبر بودن پاسخ
+        if (!Array.isArray(result)) {
+
+          throw new Error(
+            'اطلاعات دریافتی دسته‌بندی‌ها معتبر نیست.'
+          );
+
+        }
+
+
+        // ثبت اطلاعات در Context مشترک
+        if (isActive) {
+
+          setCategories(result);
+
+        }
+
+      } catch (error) {
+
+        if (isActive) {
+
+          // هنگام خطای دریافت، اطلاعات آزمایشی نمایش داده نشوند
+          setCategories([]);
+
+          setLoadError(
+            error.message ||
+            'دریافت فهرست دسته‌بندی‌ها ناموفق بود.'
+          );
+
+        }
+
+      } finally {
+
+        if (isActive) {
+
+          setIsLoading(false);
+
+        }
+
+      }
+
+    }
+
+
+    loadCategories();
+
+
+    // جلوگیری از تغییر State پس از خروج صفحه
+    return () => {
+
+      isActive = false;
+
+    };
+
+  }, [loadAttempt, setCategories]);
+
+
+  // محاسبه آمار دسته‌بندی‌ها بر اساس اطلاعات واقعی SQLite
   const statistics = useMemo(() => {
+
     return {
+
       total: categories.length,
 
       active: categories.filter(
@@ -106,10 +230,25 @@ function CategoryList() {
       ).length,
 
       used: categories.filter(
-        (category) => (productCounts.get(category.id) || 0) > 0
+        (category) => Number(category.productCount || 0) > 0
       ).length,
+
     };
-  }, [categories, productCounts]);
+
+  }, [categories]);
+
+
+  // دریافت تعداد کالاهای وابسته از اطلاعات پایگاه داده
+  function getProductCount(categoryId) {
+
+    const category = categories.find(
+      (item) => item.id === categoryId
+    );
+
+    return Number(category?.productCount || 0);
+
+  }
+
 
   // فهرست فیلترشده دسته‌بندی‌ها
   const filteredCategories = useMemo(() => {
@@ -208,58 +347,136 @@ function CategoryList() {
     setSingleError('');
   }
 
-  // ثبت یا ویرایش یک دسته‌بندی
-  function handleSingleSubmit(event) {
+
+  // ثبت یا ویرایش یک دسته‌بندی در SQLite
+  async function handleSingleSubmit(event) {
+
     event.preventDefault();
 
+
+    // جلوگیری از ارسال هم‌زمان چند درخواست
+    if (isSaving) return;
+
+
     const name = singleForm.name.trim();
+
     const description = singleForm.description.trim();
 
+
+    // بررسی نام دسته‌بندی
     if (!name) {
+
       setSingleError('نام دسته‌بندی را وارد کن.');
+
       return;
+
     }
 
+
+    // بررسی تکراری نبودن نام
     if (isDuplicateCategoryName(name, editingId)) {
-      setSingleError('این نام قبلاً برای دسته‌بندی دیگری ثبت شده است.');
+
+      setSingleError(
+        'این نام قبلاً برای دسته‌بندی دیگری ثبت شده است.'
+      );
+
       return;
+
     }
 
-    if (editingId) {
-      setCategories((previous) =>
-        previous.map((category) =>
-          category.id === editingId
-            ? {
-              ...category,
-              name,
-              description,
-            }
-            : category
-        )
+
+    setIsSaving(true);
+
+    setSingleError('');
+
+    setOperationError('');
+
+
+    try {
+
+      // دریافت API دسته‌بندی‌ها از Preload
+      const categoryApi = window.hesabyar?.categories;
+
+
+      if (!categoryApi) {
+
+        throw new Error(
+          'ارتباط با سرویس دسته‌بندی‌ها برقرار نیست.'
+        );
+
+      }
+
+
+      if (editingId) {
+
+        // ویرایش دسته‌بندی موجود
+        const updatedCategory = await categoryApi.update(
+          editingId,
+          {
+            name,
+            description,
+          }
+        );
+
+
+        // جایگزینی اطلاعات قبلی با اطلاعات دریافت‌شده از SQLite
+        setCategories((previous) =>
+          previous.map((category) =>
+            category.id === editingId
+              ? updatedCategory
+              : category
+          )
+        );
+
+
+        setSuccessMessage(
+          `دسته‌بندی «${name}» با موفقیت ویرایش شد.`
+        );
+
+      } else {
+
+        // ثبت دسته‌بندی جدید
+        const newCategory = await categoryApi.create({
+
+          name,
+
+          description,
+
+        });
+
+
+        // افزودن رکورد ثبت‌شده به Context مشترک
+        setCategories((previous) => [
+          ...previous,
+          newCategory,
+        ]);
+
+
+        setSuccessMessage(
+          `دسته‌بندی «${name}» با موفقیت ثبت شد.`
+        );
+
+      }
+
+
+      // بستن فرم پس از دریافت پاسخ موفق
+      closeForm();
+
+    } catch (error) {
+
+      // نمایش خطای دریافتی از Main Process
+      setSingleError(
+        error.message ||
+        'ثبت اطلاعات دسته‌بندی ناموفق بود.'
       );
 
-      setSuccessMessage(
-        `دسته‌بندی «${name}» با موفقیت ویرایش شد.`
-      );
-    } else {
-      const newCategory = {
-        id: generateCategoryId(),
-        name,
-        description,
-        isActive: true,
-      };
+    } finally {
 
-      setCategories((previous) => [
-        ...previous,
-        newCategory,
-      ]);
+      // آزادکردن وضعیت عملیات
+      setIsSaving(false);
 
-      setSuccessMessage(
-        `دسته‌بندی «${name}» با موفقیت ثبت شد.`
-      );
     }
 
-    closeForm();
   }
 
   // تغییر اطلاعات یک ردیف از فرم گروهی
@@ -330,9 +547,15 @@ function CategoryList() {
     return duplicates;
   }
 
-  // اعتبارسنجی و ثبت تمام دسته‌بندی‌ها
-  function handleBulkSubmit(event) {
+  // اعتبارسنجی و ثبت گروهی دسته‌بندی‌ها در SQLite
+  async function handleBulkSubmit(event) {
+
     event.preventDefault();
+
+
+    // جلوگیری از ارسال هم‌زمان
+    if (isSaving) return;
+
 
     // ردیف‌های کاملاً خالی نادیده گرفته می‌شوند
     const filledRows = bulkRows.filter(
@@ -341,142 +564,409 @@ function CategoryList() {
         row.description.trim()
     );
 
+
     if (filledRows.length === 0) {
-      setBulkError('حداقل نام یک دسته‌بندی را وارد کن.');
+
+      setBulkError(
+        'حداقل نام یک دسته‌بندی را وارد کن.'
+      );
+
       return;
+
     }
+
 
     const errors = {};
 
+
     // بررسی تک‌تک ردیف‌ها
     filledRows.forEach((row) => {
+
       const rowErrors = [];
+
       const name = row.name.trim();
 
+
       if (!name) {
-        rowErrors.push('نام دسته‌بندی الزامی است.');
+
+        rowErrors.push(
+          'نام دسته‌بندی الزامی است.'
+        );
+
       } else if (isDuplicateCategoryName(name)) {
-        rowErrors.push('این نام قبلاً ثبت شده است.');
+
+        rowErrors.push(
+          'این نام قبلاً ثبت شده است.'
+        );
+
       }
+
 
       if (rowErrors.length > 0) {
+
         errors[row.rowId] = rowErrors;
+
       }
+
     });
 
-    // بررسی تکراری بودن بین ردیف‌های همین فرم
+
+    // بررسی تکراری بودن نام‌ها در همین فرم
     const duplicateRows = findBatchDuplicates(filledRows);
 
+
     duplicateRows.forEach((rowId) => {
+
       errors[rowId] = [
+
         ...(errors[rowId] || []),
+
         'این نام در یکی دیگر از ردیف‌ها نیز وجود دارد.',
+
       ];
+
     });
 
-    // در صورت وجود حتی یک خطا، هیچ ردیفی ثبت نمی‌شود
+
+    // جلوگیری از ثبت گروهی در صورت وجود خطا
     if (Object.keys(errors).length > 0) {
+
       setBulkErrors(errors);
+
       setBulkError(
         'چند ردیف دارای خطا هستند. موارد مشخص‌شده را اصلاح کن.'
       );
+
       return;
+
     }
 
-    // تولید شناسه برای تمام دسته‌بندی‌های معتبر
-    const newCategories = filledRows.map((row) => ({
-      id: generateCategoryId(),
-      name: row.name.trim(),
-      description: row.description.trim(),
-      isActive: true,
-    }));
 
-    // ثبت گروهی همه دسته‌بندی‌ها
-    setCategories((previous) => [
-      ...previous,
-      ...newCategories,
-    ]);
+    setIsSaving(true);
 
-    setSuccessMessage(
-      `${formatNumber(newCategories.length)} دسته‌بندی با موفقیت ثبت شد.`
-    );
+    setBulkError('');
 
-    closeForm();
+    setOperationError('');
+
+
+    try {
+
+      // دریافت API دسته‌بندی‌ها
+      const createBulk =
+        window.hesabyar?.categories?.createBulk;
+
+
+      if (typeof createBulk !== 'function') {
+
+        throw new Error(
+          'سرویس ثبت گروهی دسته‌بندی‌ها در دسترس نیست.'
+        );
+
+      }
+
+
+      // تبدیل ردیف‌های فرم به اطلاعات موردنیاز سرویس
+      const inputs = filledRows.map((row) => ({
+
+        name: row.name.trim(),
+
+        description: row.description.trim(),
+
+      }));
+
+
+      // ثبت تمام دسته‌بندی‌ها در یک تراکنش SQLite
+      const createdCategories = await createBulk(inputs);
+
+
+      if (
+        !Array.isArray(createdCategories) ||
+        createdCategories.length !== inputs.length
+      ) {
+
+        throw new Error(
+          'پاسخ سرویس ثبت گروهی معتبر نیست.'
+        );
+
+      }
+
+
+      // افزودن دسته‌بندی‌های ثبت‌شده به Context
+      setCategories((previous) => [
+
+        ...previous,
+
+        ...createdCategories,
+
+      ]);
+
+
+      // نمایش نتیجه ثبت
+      setSuccessMessage(
+
+        `${formatNumber(createdCategories.length)} دسته‌بندی با موفقیت ثبت شد.`
+
+      );
+
+
+      // بستن فرم پس از موفقیت
+      closeForm();
+
+    } catch (error) {
+
+      // نمایش خطای عملیات ثبت گروهی
+      setBulkError(
+
+        error.message ||
+        'ثبت گروهی دسته‌بندی‌ها ناموفق بود.'
+
+      );
+
+    } finally {
+
+      setIsSaving(false);
+
+    }
+
   }
+
+
 
   // درخواست تغییر وضعیت دسته‌بندی
   function requestStatusChange(category) {
+
+    setOperationError('');
+
     setConfirmAction({
+
       type: 'status',
+
       category,
+
     });
+
   }
+
+
 
   // درخواست حذف دسته‌بندی
   function requestDelete(category) {
+
+    setOperationError('');
+
+
+    // جلوگیری از درخواست حذف دسته‌بندی دارای کالا
     if (getProductCount(category.id) > 0) {
-      setSuccessMessage(
+
+      setOperationError(
         'این دسته‌بندی دارای کالای وابسته است و امکان حذف آن وجود ندارد.'
       );
+
       return;
+
     }
+
 
     setConfirmAction({
+
       type: 'delete',
+
       category,
+
     });
+
   }
 
-  // تأیید نهایی عملیات
-  function handleConfirmAction() {
-    if (!confirmAction) return;
 
-    const { type, category } = confirmAction;
+  // اجرای عملیات تأییدشده دسته‌بندی در SQLite
+  async function handleConfirmAction() {
 
-    if (type === 'status') {
-      setCategories((previous) =>
-        previous.map((item) =>
-          item.id === category.id
-            ? {
-              ...item,
-              isActive: !item.isActive,
-            }
-            : item
-        )
-      );
+    if (!confirmAction || isSaving) return;
 
-      setSuccessMessage(
-        category.isActive
-          ? `دسته‌بندی «${category.name}» غیرفعال شد.`
-          : `دسته‌بندی «${category.name}» فعال شد.`
-      );
-    }
 
-    if (type === 'delete') {
-      // بررسی مجدد وابستگی کالا قبل از حذف
-      const hasProducts = products.some(
-        (product) => product.categoryId === category.id
-      );
+    const {
+      type,
+      category,
+    } = confirmAction;
 
-      if (hasProducts) {
-        setSuccessMessage(
-          'امکان حذف این دسته‌بندی وجود ندارد؛ زیرا دارای کالای وابسته است.'
+
+    setIsSaving(true);
+
+    setOperationError('');
+
+
+    try {
+
+      // دریافت API دسته‌بندی‌ها
+      const categoryApi = window.hesabyar?.categories;
+
+
+      if (!categoryApi) {
+
+        throw new Error(
+          'ارتباط با سرویس دسته‌بندی‌ها برقرار نیست.'
         );
-      } else {
+
+      }
+
+
+      if (type === 'status') {
+
+        // تعیین وضعیت جدید
+        const nextStatus = !category.isActive;
+
+
+        // تغییر وضعیت در پایگاه داده
+        const updatedCategory = await categoryApi.setActive(
+
+          category.id,
+
+          nextStatus
+
+        );
+
+
+        // به‌روزرسانی Context با نتیجه واقعی SQLite
+        setCategories((previous) =>
+          previous.map((item) =>
+            item.id === category.id
+              ? updatedCategory
+              : item
+          )
+        );
+
+
+        setSuccessMessage(
+
+          nextStatus
+
+            ? `دسته‌بندی «${category.name}» فعال شد.`
+
+            : `دسته‌بندی «${category.name}» غیرفعال شد.`
+
+        );
+
+      }
+
+
+      if (type === 'delete') {
+
+        // حذف دسته‌بندی در Main Process
+        const result = await categoryApi.delete(
+          category.id
+        );
+
+
+        if (!result?.success) {
+
+          throw new Error(
+            'حذف دسته‌بندی با موفقیت انجام نشد.'
+          );
+
+        }
+
+
+        // حذف دسته‌بندی از Context پس از حذف موفق در SQLite
         setCategories((previous) =>
           previous.filter(
             (item) => item.id !== category.id
           )
         );
 
+
         setSuccessMessage(
+
           `دسته‌بندی «${category.name}» حذف شد.`
+
         );
+
       }
+
+
+      // بستن پنجره پس از موفقیت
+      setConfirmAction(null);
+
+    } catch (error) {
+
+      // نمایش خطای دریافتی از سرویس
+      setOperationError(
+
+        error.message ||
+        'اجرای عملیات دسته‌بندی ناموفق بود.'
+
+      );
+
+    } finally {
+
+      setIsSaving(false);
+
     }
 
-    setConfirmAction(null);
   }
+
+
+  // نمایش وضعیت دریافت اطلاعات
+  if (isLoading) {
+
+    return (
+
+      <div className="category-page">
+
+        <div className="category-empty-state">
+
+          <strong>
+            در حال دریافت فهرست دسته‌بندی‌ها...
+          </strong>
+
+          <p>
+            اطلاعات از پایگاه داده حساب‌یار دریافت می‌شود.
+          </p>
+
+        </div>
+
+      </div>
+
+    );
+
+  }
+
+
+  // نمایش خطا و امکان تلاش مجدد
+  if (loadError) {
+
+    return (
+
+      <div className="category-page">
+
+        <div
+          className="category-form-error"
+          role="alert"
+        >
+
+          {loadError}
+
+        </div>
+
+
+        <button
+          type="button"
+          className="category-add-single"
+          onClick={() => {
+            setLoadAttempt((previous) => previous + 1);
+          }}
+        >
+
+          تلاش مجدد برای دریافت اطلاعات
+
+        </button>
+
+      </div>
+
+    );
+
+  }
+
+
 
   return (
     <div className="category-page">
@@ -558,27 +1048,39 @@ function CategoryList() {
           <option value="inactive">غیرفعال</option>
         </select>
 
-        <div className="category-add-actions">
 
-          <button
-            type="button"
-            className="category-add-single"
-            onClick={openSingleForm}
-          >
-            <span>+</span>
-            افزودن تکی
-          </button>
+        {/* دکمه‌های افزودن فقط برای کاربران دارای مجوز مدیریت */}
+        {canManageCategories && (
 
-          <button
-            type="button"
-            className="category-add-bulk"
-            onClick={openBulkForm}
-          >
-            <span>+</span>
-            افزودن گروهی
-          </button>
+          <div className="category-add-actions">
 
-        </div>
+            <button
+              type="button"
+              className="category-add-single"
+              onClick={openSingleForm}
+            >
+
+              <span>+</span>
+              افزودن تکی
+
+            </button>
+
+
+            <button
+              type="button"
+              className="category-add-bulk"
+              onClick={openBulkForm}
+            >
+
+              <span>+</span>
+              افزودن گروهی
+
+            </button>
+
+          </div>
+
+        )}
+
 
       </section>
 
@@ -640,47 +1142,65 @@ function CategoryList() {
                       </span>
                     </td>
 
+
                     <td>
-                      <div className="category-actions">
 
-                        <button
-                          type="button"
-                          className="category-edit-action"
-                          onClick={() => openEditForm(category)}
-                        >
-                          ویرایش
-                        </button>
+                      {canManageCategories ? (
 
-                        <button
-                          type="button"
-                          className={
-                            category.isActive
-                              ? 'category-deactivate-action'
-                              : 'category-activate-action'
-                          }
-                          onClick={() => requestStatusChange(category)}
-                        >
-                          {category.isActive
-                            ? 'غیرفعال‌سازی'
-                            : 'فعال‌سازی'}
-                        </button>
+                        <div className="category-actions">
 
-                        <button
-                          type="button"
-                          className="category-delete-action"
-                          disabled={count > 0}
-                          onClick={() => requestDelete(category)}
-                          title={
-                            count > 0
-                              ? 'این دسته‌بندی دارای کالاست.'
-                              : 'حذف دسته‌بندی'
-                          }
-                        >
-                          حذف
-                        </button>
+                          <button
+                            type="button"
+                            className="category-edit-action"
+                            onClick={() => openEditForm(category)}
+                            disabled={isSaving}
+                          >
+                            ویرایش
+                          </button>
 
-                      </div>
+
+                          <button
+                            type="button"
+                            className={
+                              category.isActive
+                                ? 'category-deactivate-action'
+                                : 'category-activate-action'
+                            }
+                            onClick={() => requestStatusChange(category)}
+                            disabled={isSaving}
+                          >
+                            {category.isActive
+                              ? 'غیرفعال‌سازی'
+                              : 'فعال‌سازی'}
+                          </button>
+
+
+                          <button
+                            type="button"
+                            className="category-delete-action"
+                            disabled={
+                              count > 0 || isSaving
+                            }
+                            onClick={() => requestDelete(category)}
+                            title={
+                              count > 0
+                                ? 'این دسته‌بندی دارای کالاست.'
+                                : 'حذف دسته‌بندی'
+                            }
+                          >
+                            حذف
+                          </button>
+
+                        </div>
+
+                      ) : (
+
+                        <span>—</span>
+
+                      )}
+
                     </td>
+
 
                   </tr>
                 );
@@ -708,7 +1228,12 @@ function CategoryList() {
         <div
           className="category-modal-backdrop"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeForm();
+            if (
+              event.target === event.currentTarget &&
+              !isSaving
+            ) {
+              closeForm();
+            }
           }}
         >
           <section
@@ -798,16 +1323,24 @@ function CategoryList() {
                     type="button"
                     className="category-cancel-button"
                     onClick={closeForm}
+                    disabled={isSaving}
                   >
                     انصراف
                   </button>
 
+
                   <button
                     type="submit"
                     className="category-submit-button"
+                    disabled={isSaving}
                   >
-                    {editingId ? 'ذخیره تغییرات' : 'ثبت دسته‌بندی'}
+                    {isSaving
+                      ? 'در حال ذخیره...'
+                      : editingId
+                        ? 'ذخیره تغییرات'
+                        : 'ثبت دسته‌بندی'}
                   </button>
+
                 </footer>
 
               </form>
@@ -949,12 +1482,17 @@ function CategoryList() {
                     انصراف
                   </button>
 
+
                   <button
                     type="submit"
                     className="category-submit-button"
+                    disabled={isSaving}
                   >
-                    ثبت همه دسته‌بندی‌ها
+                    {isSaving
+                      ? 'در حال ثبت...'
+                      : 'ثبت همه دسته‌بندی‌ها'}
                   </button>
+
                 </footer>
 
               </form>
@@ -1009,9 +1547,11 @@ function CategoryList() {
                 type="button"
                 className="category-cancel-button"
                 onClick={() => setConfirmAction(null)}
+                disabled={isSaving}
               >
                 انصراف
               </button>
+
 
               <button
                 type="button"
@@ -1021,11 +1561,15 @@ function CategoryList() {
                     : 'category-submit-button'
                 }
                 onClick={handleConfirmAction}
+                disabled={isSaving}
               >
-                {confirmAction.type === 'delete'
-                  ? 'حذف دسته‌بندی'
-                  : 'تأیید'}
+                {isSaving
+                  ? 'در حال اجرا...'
+                  : confirmAction.type === 'delete'
+                    ? 'حذف دسته‌بندی'
+                    : 'تأیید'}
               </button>
+
             </div>
 
           </section>

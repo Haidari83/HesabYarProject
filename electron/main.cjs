@@ -35,6 +35,16 @@ const {
   setUserActive,
 } = require('./services/userService.cjs');
 
+// سرویس مدیریت دسته‌بندی کالاها
+const {
+  getCategories,
+  createCategory,
+  createCategories,
+  updateCategory,
+  setCategoryActive,
+  deleteCategory,
+} = require('./services/categoryService.cjs');
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -570,6 +580,115 @@ function registerIpcHandlers() {
         actor,
         userId,
         isActive
+      );
+
+    }
+  );
+
+
+  // دریافت فهرست دسته‌بندی‌ها
+  ipcMain.handle(
+    'categories:list',
+    (event) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      // دریافت فهرست با بررسی مجوز مشاهده
+      return getCategories(database, actor);
+
+    }
+  );
+
+
+  // ایجاد یک دسته‌بندی
+  ipcMain.handle(
+    'categories:create',
+    (event, input) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      // ثبت دسته‌بندی در پایگاه داده
+      return createCategory(
+        database,
+        actor,
+        input
+      );
+
+    }
+  );
+
+
+  // ایجاد گروهی دسته‌بندی‌ها
+  ipcMain.handle(
+    'categories:create-bulk',
+    (event, inputs) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      // ثبت همه دسته‌بندی‌ها در یک تراکنش
+      return createCategories(
+        database,
+        actor,
+        inputs
+      );
+
+    }
+  );
+
+
+  // ویرایش دسته‌بندی
+  ipcMain.handle(
+    'categories:update',
+    (event, categoryId, input) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      return updateCategory(
+        database,
+        actor,
+        categoryId,
+        input
+      );
+
+    }
+  );
+
+
+  // فعال یا غیرفعال کردن دسته‌بندی
+  ipcMain.handle(
+    'categories:set-active',
+    (event, categoryId, isActive) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      return setCategoryActive(
+        database,
+        actor,
+        categoryId,
+        isActive
+      );
+
+    }
+  );
+
+
+  // حذف دسته‌بندی
+  ipcMain.handle(
+    'categories:delete',
+    (event, categoryId) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      return deleteCategory(
+        database,
+        actor,
+        categoryId
       );
 
     }

@@ -112,4 +112,56 @@ contextBridge.exposeInMainWorld('hesabyar', {
 
   },
 
+  // API مدیریت دسته‌بندی‌ها
+  categories: {
+
+    // دریافت فهرست دسته‌بندی‌ها
+    list: () =>
+      ipcRenderer.invoke('categories:list'),
+
+
+    // ایجاد یک دسته‌بندی
+    create: (input) =>
+      ipcRenderer.invoke(
+        'categories:create',
+        input
+      ),
+
+
+    // ایجاد گروهی دسته‌بندی‌ها
+    createBulk: (inputs) =>
+      ipcRenderer.invoke(
+        'categories:create-bulk',
+        inputs
+      ),
+
+
+    // ویرایش دسته‌بندی
+    update: (categoryId, input) =>
+      ipcRenderer.invoke(
+        'categories:update',
+        categoryId,
+        input
+      ),
+
+
+    // فعال یا غیرفعال کردن دسته‌بندی
+    setActive: (categoryId, isActive) =>
+      ipcRenderer.invoke(
+        'categories:set-active',
+        categoryId,
+        isActive
+      ),
+
+
+    // حذف دسته‌بندی
+    delete: (categoryId) =>
+      ipcRenderer.invoke(
+        'categories:delete',
+        categoryId
+      ),
+
+  },
+
+
 });
