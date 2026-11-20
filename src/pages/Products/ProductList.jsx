@@ -274,16 +274,6 @@ function ProductList({ currentUser }) {
             برای مشاهده فهرست محصولات مجوز لازم را نداری.
           </p>
         </div>
-        {/* پنجره مستقل ثبت کالای جدید */}
-        {isCreateFormOpen && (
-          <ProductFormModal
-            categories={categories}
-            units={units}
-            currencies={currencies}
-            onClose={() => setIsCreateFormOpen(false)}
-            onCreated={handleProductCreated}
-          />
-        )}
       </div>
     );
   }
@@ -627,6 +617,17 @@ function ProductList({ currentUser }) {
 
           </section>
         </>
+      )}
+
+      {/* پنجره مستقل ثبت کالای جدید */}
+      {isCreateFormOpen && (
+        <ProductFormModal
+          categories={categories}
+          units={units}
+          currencies={currencies}
+          onClose={() => setIsCreateFormOpen(false)}
+          onCreated={handleProductCreated}
+        />
       )}
 
     </div>
