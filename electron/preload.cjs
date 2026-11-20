@@ -215,4 +215,51 @@ contextBridge.exposeInMainWorld('hesabyar', {
 
   },
 
+  // API مدیریت محصولات
+  products: {
+
+    // دریافت فهرست محصولات
+    list: () =>
+      ipcRenderer.invoke('products:list'),
+
+
+    // دریافت دسته‌بندی‌ها، واحدها و ارزهای فعال
+    getFormOptions: () =>
+      ipcRenderer.invoke('products:form-options'),
+
+
+    // ثبت یک محصول
+    create: (input) =>
+      ipcRenderer.invoke(
+        'products:create',
+        input
+      ),
+
+
+    // ثبت گروهی محصولات
+    createBulk: (inputs) =>
+      ipcRenderer.invoke(
+        'products:create-bulk',
+        inputs
+      ),
+
+
+    // ویرایش محصول
+    update: (productId, input) =>
+      ipcRenderer.invoke(
+        'products:update',
+        productId,
+        input
+      ),
+
+
+    // فعال یا غیرفعال کردن محصول
+    setActive: (productId, isActive) =>
+      ipcRenderer.invoke(
+        'products:set-active',
+        productId,
+        isActive
+      ),
+
+  },
 });

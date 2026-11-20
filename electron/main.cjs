@@ -45,7 +45,6 @@ const {
   deleteCategory,
 } = require('./services/categoryService.cjs');
 
-
 // سرویس مدیریت واحدهای اندازه‌گیری
 const {
   getUnits,
@@ -55,6 +54,16 @@ const {
   setUnitActive,
   deleteUnit,
 } = require('./services/unitService.cjs');
+
+// سرویس مدیریت محصولات و واحدهای اختصاصی آن‌ها
+const {
+  getProducts,
+  getProductFormOptions,
+  createProduct,
+  createProducts,
+  updateProduct,
+  setProductActive,
+} = require('./services/productService.cjs');
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -809,6 +818,94 @@ function registerIpcHandlers() {
         unitId
       );
 
+    }
+  );
+  // دریافت فهرست محصولات
+  ipcMain.handle(
+    'products:list',
+    (event) => {
+      const actor = requireAuthenticatedSession(event);
+
+      return getProducts(
+        database,
+        actor
+      );
+    }
+  );
+
+
+  // دریافت اطلاعات لازم برای فرم محصولات
+  ipcMain.handle(
+    'products:form-options',
+    (event) => {
+      const actor = requireAuthenticatedSession(event);
+
+      return getProductFormOptions(
+        database,
+        actor
+      );
+    }
+  );
+
+
+  // ثبت یک محصول
+  ipcMain.handle(
+    'products:create',
+    (event, input) => {
+      const actor = requireAuthenticatedSession(event);
+
+      return createProduct(
+        database,
+        actor,
+        input
+      );
+    }
+  );
+
+
+  // ثبت گروهی محصولات در یک تراکنش
+  ipcMain.handle(
+    'products:create-bulk',
+    (event, inputs) => {
+      const actor = requireAuthenticatedSession(event);
+
+      return createProducts(
+        database,
+        actor,
+        inputs
+      );
+    }
+  );
+
+
+  // ویرایش اطلاعات محصول
+  ipcMain.handle(
+    'products:update',
+    (event, productId, input) => {
+      const actor = requireAuthenticatedSession(event);
+
+      return updateProduct(
+        database,
+        actor,
+        productId,
+        input
+      );
+    }
+  );
+
+
+  // فعال یا غیرفعال کردن محصول
+  ipcMain.handle(
+    'products:set-active',
+    (event, productId, isActive) => {
+      const actor = requireAuthenticatedSession(event);
+
+      return setProductActive(
+        database,
+        actor,
+        productId,
+        isActive
+      );
     }
   );
 
