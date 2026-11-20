@@ -164,4 +164,55 @@ contextBridge.exposeInMainWorld('hesabyar', {
   },
 
 
+  // API مدیریت واحدهای اندازه‌گیری
+  units: {
+
+    // دریافت فهرست واحدها
+    list: () =>
+      ipcRenderer.invoke('units:list'),
+
+
+    // ایجاد یک واحد
+    create: (input) =>
+      ipcRenderer.invoke(
+        'units:create',
+        input
+      ),
+
+
+    // ثبت گروهی واحدها
+    createBulk: (inputs) =>
+      ipcRenderer.invoke(
+        'units:create-bulk',
+        inputs
+      ),
+
+
+    // ویرایش اطلاعات واحد
+    update: (unitId, input) =>
+      ipcRenderer.invoke(
+        'units:update',
+        unitId,
+        input
+      ),
+
+
+    // فعال یا غیرفعال کردن واحد
+    setActive: (unitId, isActive) =>
+      ipcRenderer.invoke(
+        'units:set-active',
+        unitId,
+        isActive
+      ),
+
+
+    // حذف واحد سفارشی
+    delete: (unitId) =>
+      ipcRenderer.invoke(
+        'units:delete',
+        unitId
+      ),
+
+  },
+
 });

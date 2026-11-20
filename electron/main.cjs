@@ -45,6 +45,17 @@ const {
   deleteCategory,
 } = require('./services/categoryService.cjs');
 
+
+// سرویس مدیریت واحدهای اندازه‌گیری
+const {
+  getUnits,
+  createUnit,
+  createUnits,
+  updateUnit,
+  setUnitActive,
+  deleteUnit,
+} = require('./services/unitService.cjs');
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -694,6 +705,112 @@ function registerIpcHandlers() {
     }
   );
 
+
+  // دریافت فهرست واحدهای اندازه‌گیری
+  ipcMain.handle(
+    'units:list',
+    (event) => {
+
+      // بررسی نشست کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      // دریافت واحدها با کنترل مجوز مشاهده
+      return getUnits(database, actor);
+
+    }
+  );
+
+
+  // ایجاد یک واحد
+  ipcMain.handle(
+    'units:create',
+    (event, input) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      return createUnit(
+        database,
+        actor,
+        input
+      );
+
+    }
+  );
+
+
+  // ثبت گروهی واحدها
+  ipcMain.handle(
+    'units:create-bulk',
+    (event, inputs) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      return createUnits(
+        database,
+        actor,
+        inputs
+      );
+
+    }
+  );
+
+
+  // ویرایش واحد
+  ipcMain.handle(
+    'units:update',
+    (event, unitId, input) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      return updateUnit(
+        database,
+        actor,
+        unitId,
+        input
+      );
+
+    }
+  );
+
+
+  // فعال یا غیرفعال کردن واحد
+  ipcMain.handle(
+    'units:set-active',
+    (event, unitId, isActive) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      return setUnitActive(
+        database,
+        actor,
+        unitId,
+        isActive
+      );
+
+    }
+  );
+
+
+  // حذف واحد سفارشی
+  ipcMain.handle(
+    'units:delete',
+    (event, unitId) => {
+
+      // دریافت هویت کاربر
+      const actor = requireAuthenticatedSession(event);
+
+      return deleteUnit(
+        database,
+        actor,
+        unitId
+      );
+
+    }
+  );
 
 }
 

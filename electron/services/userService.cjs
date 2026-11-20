@@ -68,7 +68,7 @@ const PERMISSION_GROUPS = [
       },
       {
         key: 'units.manage',
-        label: 'مدیریت واحدها و تبدیل‌ها',
+        label: 'مدیریت واحدهای اندازه‌گیری',
       },
     ],
   },

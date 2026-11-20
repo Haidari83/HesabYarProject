@@ -101,23 +101,6 @@ function CategoryList({ currentUser }) {
   const [successMessage, setSuccessMessage] = useState('');
 
 
-  {/* نمایش خطای عملیات مدیریتی */ }
-  {
-    operationError && (
-
-      <div
-        className="category-form-error"
-        role="alert"
-      >
-
-        {operationError}
-
-      </div>
-
-    )
-  }
-
-
   // تشخیص داشتن مجوز مدیریت دسته‌بندی‌ها
   const canManageCategories =
     currentUser?.role === 'admin' ||
@@ -268,11 +251,6 @@ function CategoryList({ currentUser }) {
       return matchesSearch && matchesStatus;
     });
   }, [categories, search, statusFilter]);
-
-  // دریافت تعداد کالاهای هر دسته‌بندی
-  function getProductCount(categoryId) {
-    return productCounts.get(categoryId) || 0;
-  }
 
   // بررسی تکراری نبودن نام نسبت به دسته‌بندی‌های قبلی
   function isDuplicateCategoryName(name, excludedId = null) {
@@ -986,6 +964,22 @@ function CategoryList({ currentUser }) {
           </button>
         </div>
       )}
+
+      {/* نمایش خطای عملیات مدیریتی */}
+      {
+        operationError && (
+
+          <div
+            className="category-form-error"
+            role="alert"
+          >
+
+            {operationError}
+
+          </div>
+
+        )
+      }
 
       {/* آمار دسته‌بندی‌ها */}
       <section className="category-statistics">
