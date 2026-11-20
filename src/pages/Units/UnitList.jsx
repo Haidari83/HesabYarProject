@@ -1,23 +1,58 @@
+import { useEffect, useMemo, useState } from 'react';
 
-import { useMemo, useState } from 'react';
-import { useBusinessData } from '../../context/BusinessDataContext';
 import './unit-list.css';
 
-// انواع کمیت‌های قابل تعریف
-const dimensions = [
-  { value: 'count', label: 'شمارشی' },
-  { value: 'mass', label: 'وزن' },
-  { value: 'volume', label: 'حجم' },
-  { value: 'length', label: 'طول' },
-  { value: 'package', label: 'بسته‌بندی' },
+// ابعاد واحدهای استاندارد و واحد مرجع هر بُعد
+const DIMENSIONS = [
+  {
+    value: 'count',
+    label: 'شمارشی',
+    referenceName: 'عدد',
+  },
+  {
+    value: 'mass',
+    label: 'وزن',
+    referenceName: 'گرام',
+  },
+  {
+    value: 'volume',
+    label: 'حجم',
+    referenceName: 'میلی‌لیتر',
+  },
+  {
+    value: 'length',
+    label: 'طول',
+    referenceName: 'میلی‌متر',
+  },
 ];
 
-// تبدیل کد نوع کمیت به عنوان فارسی
-function getDimensionLabel(value) {
-  return dimensions.find((item) => item.value === value)?.label || 'نامشخص';
+// ساخت فرم خالی ثبت واحد
+function createEmptyUnitForm() {
+  return {
+    name: '',
+    symbol: '',
+    unitKind: 'standard',
+    dimensionCode: 'count',
+    referenceFactorNum: '1',
+    referenceFactorDen: '1',
+    defaultDecimalPlaces: '0',
+  };
 }
 
-// یکسان‌سازی متن برای تشخیص موارد تکراری
+// ساخت ردیف خالی برای ثبت گروهی
+function createEmptyBulkRow() {
+  return {
+    rowId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    ...createEmptyUnitForm(),
+  };
+}
+
+// ساخت چند ردیف خالی
+function createEmptyBulkRows(count = 5) {
+  return Array.from({ length: count }, () => createEmptyBulkRow());
+}
+
+// یکسان‌سازی متن برای تشخیص نام و نماد تکراری
 function normalizeName(value) {
   return String(value || '')
     .normalize('NFKC')
@@ -30,121 +65,267 @@ function normalizeName(value) {
     .toLowerCase();
 }
 
-// نمایش اعداد فارسی
+// نمایش اعداد با قالب فارسی
 function formatNumber(value) {
   return new Intl.NumberFormat('fa-IR').format(value);
 }
 
-// تولید شناسه آزمایشی واحد
-function createUnitId() {
-  return `UNIT-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+// دریافت عنوان بُعد
+function getDimensionLabel(dimensionCode) {
+  return (
+    DIMENSIONS.find((item) => item.value === dimensionCode)?.label ||
+    'نامشخص'
+  );
 }
 
-// تولید شناسه آزمایشی تبدیل
-function createConversionId() {
-  return `CONV-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+// دریافت نام واحد مرجع
+function getReferenceUnitName(dimensionCode) {
+  return (
+    DIMENSIONS.find((item) => item.value === dimensionCode)?.referenceName ||
+    'واحد مرجع'
+  );
 }
 
-// ساخت ردیف خالی برای ثبت گروهی
-function createEmptyRow() {
+// ساخت اطلاعات ارسالی به سرویس واحدها
+function buildUnitPayload(values) {
+  const isStandard = values.unitKind === 'standard';
+
   return {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    name: '',
-    symbol: '',
-    dimension: 'count',
-    decimalPlaces: '0',
+    name: values.name.trim(),
+    symbol: values.symbol.trim(),
+
+    unitKind: values.unitKind,
+
+    dimensionCode: isStandard
+      ? values.dimensionCode
+      : null,
+
+    referenceFactorNum: isStandard
+      ? Number(values.referenceFactorNum)
+      : null,
+
+    referenceFactorDen: isStandard
+      ? Number(values.referenceFactorDen)
+      : null,
+
+    defaultDecimalPlaces: Number(
+      values.defaultDecimalPlaces
+    ),
   };
 }
 
-function createEmptyRows(count = 5) {
-  return Array.from({ length: count }, createEmptyRow);
+// اعتبارسنجی اطلاعات یک واحد در رابط کاربری
+function validateUnitPayload(payload, units, excludedId = null) {
+  const errors = [];
+
+  if (!payload.name) {
+    errors.push('نام واحد را وارد کن.');
+  } else if (payload.name.length > 100) {
+    errors.push('نام واحد حداکثر باید ۱۰۰ نویسه باشد.');
+  }
+
+  if (!payload.symbol) {
+    errors.push('نماد واحد را وارد کن.');
+  } else if (payload.symbol.length > 30) {
+    errors.push('نماد واحد حداکثر باید ۳۰ نویسه باشد.');
+  }
+
+  if (!['standard', 'package'].includes(payload.unitKind)) {
+    errors.push('نوع واحد معتبر نیست.');
+  }
+
+  if (payload.unitKind === 'standard') {
+    const validDimension = DIMENSIONS.some(
+      (item) => item.value === payload.dimensionCode
+    );
+
+    if (!validDimension) {
+      errors.push('بُعد واحد استاندارد را انتخاب کن.');
+    }
+
+    if (
+      !Number.isSafeInteger(payload.referenceFactorNum) ||
+      payload.referenceFactorNum <= 0
+    ) {
+      errors.push('صورت نسبت مرجع باید عدد صحیح مثبت باشد.');
+    }
+
+    if (
+      !Number.isSafeInteger(payload.referenceFactorDen) ||
+      payload.referenceFactorDen <= 0
+    ) {
+      errors.push('مخرج نسبت مرجع باید عدد صحیح مثبت باشد.');
+    }
+  }
+
+  if (
+    !Number.isInteger(payload.defaultDecimalPlaces) ||
+    payload.defaultDecimalPlaces < 0 ||
+    payload.defaultDecimalPlaces > 6
+  ) {
+    errors.push('دقت اعشاری باید عدد صحیحی بین صفر تا شش باشد.');
+  }
+
+  // بررسی تکراری نبودن نام یا نماد در واحدهای موجود
+  const duplicate = units.some((unit) => {
+    if (unit.id === excludedId) return false;
+
+    return (
+      normalizeName(unit.name) === normalizeName(payload.name) ||
+      normalizeName(unit.symbol) === normalizeName(payload.symbol)
+    );
+  });
+
+  if (duplicate) {
+    errors.push('نام یا نماد این واحد قبلاً ثبت شده است.');
+  }
+
+  return errors;
 }
 
-const emptyUnitForm = {
-  name: '',
-  symbol: '',
-  dimension: 'count',
-  decimalPlaces: '0',
-};
+// نمایش نسبت دقیق واحد استاندارد به واحد مرجع
+function getReferenceRatioText(unit) {
+  if (unit.unitKind !== 'standard') {
+    return 'وابسته به کالا';
+  }
 
-const emptyConversionForm = {
-  fromUnitId: '',
-  toUnitId: '',
-  factor: '',
-};
+  const numerator = formatNumber(unit.referenceFactorNum);
+  const denominator = Number(unit.referenceFactorDen);
 
-function UnitList() {
-  const {
-    units,
-    setUnits,
-    unitConversions,
-    setUnitConversions,
-    products,
-  } = useBusinessData();
+  const ratio = denominator === 1
+    ? numerator
+    : `${numerator} / ${formatNumber(denominator)}`;
 
-  // انتخاب بخش واحدها یا تبدیل‌ها
-  const [activeTab, setActiveTab] = useState('units');
+  return `۱ ${unit.name} = ${ratio} ${getReferenceUnitName(unit.dimensionCode)}`;
+}
 
-  // جست‌وجو و فیلتر واحدها
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+function UnitList({ currentUser }) {
+  const [units, setUnits] = useState([]);
 
-  // وضعیت فرم واحد
-  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
-  const [unitFormMode, setUnitFormMode] = useState('single');
-  const [editingUnitId, setEditingUnitId] = useState(null);
-  const [unitForm, setUnitForm] = useState(emptyUnitForm);
-  const [unitRows, setUnitRows] = useState(() => createEmptyRows());
-  const [unitError, setUnitError] = useState('');
-  const [unitRowErrors, setUnitRowErrors] = useState({});
+  // دسترسی‌های کاربر فعلی
+  const canViewUnits =
+    currentUser?.role === 'admin' ||
+    currentUser?.permissions?.includes('units.view') === true;
 
-  // وضعیت فرم تبدیل
-  const [isConversionModalOpen, setIsConversionModalOpen] = useState(false);
-  const [editingConversionId, setEditingConversionId] = useState(null);
-  const [conversionForm, setConversionForm] = useState(emptyConversionForm);
-  const [conversionError, setConversionError] = useState('');
+  const canManageUnits =
+    currentUser?.role === 'admin' ||
+    currentUser?.permissions?.includes('units.manage') === true;
 
-  // پنجره تأیید عملیات
-  const [confirmAction, setConfirmAction] = useState(null);
+  // وضعیت دریافت اطلاعات از SQLite
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
-  // پیام نتیجه عملیات
+  // وضعیت عملیات ثبت، ویرایش و حذف
+  const [isSaving, setIsSaving] = useState(false);
+  const [operationError, setOperationError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // محاسبه تعداد کالاهای وابسته به هر واحد
-  const unitProductCounts = useMemo(() => {
-    const counts = new Map();
+  // وضعیت جست‌وجو و فیلترها
+  const [search, setSearch] = useState('');
+  const [kindFilter, setKindFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-    products.forEach((product) => {
-      if (!product.unitId) return;
+  // وضعیت پنجره ثبت و ویرایش
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState('single');
+  const [editingUnit, setEditingUnit] = useState(null);
 
-      counts.set(
-        product.unitId,
-        (counts.get(product.unitId) || 0) + 1
-      );
-    });
-
-    return counts;
-  }, [products]);
-
-  // شناسه واحدهایی که در تبدیل‌ها استفاده شده‌اند
-  const conversionUnitIds = useMemo(() => {
-    const ids = new Set();
-
-    unitConversions.forEach((conversion) => {
-      ids.add(conversion.fromUnitId);
-      ids.add(conversion.toUnitId);
-    });
-
-    return ids;
-  }, [unitConversions]);
-
-  // فقط واحدهای فعال
-  const activeUnits = useMemo(
-    () => units.filter((unit) => unit.isActive),
-    [units]
+  // اطلاعات فرم تکی
+  const [unitForm, setUnitForm] = useState(
+    createEmptyUnitForm
   );
 
-  // فهرست واحدهای فیلترشده
+  // اطلاعات فرم گروهی
+  const [bulkRows, setBulkRows] = useState(
+    () => createEmptyBulkRows(5)
+  );
+
+  // خطاهای فرم‌ها
+  const [formError, setFormError] = useState('');
+  const [bulkErrors, setBulkErrors] = useState({});
+
+  // واحد انتخاب‌شده برای تأیید عملیات
+  const [confirmAction, setConfirmAction] = useState(null);
+
+  // دریافت واحدها از پایگاه داده
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadUnits() {
+      if (!canViewUnits) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setLoadError('');
+
+      try {
+        // دریافت API تعریف‌شده در Preload
+        const listUnits = window.hesabyar?.units?.list;
+
+        if (typeof listUnits !== 'function') {
+          throw new Error(
+            'سرویس دریافت واحدها در دسترس نیست.'
+          );
+        }
+
+        // دریافت فهرست واقعی واحدها از Main Process
+        const result = await listUnits();
+
+        if (!Array.isArray(result)) {
+          throw new Error(
+            'اطلاعات دریافتی واحدها معتبر نیست.'
+          );
+        }
+
+        if (isActive) {
+          // همگام‌سازی Context مشترک با اطلاعات SQLite
+          setUnits(result);
+        }
+      } catch (error) {
+        if (isActive) {
+          // در صورت خطا، اطلاعات آزمایشی نمایش داده نشوند
+          setUnits([]);
+
+          setLoadError(
+            error.message ||
+            'دریافت فهرست واحدها ناموفق بود.'
+          );
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadUnits();
+
+    return () => {
+      isActive = false;
+    };
+  }, [loadAttempt, canViewUnits, setUnits]);
+
+  // آمار واحدها بر اساس داده واقعی پایگاه داده
+  const statistics = useMemo(() => ({
+    total: units.length,
+
+    standard: units.filter(
+      (unit) => unit.unitKind === 'standard'
+    ).length,
+
+    package: units.filter(
+      (unit) => unit.unitKind === 'package'
+    ).length,
+
+    used: units.filter(
+      (unit) => Number(unit.productCount || 0) > 0
+    ).length,
+  }), [units]);
+
+  // فهرست فیلترشده واحدها
   const filteredUnits = useMemo(() => {
     const searchValue = normalizeName(search);
 
@@ -152,214 +333,259 @@ function UnitList() {
       const matchesSearch =
         !searchValue ||
         normalizeName(unit.name).includes(searchValue) ||
-        normalizeName(unit.symbol).includes(searchValue);
+        normalizeName(unit.symbol).includes(searchValue) ||
+        normalizeName(unit.code).includes(searchValue);
+
+      const matchesKind =
+        kindFilter === 'all' ||
+        unit.unitKind === kindFilter;
 
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'active' && unit.isActive) ||
         (statusFilter === 'inactive' && !unit.isActive);
 
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesKind && matchesStatus;
     });
-  }, [units, search, statusFilter]);
+  }, [units, search, kindFilter, statusFilter]);
 
-  // آمار واحدها
-  const statistics = useMemo(() => ({
-    total: units.length,
-    active: units.filter((unit) => unit.isActive).length,
-    inactive: units.filter((unit) => !unit.isActive).length,
-    used: units.filter(
-      (unit) => (unitProductCounts.get(unit.id) || 0) > 0
-    ).length,
-    conversions: unitConversions.length,
-  }), [units, unitProductCounts, unitConversions]);
-
-  // تعداد کالاهای استفاده‌کننده از واحد
-  function getUnitProductCount(unitId) {
-    return unitProductCounts.get(unitId) || 0;
-  }
-
-  // بررسی ارتباط واحد با کالا یا تبدیل
-  function isUnitReferenced(unitId) {
-    return (
-      getUnitProductCount(unitId) > 0 ||
-      conversionUnitIds.has(unitId)
-    );
-  }
-
-  // بررسی نام و نماد تکراری
-  function findUnitDuplicate(name, symbol, excludedId = null) {
-    const normalizedName = normalizeName(name);
-    const normalizedSymbol = normalizeName(symbol);
-
-    return units.some((unit) => {
-      if (unit.id === excludedId) return false;
-
-      return (
-        normalizeName(unit.name) === normalizedName ||
-        normalizeName(unit.symbol) === normalizedSymbol
-      );
-    });
-  }
+  // بررسی قفل بودن ویژگی‌های ساختاری واحد
+  const isStructureLocked = Boolean(
+    editingUnit &&
+    (
+      editingUnit.isSystem ||
+      Number(editingUnit.productCount || 0) > 0
+    )
+  );
 
   // بازکردن فرم ثبت تکی
-  function openSingleUnitForm() {
-    setUnitFormMode('single');
-    setEditingUnitId(null);
-    setUnitForm({ ...emptyUnitForm });
-    setUnitError('');
-    setIsUnitModalOpen(true);
+  function openSingleForm() {
+    setFormMode('single');
+    setEditingUnit(null);
+    setUnitForm(createEmptyUnitForm());
+    setFormError('');
+    setBulkErrors({});
+    setIsFormOpen(true);
   }
 
   // بازکردن فرم ثبت گروهی
-  function openBulkUnitForm() {
-    setUnitFormMode('bulk');
-    setEditingUnitId(null);
-    setUnitRows(createEmptyRows());
-    setUnitRowErrors({});
-    setUnitError('');
-    setIsUnitModalOpen(true);
+  function openBulkForm() {
+    setFormMode('bulk');
+    setEditingUnit(null);
+    setBulkRows(createEmptyBulkRows(5));
+    setBulkErrors({});
+    setFormError('');
+    setIsFormOpen(true);
   }
 
   // بازکردن فرم ویرایش واحد
-  function openEditUnitForm(unit) {
-    setUnitFormMode('single');
-    setEditingUnitId(unit.id);
+  function openEditForm(unit) {
+    setFormMode('single');
+    setEditingUnit(unit);
 
     setUnitForm({
       name: unit.name,
       symbol: unit.symbol,
-      dimension: unit.dimension,
-      decimalPlaces: String(unit.decimalPlaces),
+      unitKind: unit.unitKind,
+      dimensionCode: unit.dimensionCode || 'count',
+
+      referenceFactorNum:
+        unit.referenceFactorNum === null
+          ? ''
+          : String(unit.referenceFactorNum),
+
+      referenceFactorDen:
+        unit.referenceFactorDen === null
+          ? ''
+          : String(unit.referenceFactorDen),
+
+      defaultDecimalPlaces: String(
+        unit.defaultDecimalPlaces
+      ),
     });
 
-    setUnitError('');
-    setIsUnitModalOpen(true);
+    setFormError('');
+    setBulkErrors({});
+    setIsFormOpen(true);
   }
 
-  // بستن فرم واحد
-  function closeUnitForm() {
-    setIsUnitModalOpen(false);
-    setEditingUnitId(null);
-    setUnitError('');
-    setUnitRowErrors({});
+  // بستن فرم
+  function closeForm() {
+    setIsFormOpen(false);
+    setEditingUnit(null);
+    setFormError('');
+    setBulkErrors({});
   }
 
   // تغییر اطلاعات فرم تکی
   function handleUnitFormChange(event) {
     const { name, value } = event.target;
 
-    setUnitForm((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
+    if (name === 'unitKind') {
+      setUnitForm((previous) => (
+        value === 'package'
+          ? {
+            ...previous,
+            unitKind: 'package',
+            dimensionCode: '',
+            referenceFactorNum: '',
+            referenceFactorDen: '',
+          }
+          : {
+            ...previous,
+            unitKind: 'standard',
+            dimensionCode: previous.dimensionCode || 'count',
+            referenceFactorNum: previous.referenceFactorNum || '1',
+            referenceFactorDen: previous.referenceFactorDen || '1',
+          }
+      ));
+    } else {
+      setUnitForm((previous) => ({
+        ...previous,
+        [name]: value,
+      }));
+    }
 
-    setUnitError('');
+    setFormError('');
   }
 
-  // ثبت یا ویرایش واحد
-  function handleSingleUnitSubmit(event) {
+  // ثبت یا ویرایش یک واحد
+  async function handleSingleSubmit(event) {
     event.preventDefault();
 
-    const name = unitForm.name.trim();
-    const symbol = unitForm.symbol.trim();
-    const decimalPlaces = Number(unitForm.decimalPlaces);
+    if (isSaving) return;
 
-    if (!name || !symbol) {
-      setUnitError('نام و نماد واحد الزامی است.');
+    const payload = buildUnitPayload(unitForm);
+
+    const errors = validateUnitPayload(
+      payload,
+      units,
+      editingUnit?.id || null
+    );
+
+    if (errors.length > 0) {
+      setFormError(errors[0]);
       return;
     }
 
-    if (
-      !Number.isInteger(decimalPlaces) ||
-      decimalPlaces < 0 ||
-      decimalPlaces > 6
-    ) {
-      setUnitError('دقت اعشاری باید عدد صحیحی بین صفر تا شش باشد.');
-      return;
-    }
+    setIsSaving(true);
+    setFormError('');
+    setOperationError('');
 
-    if (findUnitDuplicate(name, symbol, editingUnitId)) {
-      setUnitError('نام یا نماد این واحد قبلاً ثبت شده است.');
-      return;
-    }
+    try {
+      const unitApi = window.hesabyar?.units;
 
-    if (editingUnitId) {
-      const oldUnit = units.find((unit) => unit.id === editingUnitId);
-
-      if (
-        isUnitReferenced(editingUnitId) &&
-        oldUnit.dimension !== unitForm.dimension
-      ) {
-        setUnitError(
-          'نوع کمیت این واحد به دلیل استفاده در کالاها یا تبدیل‌ها قابل تغییر نیست.'
+      if (!unitApi) {
+        throw new Error(
+          'ارتباط با سرویس مدیریت واحدها برقرار نیست.'
         );
-        return;
       }
 
-      setUnits((previous) =>
-        previous.map((unit) =>
-          unit.id === editingUnitId
-            ? {
-              ...unit,
-              name,
-              symbol,
-              dimension: unitForm.dimension,
-              decimalPlaces,
-            }
-            : unit
-        )
+      if (editingUnit) {
+        // ارسال اطلاعات ویرایش‌شده به Main Process
+        const updatedUnit = await unitApi.update(
+          editingUnit.id,
+          payload
+        );
+
+        // جایگزینی رکورد قبلی با پاسخ پایگاه داده
+        setUnits((previous) =>
+          previous.map((unit) =>
+            unit.id === editingUnit.id
+              ? updatedUnit
+              : unit
+          )
+        );
+
+        setSuccessMessage(
+          `واحد «${updatedUnit.name}» با موفقیت ویرایش شد.`
+        );
+      } else {
+        // ثبت واحد جدید در SQLite
+        const newUnit = await unitApi.create(payload);
+
+        setUnits((previous) => [
+          ...previous,
+          newUnit,
+        ]);
+
+        setSuccessMessage(
+          `واحد «${newUnit.name}» با موفقیت ثبت شد.`
+        );
+      }
+
+      closeForm();
+    } catch (error) {
+      setFormError(
+        error.message ||
+        'ثبت اطلاعات واحد ناموفق بود.'
       );
-
-      setSuccessMessage(`واحد «${name}» با موفقیت ویرایش شد.`);
-    } else {
-      setUnits((previous) => [
-        ...previous,
-        {
-          id: createUnitId(),
-          name,
-          symbol,
-          dimension: unitForm.dimension,
-          decimalPlaces,
-          isActive: true,
-        },
-      ]);
-
-      setSuccessMessage(`واحد «${name}» با موفقیت ثبت شد.`);
+    } finally {
+      setIsSaving(false);
     }
-
-    closeUnitForm();
   }
 
-  // تغییر یک ردیف ثبت گروهی
-  function updateUnitRow(rowId, changes) {
-    setUnitRows((previous) =>
+  // تغییر نوع واحد در ردیف ثبت گروهی
+  function handleBulkKindChange(row, value) {
+    updateBulkRow(row.rowId,
+      value === 'package'
+        ? {
+          unitKind: 'package',
+          dimensionCode: '',
+          referenceFactorNum: '',
+          referenceFactorDen: '',
+        }
+        : {
+          unitKind: 'standard',
+          dimensionCode: row.dimensionCode || 'count',
+          referenceFactorNum: row.referenceFactorNum || '1',
+          referenceFactorDen: row.referenceFactorDen || '1',
+        }
+    );
+  }
+
+  // تغییر اطلاعات یک ردیف ثبت گروهی
+  function updateBulkRow(rowId, changes) {
+    setBulkRows((previous) =>
       previous.map((row) =>
-        row.id === rowId ? { ...row, ...changes } : row
+        row.rowId === rowId
+          ? { ...row, ...changes }
+          : row
       )
     );
 
-    setUnitRowErrors({});
-    setUnitError('');
+    setBulkErrors({});
+    setFormError('');
   }
 
-  // افزودن ردیف
-  function addUnitRows(count = 1) {
-    setUnitRows((previous) => [
-      ...previous,
-      ...createEmptyRows(count),
-    ]);
+  // افزودن ردیف به فرم گروهی
+  function addBulkRows(count = 1) {
+    setBulkRows((previous) => {
+      const remaining = 200 - previous.length;
+      const numberToAdd = Math.min(count, remaining);
+
+      if (numberToAdd <= 0) return previous;
+
+      return [
+        ...previous,
+        ...createEmptyBulkRows(numberToAdd),
+      ];
+    });
   }
 
-  // حذف ردیف
-  function removeUnitRow(rowId) {
-    setUnitRows((previous) => {
-      if (previous.length === 1) return createEmptyRows(1);
+  // حذف ردیف از فرم گروهی
+  function removeBulkRow(rowId) {
+    setBulkRows((previous) => {
+      if (previous.length === 1) {
+        return createEmptyBulkRows(1);
+      }
 
-      return previous.filter((row) => row.id !== rowId);
+      return previous.filter(
+        (row) => row.rowId !== rowId
+      );
     });
 
-    setUnitRowErrors((previous) => {
+    setBulkErrors((previous) => {
       const next = { ...previous };
       delete next[rowId];
       return next;
@@ -367,15 +593,24 @@ function UnitList() {
   }
 
   // ثبت گروهی واحدها
-  function handleBulkUnitSubmit(event) {
+  async function handleBulkSubmit(event) {
     event.preventDefault();
 
-    const filledRows = unitRows.filter(
-      (row) => row.name.trim() || row.symbol.trim()
+    if (isSaving) return;
+
+    const filledRows = bulkRows.filter(
+      (row) =>
+        row.name.trim() ||
+        row.symbol.trim()
     );
 
     if (filledRows.length === 0) {
-      setUnitError('حداقل یک واحد را وارد کن.');
+      setFormError('حداقل اطلاعات یک واحد را وارد کن.');
+      return;
+    }
+
+    if (filledRows.length > 200) {
+      setFormError('در هر مرحله حداکثر ۲۰۰ واحد قابل ثبت است.');
       return;
     }
 
@@ -384,381 +619,225 @@ function UnitList() {
     const seenSymbols = new Map();
 
     filledRows.forEach((row) => {
-      const rowErrors = [];
-      const name = normalizeName(row.name);
-      const symbol = normalizeName(row.symbol);
-      const decimalPlaces = Number(row.decimalPlaces);
+      const payload = buildUnitPayload(row);
 
-      if (!name) {
-        rowErrors.push('نام واحد الزامی است.');
-      } else {
-        if (findUnitDuplicate(name, symbol)) {
-          rowErrors.push('نام یا نماد این واحد قبلاً ثبت شده است.');
-        }
+      const rowErrors = validateUnitPayload(
+        payload,
+        units
+      );
 
-        if (seenNames.has(name)) {
+      // بررسی نام‌های تکراری در همین فرم
+      const normalizedName = normalizeName(payload.name);
+
+      if (normalizedName) {
+        if (seenNames.has(normalizedName)) {
           rowErrors.push('نام این واحد در ردیف دیگری نیز تکرار شده است.');
-          const previousId = seenNames.get(name);
+
+          const previousId = seenNames.get(normalizedName);
+
           errors[previousId] = [
             ...(errors[previousId] || []),
             'نام این واحد در ردیف دیگری نیز تکرار شده است.',
           ];
         } else {
-          seenNames.set(name, row.id);
+          seenNames.set(normalizedName, row.rowId);
         }
       }
 
-      if (!symbol) {
-        rowErrors.push('نماد واحد الزامی است.');
-      } else {
-        if (seenSymbols.has(symbol)) {
+      // بررسی نمادهای تکراری در همین فرم
+      const normalizedSymbol = normalizeName(payload.symbol);
+
+      if (normalizedSymbol) {
+        if (seenSymbols.has(normalizedSymbol)) {
           rowErrors.push('نماد این واحد در ردیف دیگری نیز تکرار شده است.');
-          const previousId = seenSymbols.get(symbol);
+
+          const previousId = seenSymbols.get(normalizedSymbol);
+
           errors[previousId] = [
             ...(errors[previousId] || []),
             'نماد این واحد در ردیف دیگری نیز تکرار شده است.',
           ];
         } else {
-          seenSymbols.set(symbol, row.id);
+          seenSymbols.set(normalizedSymbol, row.rowId);
         }
       }
 
-      if (
-        !Number.isInteger(decimalPlaces) ||
-        decimalPlaces < 0 ||
-        decimalPlaces > 6
-      ) {
-        rowErrors.push('دقت اعشاری باید بین صفر تا شش باشد.');
-      }
-
       if (rowErrors.length > 0) {
-        errors[row.id] = [
-          ...(errors[row.id] || []),
+        errors[row.rowId] = [
+          ...(errors[row.rowId] || []),
           ...rowErrors,
         ];
       }
     });
 
-    // در صورت وجود خطا، هیچ واحدی ثبت نمی‌شود
     if (Object.keys(errors).length > 0) {
-      setUnitRowErrors(errors);
-      setUnitError('ردیف‌های مشخص‌شده را اصلاح کن.');
+      setBulkErrors(errors);
+      setFormError(
+        'برخی ردیف‌ها دارای خطا هستند. موارد مشخص‌شده را اصلاح کن.'
+      );
       return;
     }
 
-    const newUnits = filledRows.map((row) => ({
-      id: createUnitId(),
-      name: row.name.trim(),
-      symbol: row.symbol.trim(),
-      dimension: row.dimension,
-      decimalPlaces: Number(row.decimalPlaces),
-      isActive: true,
-    }));
+    setIsSaving(true);
+    setBulkErrors({});
+    setFormError('');
+    setOperationError('');
 
-    setUnits((previous) => [...previous, ...newUnits]);
+    try {
+      const createBulk =
+        window.hesabyar?.units?.createBulk;
 
-    setSuccessMessage(
-      `${formatNumber(newUnits.length)} واحد با موفقیت ثبت شد.`
-    );
+      if (typeof createBulk !== 'function') {
+        throw new Error(
+          'سرویس ثبت گروهی واحدها در دسترس نیست.'
+        );
+      }
 
-    closeUnitForm();
+      const inputs = filledRows.map(buildUnitPayload);
+
+      // ثبت اتمیک تمام واحدها در SQLite
+      const createdUnits = await createBulk(inputs);
+
+      if (
+        !Array.isArray(createdUnits) ||
+        createdUnits.length !== inputs.length
+      ) {
+        throw new Error(
+          'پاسخ سرویس ثبت گروهی معتبر نیست.'
+        );
+      }
+
+      setUnits((previous) => [
+        ...previous,
+        ...createdUnits,
+      ]);
+
+      setSuccessMessage(
+        `${formatNumber(createdUnits.length)} واحد با موفقیت ثبت شد.`
+      );
+
+      closeForm();
+    } catch (error) {
+      setFormError(
+        error.message ||
+        'ثبت گروهی واحدها ناموفق بود.'
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  // درخواست فعال‌سازی یا غیرفعال‌سازی
-  function requestUnitStatusChange(unit) {
+  // درخواست تغییر وضعیت واحد
+  function requestStatusChange(unit) {
+    if (unit.isActive && Number(unit.productCount || 0) > 0) {
+      return;
+    }
+
     setConfirmAction({
-      type: 'unit-status',
+      type: 'status',
       unit,
     });
   }
 
   // درخواست حذف واحد
-  function requestUnitDelete(unit) {
-    if (isUnitReferenced(unit.id)) return;
+  function requestDelete(unit) {
+    if (
+      unit.isSystem ||
+      Number(unit.productCount || 0) > 0
+    ) {
+      return;
+    }
 
     setConfirmAction({
-      type: 'unit-delete',
+      type: 'delete',
       unit,
     });
   }
 
-  // واحدهای سازگار با واحد مبدأ تبدیل
-  function getCompatibleUnits(fromUnitId) {
-    const fromUnit = units.find((unit) => unit.id === fromUnitId);
-
-    if (!fromUnit || fromUnit.dimension === 'package') return [];
-
-    return units.filter(
-      (unit) =>
-        unit.id !== fromUnitId &&
-        unit.dimension === fromUnit.dimension &&
-        unit.dimension !== 'package' &&
-        unit.isActive
-    );
-  }
-
-  // بازکردن فرم تعریف تبدیل
-  // بازکردن فرم تعریف تبدیل جدید
-  function openAddConversionForm() {
-
-    // پیدا کردن اولین جفت واحد فعال که هنوز تبدیل آن ثبت نشده است
-    const availablePair = activeUnits
-      .flatMap((fromUnit) =>
-        getCompatibleUnits(fromUnit.id).map((toUnit) => ({
-          fromUnit,
-          toUnit,
-        }))
-      )
-      .find(({ fromUnit, toUnit }) => {
-
-        // بررسی ثبت نشدن تبدیل در هر دو جهت
-        return !unitConversions.some((conversion) => {
-
-          const sameDirection =
-            conversion.fromUnitId === fromUnit.id &&
-            conversion.toUnitId === toUnit.id;
-
-          const reverseDirection =
-            conversion.fromUnitId === toUnit.id &&
-            conversion.toUnitId === fromUnit.id;
-
-          return sameDirection || reverseDirection;
-        });
-
-      });
-
-    // اگر هیچ جفت واحد جدیدی وجود نداشت
-    if (!availablePair) {
-      setSuccessMessage(
-        'برای تعریف تبدیل جدید، ابتدا یک واحد هم‌نوع دیگر ایجاد کن.'
-      );
-      return;
-    }
-
-    // بازکردن فرم با واحدهای انتخاب‌شده
-    setEditingConversionId(null);
-
-    setConversionForm({
-      fromUnitId: availablePair.fromUnit.id,
-      toUnitId: availablePair.toUnit.id,
-      factor: '',
-    });
-
-    setConversionError('');
-    setIsConversionModalOpen(true);
-  }
-
-  // بازکردن فرم ویرایش تبدیل
-  function openEditConversionForm(conversion) {
-    setEditingConversionId(conversion.id);
-
-    setConversionForm({
-      fromUnitId: conversion.fromUnitId,
-      toUnitId: conversion.toUnitId,
-      factor: String(conversion.factor),
-    });
-
-    setConversionError('');
-    setIsConversionModalOpen(true);
-  }
-
-  // بستن فرم تبدیل
-  function closeConversionForm() {
-    setIsConversionModalOpen(false);
-    setEditingConversionId(null);
-    setConversionError('');
-  }
-
-  // تغییر واحد مبدأ و انتخاب مقصد سازگار
-  function handleFromUnitChange(fromUnitId) {
-    const targets = getCompatibleUnits(fromUnitId);
-
-    setConversionForm((previous) => ({
-      ...previous,
-      fromUnitId,
-      toUnitId: targets[0]?.id || '',
-      factor: '',
-    }));
-
-    setConversionError('');
-  }
-
-  // ثبت یا ویرایش تبدیل
-  function handleConversionSubmit(event) {
-    event.preventDefault();
-
-    const fromUnit = units.find(
-      (unit) => unit.id === conversionForm.fromUnitId
-    );
-
-    const toUnit = units.find(
-      (unit) => unit.id === conversionForm.toUnitId
-    );
-
-    const factor = Number(conversionForm.factor);
-
-    if (!fromUnit || !toUnit) {
-      setConversionError('واحد مبدأ و مقصد را انتخاب کن.');
-      return;
-    }
-
-    if (
-      fromUnit.id === toUnit.id ||
-      fromUnit.dimension !== toUnit.dimension ||
-      fromUnit.dimension === 'package'
-    ) {
-      setConversionError('تبدیل فقط بین واحدهای متفاوت و هم‌نوع مجاز است.');
-      return;
-    }
-
-    if (
-      !editingConversionId &&
-      (!fromUnit.isActive || !toUnit.isActive)
-    ) {
-      setConversionError('برای تبدیل جدید باید هر دو واحد فعال باشند.');
-      return;
-    }
-
-    if (!Number.isFinite(factor) || factor <= 0) {
-      setConversionError('ضریب تبدیل باید عددی بزرگ‌تر از صفر باشد.');
-      return;
-    }
-
-    // جلوگیری از تعریف مجدد همان تبدیل یا تبدیل معکوس
-    const duplicate = unitConversions.some((item) => {
-      if (item.id === editingConversionId) return false;
-
-      const sameDirection =
-        item.fromUnitId === fromUnit.id &&
-        item.toUnitId === toUnit.id;
-
-      const reverseDirection =
-        item.fromUnitId === toUnit.id &&
-        item.toUnitId === fromUnit.id;
-
-      return sameDirection || reverseDirection;
-    });
-
-    if (duplicate) {
-      setConversionError('برای این دو واحد قبلاً تبدیل تعریف شده است.');
-      return;
-    }
-
-    const conversionData = {
-      id: editingConversionId || createConversionId(),
-      fromUnitId: fromUnit.id,
-      toUnitId: toUnit.id,
-      factor,
-    };
-
-    if (editingConversionId) {
-      setUnitConversions((previous) =>
-        previous.map((item) =>
-          item.id === editingConversionId ? conversionData : item
-        )
-      );
-
-      setSuccessMessage('تبدیل واحد با موفقیت ویرایش شد.');
-    } else {
-      setUnitConversions((previous) => [
-        ...previous,
-        conversionData,
-      ]);
-
-      setSuccessMessage('تبدیل واحد با موفقیت ثبت شد.');
-    }
-
-    closeConversionForm();
-  }
-
-  // درخواست حذف تبدیل
-  function requestConversionDelete(conversion) {
-    setConfirmAction({
-      type: 'conversion-delete',
-      conversion,
-    });
-  }
-
   // اجرای عملیات تأییدشده
-  function handleConfirmAction() {
-    if (!confirmAction) return;
+  async function handleConfirmAction() {
+    if (!confirmAction || isSaving) return;
 
-    if (confirmAction.type === 'unit-status') {
-      const { unit } = confirmAction;
-      const nextStatus = !unit.isActive;
+    setIsSaving(true);
+    setOperationError('');
 
-      setUnits((previous) =>
-        previous.map((item) =>
-          item.id === unit.id
-            ? { ...item, isActive: nextStatus }
-            : item
-        )
-      );
+    try {
+      const unitApi = window.hesabyar?.units;
 
-      setSuccessMessage(
-        nextStatus
-          ? `واحد «${unit.name}» فعال شد.`
-          : `واحد «${unit.name}» غیرفعال شد.`
-      );
-    }
+      if (!unitApi) {
+        throw new Error(
+          'ارتباط با سرویس مدیریت واحدها برقرار نیست.'
+        );
+      }
 
-    if (confirmAction.type === 'unit-delete') {
       const { unit } = confirmAction;
 
-      // بررسی مجدد وابستگی پیش از حذف
-      if (isUnitReferenced(unit.id)) {
-        setSuccessMessage('این واحد در کالاها یا تبدیل‌ها استفاده شده است و قابل حذف نیست.');
-      } else {
-        setUnits((previous) =>
-          previous.filter((item) => item.id !== unit.id)
+      if (confirmAction.type === 'status') {
+        const nextStatus = !unit.isActive;
+
+        // تغییر وضعیت در پایگاه داده
+        const updatedUnit = await unitApi.setActive(
+          unit.id,
+          nextStatus
         );
 
-        setSuccessMessage(`واحد «${unit.name}» حذف شد.`);
+        setUnits((previous) =>
+          previous.map((item) =>
+            item.id === unit.id
+              ? updatedUnit
+              : item
+          )
+        );
+
+        setSuccessMessage(
+          nextStatus
+            ? `واحد «${unit.name}» فعال شد.`
+            : `واحد «${unit.name}» غیرفعال شد.`
+        );
       }
-    }
 
-    if (confirmAction.type === 'conversion-delete') {
-      const { conversion } = confirmAction;
+      if (confirmAction.type === 'delete') {
+        // حذف واحد سفارشی از پایگاه داده
+        await unitApi.delete(unit.id);
 
-      setUnitConversions((previous) =>
-        previous.filter((item) => item.id !== conversion.id)
+        setUnits((previous) =>
+          previous.filter(
+            (item) => item.id !== unit.id
+          )
+        );
+
+        setSuccessMessage(
+          `واحد «${unit.name}» حذف شد.`
+        );
+      }
+
+      setConfirmAction(null);
+    } catch (error) {
+      setOperationError(
+        error.message ||
+        'اجرای عملیات ناموفق بود.'
       );
-
-      setSuccessMessage('تبدیل واحد حذف شد.');
+    } finally {
+      setIsSaving(false);
     }
-
-    setConfirmAction(null);
   }
 
-  // دریافت نام واحد از شناسه
-  function getUnitName(unitId) {
-    return units.find((unit) => unit.id === unitId)?.name || 'واحد نامشخص';
-  }
-
-  // دریافت نماد واحد از شناسه
-  function getUnitSymbol(unitId) {
-    return units.find((unit) => unit.id === unitId)?.symbol || '—';
-  }
-
-  // واحدهای مقصد مجاز در فرم تبدیل
-  const conversionTargets = units.filter((unit) => {
-    const fromUnit = units.find(
-      (item) => item.id === conversionForm.fromUnitId
-    );
-
+  // بررسی مجوز مشاهده صفحه
+  if (!canViewUnits) {
     return (
-      fromUnit &&
-      unit.id !== fromUnit.id &&
-      unit.dimension === fromUnit.dimension &&
-      unit.dimension !== 'package' &&
-      (unit.isActive || unit.id === conversionForm.toUnitId)
+      <div className="unit-page">
+        <div className="unit-state-message">
+          <strong>دسترسی غیرمجاز</strong>
+          <p>برای مشاهده واحدهای اندازه‌گیری مجوز لازم را نداری.</p>
+        </div>
+      </div>
     );
-  });
+  }
 
   return (
     <div className="unit-page">
 
-      {/* پیام نتیجه عملیات */}
+      {/* پیام موفقیت عملیات */}
       {successMessage && (
         <div className="unit-success-message" role="status">
           <span>✓</span>
@@ -774,65 +853,92 @@ function UnitList() {
         </div>
       )}
 
-      {/* کارت‌های آماری */}
-      <section className="unit-statistics">
+      {/* خطای عمومی عملیات */}
+      {operationError && (
+        <div className="unit-operation-error" role="alert">
+          <span>{operationError}</span>
 
-        <article className="unit-stat-card">
-          <span className="unit-stat-icon total">▤</span>
-          <div>
-            <p>کل واحدها</p>
-            <strong>{formatNumber(statistics.total)}</strong>
-          </div>
-        </article>
+          <button
+            type="button"
+            onClick={() => setOperationError('')}
+            aria-label="بستن پیام خطا"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
-        <article className="unit-stat-card">
-          <span className="unit-stat-icon active">✓</span>
-          <div>
-            <p>واحدهای فعال</p>
-            <strong>{formatNumber(statistics.active)}</strong>
-          </div>
-        </article>
+      {/* وضعیت بارگذاری اطلاعات */}
+      {isLoading && (
+        <div className="unit-state-message">
+          در حال دریافت واحدهای اندازه‌گیری...
+        </div>
+      )}
 
-        <article className="unit-stat-card">
-          <span className="unit-stat-icon used">▦</span>
-          <div>
-            <p>واحدهای استفاده‌شده</p>
-            <strong>{formatNumber(statistics.used)}</strong>
-          </div>
-        </article>
+      {/* خطای دریافت اطلاعات */}
+      {!isLoading && loadError && (
+        <div className="unit-state-message unit-state-error">
+          <strong>دریافت اطلاعات ناموفق بود.</strong>
+          <p>{loadError}</p>
 
-        <article className="unit-stat-card">
-          <span className="unit-stat-icon conversion">⇄</span>
-          <div>
-            <p>تبدیل‌های تعریف‌شده</p>
-            <strong>{formatNumber(statistics.conversions)}</strong>
-          </div>
-        </article>
+          <button
+            type="button"
+            className="unit-retry-button"
+            onClick={() => setLoadAttempt((value) => value + 1)}
+          >
+            تلاش مجدد
+          </button>
+        </div>
+      )}
 
-      </section>
-
-      {/* انتخاب بخش‌ها */}
-      <div className="unit-tabs">
-        <button
-          type="button"
-          className={activeTab === 'units' ? 'active' : ''}
-          onClick={() => setActiveTab('units')}
-        >
-          واحدهای اندازه‌گیری
-        </button>
-
-        <button
-          type="button"
-          className={activeTab === 'conversions' ? 'active' : ''}
-          onClick={() => setActiveTab('conversions')}
-        >
-          تبدیل واحدها
-        </button>
-      </div>
-
-      {/* بخش مدیریت واحدها */}
-      {activeTab === 'units' && (
+      {!isLoading && !loadError && (
         <>
+          {/* پیام محدودیت دسترسی مدیریتی */}
+          {!canManageUnits && (
+            <div className="unit-permission-note">
+              دسترسی شما فقط برای مشاهده واحدهاست؛
+              امکان ثبت، ویرایش و حذف در اختیارت نیست.
+            </div>
+          )}
+
+          {/* کارت‌های آماری */}
+          <section className="unit-statistics">
+
+            <article className="unit-stat-card">
+              <span className="unit-stat-icon total">▤</span>
+              <div>
+                <p>کل واحدها</p>
+                <strong>{formatNumber(statistics.total)}</strong>
+              </div>
+            </article>
+
+            <article className="unit-stat-card">
+              <span className="unit-stat-icon active">◈</span>
+              <div>
+                <p>واحدهای استاندارد</p>
+                <strong>{formatNumber(statistics.standard)}</strong>
+              </div>
+            </article>
+
+            <article className="unit-stat-card">
+              <span className="unit-stat-icon conversion">▣</span>
+              <div>
+                <p>واحدهای بسته‌بندی</p>
+                <strong>{formatNumber(statistics.package)}</strong>
+              </div>
+            </article>
+
+            <article className="unit-stat-card">
+              <span className="unit-stat-icon used">▦</span>
+              <div>
+                <p>واحدهای استفاده‌شده</p>
+                <strong>{formatNumber(statistics.used)}</strong>
+              </div>
+            </article>
+
+          </section>
+
+          {/* نوار جست‌وجو، فیلتر و عملیات */}
           <section className="unit-toolbar">
 
             <div className="unit-search">
@@ -842,9 +948,19 @@ function UnitList() {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="جست‌وجوی نام یا نماد واحد..."
+                placeholder="جست‌وجوی نام، نماد یا کد واحد..."
               />
             </div>
+
+            <select
+              value={kindFilter}
+              onChange={(event) => setKindFilter(event.target.value)}
+              aria-label="فیلتر نوع واحد"
+            >
+              <option value="all">همه انواع</option>
+              <option value="standard">استاندارد</option>
+              <option value="package">بسته‌بندی</option>
+            </select>
 
             <select
               value={statusFilter}
@@ -856,33 +972,36 @@ function UnitList() {
               <option value="inactive">غیرفعال</option>
             </select>
 
-            <div className="unit-add-actions">
-              <button
-                type="button"
-                className="unit-add-single"
-                onClick={openSingleUnitForm}
-              >
-                + افزودن تکی
-              </button>
+            {canManageUnits && (
+              <div className="unit-add-actions">
+                <button
+                  type="button"
+                  className="unit-add-single"
+                  onClick={openSingleForm}
+                >
+                  + افزودن تکی
+                </button>
 
-              <button
-                type="button"
-                className="unit-add-bulk"
-                onClick={openBulkUnitForm}
-              >
-                + افزودن گروهی
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className="unit-add-bulk"
+                  onClick={openBulkForm}
+                >
+                  + افزودن گروهی
+                </button>
+              </div>
+            )}
 
           </section>
 
+          {/* جدول واحدها */}
           <section className="unit-table-card">
 
             <header className="unit-table-header">
               <div>
                 <h2>فهرست واحدهای اندازه‌گیری</h2>
                 <p>
-                  {formatNumber(filteredUnits.length)} واحد
+                  {formatNumber(filteredUnits.length)} واحد نمایش داده می‌شود
                 </p>
               </div>
             </header>
@@ -895,9 +1014,11 @@ function UnitList() {
                     <th>ردیف</th>
                     <th>نام واحد</th>
                     <th>نماد</th>
-                    <th>نوع کمیت</th>
+                    <th>نوع واحد</th>
+                    <th>بُعد</th>
+                    <th>نسبت به واحد مرجع</th>
                     <th>دقت اعشاری</th>
-                    <th>تعداد کالاها</th>
+                    <th>کالاهای وابسته</th>
                     <th>وضعیت</th>
                     <th>عملیات</th>
                   </tr>
@@ -905,21 +1026,60 @@ function UnitList() {
 
                 <tbody>
                   {filteredUnits.map((unit, index) => {
-                    const productCount = getUnitProductCount(unit.id);
-                    const isReferenced = isUnitReferenced(unit.id);
+                    const productCount = Number(
+                      unit.productCount || 0
+                    );
+
+                    const cannotDelete =
+                      unit.isSystem || productCount > 0;
+
+                    const cannotDeactivate =
+                      unit.isActive && productCount > 0;
 
                     return (
                       <tr key={unit.id}>
 
                         <td>{formatNumber(index + 1)}</td>
 
-                        <td className="unit-name">{unit.name}</td>
+                        <td className="unit-name">
+                          <div className="unit-name-cell">
+                            <span>{unit.name}</span>
 
-                        <td className="unit-symbol">{unit.symbol}</td>
+                            {unit.isSystem && (
+                              <small className="unit-system-badge">
+                                پیش‌فرض
+                              </small>
+                            )}
+                          </div>
+                        </td>
 
-                        <td>{getDimensionLabel(unit.dimension)}</td>
+                        <td className="unit-symbol">
+                          {unit.symbol || '—'}
+                        </td>
 
-                        <td>{formatNumber(unit.decimalPlaces)}</td>
+                        <td>
+                          <span
+                            className={`unit-kind-badge ${unit.unitKind}`}
+                          >
+                            {unit.unitKind === 'standard'
+                              ? 'استاندارد'
+                              : 'بسته‌بندی'}
+                          </span>
+                        </td>
+
+                        <td>
+                          {unit.unitKind === 'standard'
+                            ? getDimensionLabel(unit.dimensionCode)
+                            : 'وابسته به کالا'}
+                        </td>
+
+                        <td className="unit-reference-cell">
+                          {getReferenceRatioText(unit)}
+                        </td>
+
+                        <td>
+                          {formatNumber(unit.defaultDecimalPlaces)}
+                        </td>
 
                         <td>
                           <span className="unit-product-count">
@@ -937,43 +1097,59 @@ function UnitList() {
                         </td>
 
                         <td>
-                          <div className="unit-actions">
+                          {canManageUnits ? (
+                            <div className="unit-actions">
 
-                            <button
-                              type="button"
-                              className="unit-edit-action"
-                              onClick={() => openEditUnitForm(unit)}
-                            >
-                              ویرایش
-                            </button>
+                              <button
+                                type="button"
+                                className="unit-edit-action"
+                                onClick={() => openEditForm(unit)}
+                              >
+                                ویرایش
+                              </button>
 
-                            <button
-                              type="button"
-                              className={
-                                unit.isActive
-                                  ? 'unit-deactivate-action'
-                                  : 'unit-activate-action'
-                              }
-                              onClick={() => requestUnitStatusChange(unit)}
-                            >
-                              {unit.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
-                            </button>
+                              <button
+                                type="button"
+                                className={
+                                  unit.isActive
+                                    ? 'unit-deactivate-action'
+                                    : 'unit-activate-action'
+                                }
+                                disabled={cannotDeactivate}
+                                title={
+                                  cannotDeactivate
+                                    ? 'این واحد در کالاها استفاده شده و قابل غیرفعال‌سازی نیست.'
+                                    : unit.isActive
+                                      ? 'غیرفعال‌سازی'
+                                      : 'فعال‌سازی'
+                                }
+                                onClick={() => requestStatusChange(unit)}
+                              >
+                                {unit.isActive
+                                  ? 'غیرفعال'
+                                  : 'فعال'}
+                              </button>
 
-                            <button
-                              type="button"
-                              className="unit-delete-action"
-                              disabled={isReferenced}
-                              title={
-                                isReferenced
-                                  ? 'این واحد در کالاها یا تبدیل‌ها استفاده شده است.'
-                                  : 'حذف واحد'
-                              }
-                              onClick={() => requestUnitDelete(unit)}
-                            >
-                              حذف
-                            </button>
+                              <button
+                                type="button"
+                                className="unit-delete-action"
+                                disabled={cannotDelete}
+                                title={
+                                  unit.isSystem
+                                    ? 'واحدهای پیش‌فرض قابل حذف نیستند.'
+                                    : productCount > 0
+                                      ? 'این واحد در کالاها استفاده شده است.'
+                                      : 'حذف واحد'
+                                }
+                                onClick={() => requestDelete(unit)}
+                              >
+                                حذف
+                              </button>
 
-                          </div>
+                            </div>
+                          ) : (
+                            '—'
+                          )}
                         </td>
 
                       </tr>
@@ -982,10 +1158,12 @@ function UnitList() {
 
                   {filteredUnits.length === 0 && (
                     <tr>
-                      <td colSpan="8">
+                      <td colSpan="10">
                         <div className="unit-empty-state">
                           <strong>واحدی پیدا نشد</strong>
-                          <p>جست‌وجو یا فیلتر را تغییر بده.</p>
+                          <p>
+                            عبارت جست‌وجو یا فیلترها را تغییر بده.
+                          </p>
                         </div>
                       </td>
                     </tr>
@@ -999,120 +1177,18 @@ function UnitList() {
         </>
       )}
 
-      {/* بخش مدیریت تبدیل‌ها */}
-      {activeTab === 'conversions' && (
-        <section className="unit-table-card">
-
-          <header className="unit-table-header">
-            <div>
-              <h2>تبدیل واحدها</h2>
-              <p>
-                تبدیل بین واحدهای هم‌نوع را تعریف و مدیریت کن.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="unit-add-conversion"
-              onClick={openAddConversionForm}
-            >
-              + افزودن تبدیل
-            </button>
-          </header>
-
-          <div className="unit-conversion-info">
-            تبدیل‌ها جهت‌دار هستند. مثلاً یک کیلوگرام برابر با ۱۰۰۰ گرام است.
-            تبدیل‌های بسته‌بندی باید در سطح هر کالا تعریف شوند.
-          </div>
-
-          <div className="unit-table-wrapper">
-            <table className="unit-table">
-
-              <thead>
-                <tr>
-                  <th>ردیف</th>
-                  <th>واحد مبدأ</th>
-                  <th>واحد مقصد</th>
-                  <th>ضریب تبدیل</th>
-                  <th>عملیات</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {unitConversions.map((conversion, index) => (
-                  <tr key={conversion.id}>
-
-                    <td>{formatNumber(index + 1)}</td>
-
-                    <td>
-                      {getUnitName(conversion.fromUnitId)}
-                      {' '}
-                      ({getUnitSymbol(conversion.fromUnitId)})
-                    </td>
-
-                    <td>
-                      {getUnitName(conversion.toUnitId)}
-                      {' '}
-                      ({getUnitSymbol(conversion.toUnitId)})
-                    </td>
-
-                    <td className="unit-conversion-factor">
-                      ۱ = {formatNumber(conversion.factor)}
-                    </td>
-
-                    <td>
-                      <div className="unit-actions">
-
-                        <button
-                          type="button"
-                          className="unit-edit-action"
-                          onClick={() => openEditConversionForm(conversion)}
-                        >
-                          ویرایش
-                        </button>
-
-                        <button
-                          type="button"
-                          className="unit-delete-action"
-                          onClick={() => requestConversionDelete(conversion)}
-                        >
-                          حذف
-                        </button>
-
-                      </div>
-                    </td>
-
-                  </tr>
-                ))}
-
-                {unitConversions.length === 0 && (
-                  <tr>
-                    <td colSpan="5">
-                      <div className="unit-empty-state">
-                        <strong>هنوز تبدیلی تعریف نشده است.</strong>
-                        <p>برای شروع، یک تبدیل جدید اضافه کن.</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-
-              </tbody>
-            </table>
-          </div>
-
-        </section>
-      )}
-
-      {/* فرم افزودن یا ویرایش واحد */}
-      {isUnitModalOpen && (
+      {/* پنجره ثبت یا ویرایش واحد */}
+      {isFormOpen && (
         <div
           className="unit-modal-backdrop"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeUnitForm();
+            if (event.target === event.currentTarget && !isSaving) {
+              closeForm();
+            }
           }}
         >
           <section
-            className={`unit-modal ${unitFormMode === 'bulk' ? 'unit-bulk-modal' : ''
+            className={`unit-modal ${formMode === 'bulk' ? 'unit-bulk-modal' : ''
               }`}
             role="dialog"
             aria-modal="true"
@@ -1122,24 +1198,25 @@ function UnitList() {
             <header className="unit-modal-header">
               <div>
                 <h2 id="unit-modal-title">
-                  {editingUnitId
-                    ? 'ویرایش واحد اندازه‌گیری'
-                    : unitFormMode === 'single'
-                      ? 'افزودن واحد جدید'
-                      : 'افزودن گروهی واحدها'}
+                  {formMode === 'bulk'
+                    ? 'ثبت گروهی واحدها'
+                    : editingUnit
+                      ? 'ویرایش واحد اندازه‌گیری'
+                      : 'افزودن واحد جدید'}
                 </h2>
 
                 <p>
-                  {unitFormMode === 'bulk'
-                    ? 'اطلاعات چند واحد را وارد کن و همه را یک‌جا ثبت کن.'
-                    : 'مشخصات واحد اندازه‌گیری را وارد کن.'}
+                  {formMode === 'bulk'
+                    ? 'اطلاعات واحدهای موردنظر را وارد کن و همه را یک‌جا ثبت کن.'
+                    : 'مشخصات واحد را مطابق نوع و بُعد آن وارد کن.'}
                 </p>
               </div>
 
               <button
                 type="button"
                 className="unit-modal-close"
-                onClick={closeUnitForm}
+                onClick={closeForm}
+                disabled={isSaving}
                 aria-label="بستن"
               >
                 ×
@@ -1147,10 +1224,10 @@ function UnitList() {
             </header>
 
             {/* فرم ثبت تکی یا ویرایش */}
-            {unitFormMode === 'single' && (
+            {formMode === 'single' && (
               <form
                 className="unit-single-form"
-                onSubmit={handleSingleUnitSubmit}
+                onSubmit={handleSingleSubmit}
               >
 
                 <div className="unit-form-grid">
@@ -1176,61 +1253,145 @@ function UnitList() {
                       value={unitForm.symbol}
                       onChange={handleUnitFormChange}
                       placeholder="مثلاً kg"
-                      required
                       dir="auto"
+                      required
                     />
                   </label>
 
                   <label className="unit-form-field">
-                    <span>نوع کمیت</span>
+                    <span>نوع واحد</span>
 
                     <select
-                      name="dimension"
-                      value={unitForm.dimension}
+                      name="unitKind"
+                      value={unitForm.unitKind}
                       onChange={handleUnitFormChange}
-                      disabled={
-                        Boolean(editingUnitId) &&
-                        isUnitReferenced(editingUnitId)
-                      }
+                      disabled={isStructureLocked}
                     >
-                      {dimensions.map((dimension) => (
-                        <option
-                          key={dimension.value}
-                          value={dimension.value}
-                        >
-                          {dimension.label}
-                        </option>
-                      ))}
+                      <option value="standard">واحد استاندارد</option>
+                      <option value="package">واحد بسته‌بندی</option>
                     </select>
-
-                    {editingUnitId &&
-                      isUnitReferenced(editingUnitId) && (
-                        <small>
-                          نوع کمیت این واحد به دلیل استفاده قبلی قابل تغییر نیست.
-                        </small>
-                      )}
                   </label>
 
+                  {unitForm.unitKind === 'standard' && (
+                    <label className="unit-form-field">
+                      <span>بُعد واحد</span>
+
+                      <select
+                        name="dimensionCode"
+                        value={unitForm.dimensionCode}
+                        onChange={handleUnitFormChange}
+                        disabled={isStructureLocked}
+                      >
+                        {DIMENSIONS.map((dimension) => (
+                          <option
+                            key={dimension.value}
+                            value={dimension.value}
+                          >
+                            {dimension.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+
+                  {unitForm.unitKind === 'standard' && (
+                    <div className="unit-form-field unit-form-field-full">
+                      <span>نسبت به واحد مرجع</span>
+
+                      <div className="unit-ratio-inputs">
+                        <label>
+                          <small>صورت</small>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={unitForm.referenceFactorNum}
+                            onChange={(event) =>
+                              handleUnitFormChange({
+                                target: {
+                                  name: 'referenceFactorNum',
+                                  value: event.target.value,
+                                },
+                              })
+                            }
+                            disabled={isStructureLocked}
+                            required
+                          />
+                        </label>
+
+                        <span className="unit-ratio-divider">/</span>
+
+                        <label>
+                          <small>مخرج</small>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={unitForm.referenceFactorDen}
+                            onChange={(event) =>
+                              handleUnitFormChange({
+                                target: {
+                                  name: 'referenceFactorDen',
+                                  value: event.target.value,
+                                },
+                              })
+                            }
+                            disabled={isStructureLocked}
+                            required
+                          />
+                        </label>
+                      </div>
+
+                      <small className="unit-field-description">
+                        هر یک از این واحدها برابر با این نسبت از
+                        {' '}
+                        {getReferenceUnitName(unitForm.dimensionCode)}
+                        {' '}
+                        است.
+                      </small>
+                    </div>
+                  )}
+
+                  {unitForm.unitKind === 'package' && (
+                    <div className="unit-package-note">
+                      واحدهای بسته‌بندی نسبت تبدیل عمومی ندارند.
+                      ضریب تبدیل آن‌ها هنگام تعریف واحدهای هر کالا
+                      مشخص می‌شود.
+                    </div>
+                  )}
+
                   <label className="unit-form-field">
-                    <span>تعداد ارقام اعشاری مجاز</span>
+                    <span>دقت اعشاری پیشنهادی</span>
 
                     <input
                       type="number"
-                      name="decimalPlaces"
+                      name="defaultDecimalPlaces"
                       min="0"
                       max="6"
                       step="1"
-                      value={unitForm.decimalPlaces}
+                      value={unitForm.defaultDecimalPlaces}
                       onChange={handleUnitFormChange}
                       required
                     />
+
+                    <small className="unit-field-description">
+                      عددی بین صفر تا شش؛ این مقدار پیشنهاد پیش‌فرض است.
+                    </small>
                   </label>
 
                 </div>
 
-                {unitError && (
+                {isStructureLocked && (
+                  <div className="unit-structure-lock-note">
+                    {editingUnit?.isSystem
+                      ? 'ساختار واحدهای پیش‌فرض قابل تغییر نیست؛ فقط نام، نماد و دقت اعشاری را می‌توان ویرایش کرد.'
+                      : 'این واحد در کالاها استفاده شده است؛ نوع، بُعد و نسبت مرجع آن قابل تغییر نیست.'}
+                  </div>
+                )}
+
+                {formError && (
                   <div className="unit-form-error" role="alert">
-                    {unitError}
+                    {formError}
                   </div>
                 )}
 
@@ -1238,7 +1399,8 @@ function UnitList() {
                   <button
                     type="button"
                     className="unit-cancel-button"
-                    onClick={closeUnitForm}
+                    onClick={closeForm}
+                    disabled={isSaving}
                   >
                     انصراف
                   </button>
@@ -1246,8 +1408,13 @@ function UnitList() {
                   <button
                     type="submit"
                     className="unit-submit-button"
+                    disabled={isSaving}
                   >
-                    {editingUnitId ? 'ذخیره تغییرات' : 'ثبت واحد'}
+                    {isSaving
+                      ? 'در حال ذخیره...'
+                      : editingUnit
+                        ? 'ذخیره تغییرات'
+                        : 'ثبت واحد'}
                   </button>
                 </footer>
 
@@ -1255,14 +1422,16 @@ function UnitList() {
             )}
 
             {/* فرم ثبت گروهی */}
-            {unitFormMode === 'bulk' && (
+            {formMode === 'bulk' && (
               <form
                 className="unit-bulk-form"
-                onSubmit={handleBulkUnitSubmit}
+                onSubmit={handleBulkSubmit}
               >
 
                 <div className="unit-bulk-info">
-                  نام و نماد الزامی هستند. ردیف‌های کاملاً خالی نادیده گرفته می‌شوند.
+                  نام و نماد هر واحد الزامی است.
+                  ردیف‌های کاملاً خالی نادیده گرفته می‌شوند.
+                  برای واحد بسته‌بندی، نسبت مرجع وارد نمی‌شود.
                 </div>
 
                 <div className="unit-bulk-table-wrapper">
@@ -1273,18 +1442,21 @@ function UnitList() {
                         <th>ردیف</th>
                         <th>نام واحد</th>
                         <th>نماد</th>
-                        <th>نوع کمیت</th>
+                        <th>نوع</th>
+                        <th>بُعد</th>
+                        <th>صورت</th>
+                        <th>مخرج</th>
                         <th>دقت اعشاری</th>
                         <th>عملیات</th>
                       </tr>
                     </thead>
 
                     <tbody>
-                      {unitRows.map((row, index) => (
+                      {bulkRows.map((row, index) => (
                         <tr
-                          key={row.id}
+                          key={row.rowId}
                           className={
-                            unitRowErrors[row.id] ? 'invalid' : ''
+                            bulkErrors[row.rowId] ? 'invalid' : ''
                           }
                         >
 
@@ -1294,17 +1466,19 @@ function UnitList() {
                             <input
                               value={row.name}
                               onChange={(event) =>
-                                updateUnitRow(row.id, {
+                                updateBulkRow(row.rowId, {
                                   name: event.target.value,
                                 })
                               }
                               placeholder="نام واحد..."
                             />
 
-                            {unitRowErrors[row.id] && (
+                            {bulkErrors[row.rowId] && (
                               <ul className="unit-row-errors">
-                                {unitRowErrors[row.id].map((error) => (
-                                  <li key={error}>{error}</li>
+                                {bulkErrors[row.rowId].map((error, errorIndex) => (
+                                  <li key={`${row.rowId}-${errorIndex}`}>
+                                    {error}
+                                  </li>
                                 ))}
                               </ul>
                             )}
@@ -1314,7 +1488,7 @@ function UnitList() {
                             <input
                               value={row.symbol}
                               onChange={(event) =>
-                                updateUnitRow(row.id, {
+                                updateBulkRow(row.rowId, {
                                   symbol: event.target.value,
                                 })
                               }
@@ -1325,22 +1499,74 @@ function UnitList() {
 
                           <td>
                             <select
-                              value={row.dimension}
+                              value={row.unitKind}
                               onChange={(event) =>
-                                updateUnitRow(row.id, {
-                                  dimension: event.target.value,
-                                })
+                                handleBulkKindChange(row, event.target.value)
                               }
                             >
-                              {dimensions.map((dimension) => (
-                                <option
-                                  key={dimension.value}
-                                  value={dimension.value}
-                                >
-                                  {dimension.label}
-                                </option>
-                              ))}
+                              <option value="standard">استاندارد</option>
+                              <option value="package">بسته‌بندی</option>
                             </select>
+                          </td>
+
+                          <td>
+                            {row.unitKind === 'standard' ? (
+                              <select
+                                value={row.dimensionCode}
+                                onChange={(event) =>
+                                  updateBulkRow(row.rowId, {
+                                    dimensionCode: event.target.value,
+                                  })
+                                }
+                              >
+                                {DIMENSIONS.map((dimension) => (
+                                  <option
+                                    key={dimension.value}
+                                    value={dimension.value}
+                                  >
+                                    {dimension.label}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+
+                          <td>
+                            {row.unitKind === 'standard' ? (
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={row.referenceFactorNum}
+                                onChange={(event) =>
+                                  updateBulkRow(row.rowId, {
+                                    referenceFactorNum: event.target.value,
+                                  })
+                                }
+                              />
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+
+                          <td>
+                            {row.unitKind === 'standard' ? (
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={row.referenceFactorDen}
+                                onChange={(event) =>
+                                  updateBulkRow(row.rowId, {
+                                    referenceFactorDen: event.target.value,
+                                  })
+                                }
+                              />
+                            ) : (
+                              '—'
+                            )}
                           </td>
 
                           <td>
@@ -1349,10 +1575,10 @@ function UnitList() {
                               min="0"
                               max="6"
                               step="1"
-                              value={row.decimalPlaces}
+                              value={row.defaultDecimalPlaces}
                               onChange={(event) =>
-                                updateUnitRow(row.id, {
-                                  decimalPlaces: event.target.value,
+                                updateBulkRow(row.rowId, {
+                                  defaultDecimalPlaces: event.target.value,
                                 })
                               }
                             />
@@ -1362,8 +1588,9 @@ function UnitList() {
                             <button
                               type="button"
                               className="unit-row-remove"
-                              onClick={() => removeUnitRow(row.id)}
+                              onClick={() => removeBulkRow(row.rowId)}
                               aria-label={`حذف ردیف ${index + 1}`}
+                              disabled={isSaving}
                             >
                               ×
                             </button>
@@ -1380,25 +1607,29 @@ function UnitList() {
                   <div>
                     <button
                       type="button"
-                      onClick={() => addUnitRows(1)}
+                      onClick={() => addBulkRows(1)}
+                      disabled={bulkRows.length >= 200 || isSaving}
                     >
                       + یک ردیف
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => addUnitRows(5)}
+                      onClick={() => addBulkRows(5)}
+                      disabled={bulkRows.length >= 200 || isSaving}
                     >
                       + پنج ردیف
                     </button>
                   </div>
 
-                  <span>{formatNumber(unitRows.length)} ردیف</span>
+                  <span>
+                    {formatNumber(bulkRows.length)} از ۲۰۰ ردیف
+                  </span>
                 </div>
 
-                {unitError && (
+                {formError && (
                   <div className="unit-form-error" role="alert">
-                    {unitError}
+                    {formError}
                   </div>
                 )}
 
@@ -1406,7 +1637,8 @@ function UnitList() {
                   <button
                     type="button"
                     className="unit-cancel-button"
-                    onClick={closeUnitForm}
+                    onClick={closeForm}
+                    disabled={isSaving}
                   >
                     انصراف
                   </button>
@@ -1414,8 +1646,11 @@ function UnitList() {
                   <button
                     type="submit"
                     className="unit-submit-button"
+                    disabled={isSaving}
                   >
-                    ثبت همه واحدها
+                    {isSaving
+                      ? 'در حال ثبت...'
+                      : 'ثبت همه واحدها'}
                   </button>
                 </footer>
 
@@ -1426,159 +1661,12 @@ function UnitList() {
         </div>
       )}
 
-      {/* فرم تعریف یا ویرایش تبدیل */}
-      {isConversionModalOpen && (
-        <div
-          className="unit-modal-backdrop"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeConversionForm();
-            }
-          }}
-        >
-          <section
-            className="unit-modal unit-conversion-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="conversion-modal-title"
-          >
-
-            <header className="unit-modal-header">
-              <div>
-                <h2 id="conversion-modal-title">
-                  {editingConversionId ? 'ویرایش تبدیل' : 'تعریف تبدیل جدید'}
-                </h2>
-
-                <p>واحد مبدأ، مقصد و ضریب تبدیل را مشخص کن.</p>
-              </div>
-
-              <button
-                type="button"
-                className="unit-modal-close"
-                onClick={closeConversionForm}
-                aria-label="بستن"
-              >
-                ×
-              </button>
-            </header>
-
-            <form
-              className="unit-single-form"
-              onSubmit={handleConversionSubmit}
-            >
-
-              <div className="unit-form-grid">
-
-                <label className="unit-form-field">
-                  <span>واحد مبدأ</span>
-
-                  <select
-                    value={conversionForm.fromUnitId}
-                    onChange={(event) =>
-                      handleFromUnitChange(event.target.value)
-                    }
-                  >
-                    {activeUnits
-                      .filter((unit) => unit.dimension !== 'package')
-                      .map((unit) => (
-                        <option key={unit.id} value={unit.id}>
-                          {unit.name} ({unit.symbol})
-                        </option>
-                      ))}
-                  </select>
-                </label>
-
-                <label className="unit-form-field">
-                  <span>واحد مقصد</span>
-
-                  <select
-                    value={conversionForm.toUnitId}
-                    onChange={(event) =>
-                      setConversionForm((previous) => ({
-                        ...previous,
-                        toUnitId: event.target.value,
-                        factor: '',
-                      }))
-                    }
-                    disabled={conversionTargets.length === 0}
-                  >
-                    <option value="">انتخاب واحد مقصد</option>
-
-                    {conversionTargets.map((unit) => (
-                      <option key={unit.id} value={unit.id}>
-                        {unit.name} ({unit.symbol})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="unit-form-field">
-                  <span>ضریب تبدیل</span>
-
-                  <input
-                    type="number"
-                    min="0.000001"
-                    step="any"
-                    value={conversionForm.factor}
-                    onChange={(event) =>
-                      setConversionForm((previous) => ({
-                        ...previous,
-                        factor: event.target.value,
-                      }))
-                    }
-                    placeholder="مثلاً ۱۰۰۰"
-                    required
-                  />
-                </label>
-
-              </div>
-
-              {conversionForm.fromUnitId && conversionForm.toUnitId && (
-                <div className="unit-conversion-preview">
-                  یک {getUnitName(conversionForm.fromUnitId)}
-                  {' '}
-                  برابر است با
-                  {' '}
-                  <strong>{conversionForm.factor || '؟'}</strong>
-                  {' '}
-                  {getUnitName(conversionForm.toUnitId)}.
-                </div>
-              )}
-
-              {conversionError && (
-                <div className="unit-form-error" role="alert">
-                  {conversionError}
-                </div>
-              )}
-
-              <footer className="unit-modal-actions">
-                <button
-                  type="button"
-                  className="unit-cancel-button"
-                  onClick={closeConversionForm}
-                >
-                  انصراف
-                </button>
-
-                <button
-                  type="submit"
-                  className="unit-submit-button"
-                >
-                  {editingConversionId ? 'ذخیره تغییرات' : 'ثبت تبدیل'}
-                </button>
-              </footer>
-
-            </form>
-          </section>
-        </div>
-      )}
-
-      {/* تأیید حذف، تغییر وضعیت یا حذف تبدیل */}
+      {/* پنجره تأیید حذف یا تغییر وضعیت */}
       {confirmAction && (
         <div
           className="unit-modal-backdrop"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
+            if (event.target === event.currentTarget && !isSaving) {
               setConfirmAction(null);
             }
           }}
@@ -1590,29 +1678,24 @@ function UnitList() {
           >
 
             <h2>
-              {confirmAction.type === 'unit-delete'
+              {confirmAction.type === 'delete'
                 ? 'حذف واحد'
-                : confirmAction.type === 'conversion-delete'
-                  ? 'حذف تبدیل'
-                  : confirmAction.unit.isActive
-                    ? 'غیرفعال‌کردن واحد'
-                    : 'فعال‌کردن واحد'}
+                : confirmAction.unit.isActive
+                  ? 'غیرفعال‌کردن واحد'
+                  : 'فعال‌کردن واحد'}
             </h2>
 
             <p>
-              {confirmAction.type === 'unit-delete'
-                ? `آیا واحد «${confirmAction.unit.name}» حذف شود؟`
-                : confirmAction.type === 'conversion-delete'
-                  ? 'آیا از حذف این تبدیل اطمینان داری؟'
-                  : `آیا می‌خواهی واحد «${confirmAction.unit.name}» را ${confirmAction.unit.isActive ? 'غیرفعال' : 'فعال'
-                  } کنی؟`}
+              {confirmAction.type === 'delete'
+                ? `آیا از حذف واحد «${confirmAction.unit.name}» اطمینان داری؟`
+                : `آیا می‌خواهی واحد «${confirmAction.unit.name}» را ${confirmAction.unit.isActive ? 'غیرفعال' : 'فعال'
+                } کنی؟`}
             </p>
 
-            {confirmAction.type === 'unit-status' &&
+            {confirmAction.type === 'status' &&
               confirmAction.unit.isActive && (
                 <div className="unit-confirm-hint">
-                  واحد غیرفعال برای ثبت کالاهای جدید قابل انتخاب نخواهد بود؛
-                  اما اطلاعات کالاهای قبلی حفظ می‌شود.
+                  واحد غیرفعال‌شده برای ثبت کالاهای جدید قابل انتخاب نخواهد بود.
                 </div>
               )}
 
@@ -1621,6 +1704,7 @@ function UnitList() {
                 type="button"
                 className="unit-cancel-button"
                 onClick={() => setConfirmAction(null)}
+                disabled={isSaving}
               >
                 انصراف
               </button>
@@ -1628,14 +1712,14 @@ function UnitList() {
               <button
                 type="button"
                 className={
-                  confirmAction.type === 'unit-delete' ||
-                    confirmAction.type === 'conversion-delete'
+                  confirmAction.type === 'delete'
                     ? 'unit-delete-confirm'
                     : 'unit-submit-button'
                 }
                 onClick={handleConfirmAction}
+                disabled={isSaving}
               >
-                تأیید
+                {isSaving ? 'در حال انجام...' : 'تأیید'}
               </button>
             </div>
 

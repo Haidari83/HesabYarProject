@@ -35,7 +35,7 @@ export const navigationItems = [
       {
         id: 'units',
         label: 'واحدهای اندازه‌گیری',
-        description: 'مدیریت واحدها و تبدیل واحدهای اندازه‌گیری',
+        description: 'مدیریت واحدهای استاندارد و بسته‌بندی',
         requiredPermission: 'units.view',
       },
       {

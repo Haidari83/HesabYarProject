@@ -135,7 +135,7 @@ function ApplicationShell({
             ) : activePageId === 'categories' ? (
               <CategoryList currentUser={currentUser} />
             ) : activePageId === 'units' ? (
-              <UnitList />
+              <UnitList currentUser={currentUser} />
             ) : activePageId === 'inventory' ? (<InventoryOverview
               onNavigate={handlePageSelect}
               currentUser={currentUser}
