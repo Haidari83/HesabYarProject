@@ -11,7 +11,6 @@ function createUnitOption(unitKind) {
     rowId: `product-unit-${unitRowSequence}`,
     unitKind,
     unitId: '',
-    inputDecimalPlaces: '0',
     conversionNum: '1',
     conversionDen: '1',
   };
@@ -31,45 +30,10 @@ function normalizeDigits(value) {
     .trim();
 }
 
-// بررسی تعداد ارقام اعشار
-function isValidDecimalPlaces(value) {
-  const number = Number(value);
-
-  return (
-    Number.isInteger(number) &&
-    number >= 0 &&
-    number <= 6
-  );
-}
-
 // بررسی قیمت واردشده
 function isValidPrice(value) {
   return /^\d+(?:\.\d{1,6})?$/.test(
     normalizeDigits(value)
-  );
-}
-
-// نمایش انتخاب دقت اعشاری
-function DecimalPlacesSelect({
-  label,
-  value,
-  onChange,
-}) {
-  return (
-    <label className="product-form-field">
-      <span>{label}</span>
-
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        {Array.from({ length: 7 }, (_, index) => (
-          <option key={index} value={String(index)}>
-            {index} رقم اعشار
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 
@@ -86,10 +50,6 @@ function ProductFormModal({
 
   // اطلاعات واحد پایه
   const [baseUnitId, setBaseUnitId] = useState('');
-  const [baseQuantityDecimalPlaces, setBaseQuantityDecimalPlaces] =
-    useState('0');
-  const [baseInputDecimalPlaces, setBaseInputDecimalPlaces] =
-    useState('0');
 
   // واحدهای فرعی و بسته‌بندی
   const [unitOptions, setUnitOptions] = useState([]);
@@ -147,11 +107,6 @@ function ProductFormModal({
     setFormError('');
 
     if (!nextBaseUnit) return;
-
-    // تنظیم دقت ورود بر اساس تنظیم پیش‌فرض واحد انتخاب‌شده
-    setBaseInputDecimalPlaces(
-      String(nextBaseUnit.defaultDecimalPlaces)
-    );
 
     // با تغییر بُعد واحد پایه، واحدهای استاندارد ناسازگار حذف می‌شوند
     const incompatibleRows = unitOptions.filter((option) => {
@@ -218,236 +173,209 @@ function ProductFormModal({
   // تغییر مشخصات یک واحد فرعی
   function updateUnitOption(rowId, changes) {
     setUnitOptions((previous) =>
-      previous.map((option) => {
-        if (option.rowId !== rowId) return option;
-
-        const nextOption = {
-          ...option,
-          ...changes,
-        };
-
-        // هنگام انتخاب واحد، دقت پیش‌فرض آن تنظیم می‌شود
-        if (Object.hasOwn(changes, 'unitId')) {
-          const selectedUnit = units.find(
-            (unit) => unit.id === changes.unitId
-          );
-
-          nextOption.inputDecimalPlaces = String(
-            selectedUnit?.defaultDecimalPlaces ?? 0
-          );
-        }
-
-        return nextOption;
-      })
+      previous.map((option) =>
+        option.rowId === rowId
+          ? {
+            ...option,
+            ...changes,
+          }
+          : option
+      )
     );
 
     setFormError('');
   }
 
-  // حذف واحد فرعی
-  function removeUnitOption(rowId) {
-    setUnitOptions((previous) =>
-      previous.filter((option) => option.rowId !== rowId)
+  setFormError('');
+}
+
+// حذف واحد فرعی
+function removeUnitOption(rowId) {
+  setUnitOptions((previous) =>
+    previous.filter((option) => option.rowId !== rowId)
+  );
+
+  setFormError('');
+}
+
+// تغییر قیمت یک واحد و ارز
+function updatePrice(unitId, currencyCode, priceType, value) {
+  const key = `${unitId}::${currencyCode}`;
+
+  setPriceValues((previous) => ({
+    ...previous,
+    [key]: {
+      ...(previous[key] || {}),
+      [priceType]: value,
+    },
+  }));
+
+  setFormError('');
+}
+
+// آماده‌سازی واحدهای قابل قیمت‌گذاری
+const priceRows = useMemo(() => {
+  if (!selectedBaseUnit) return [];
+
+  const rows = [
+    {
+      unitId: selectedBaseUnit.id,
+      unitName: selectedBaseUnit.name,
+      unitSymbol: selectedBaseUnit.symbol,
+      isBaseUnit: true,
+    },
+  ];
+
+  for (const option of unitOptions) {
+    const unit = units.find(
+      (item) => item.id === option.unitId
     );
 
-    setFormError('');
+    if (!unit) continue;
+
+    rows.push({
+      unitId: unit.id,
+      unitName: unit.name,
+      unitSymbol: unit.symbol,
+      isBaseUnit: false,
+    });
   }
 
-  // تغییر قیمت یک واحد و ارز
-  function updatePrice(unitId, currencyCode, priceType, value) {
-    const key = `${unitId}::${currencyCode}`;
+  return rows;
+}, [selectedBaseUnit, unitOptions, units]);
 
-    setPriceValues((previous) => ({
-      ...previous,
-      [key]: {
-        ...(previous[key] || {}),
-        [priceType]: value,
-      },
-    }));
+// اعتبارسنجی و ثبت کالا
+async function handleSubmit(event) {
+  event.preventDefault();
 
-    setFormError('');
+  if (isSaving) return;
+
+  setFormError('');
+
+  // بررسی اطلاعات اصلی
+  if (!name.trim()) {
+    setFormError('نام کالا را وارد کن.');
+    return;
   }
 
-  // آماده‌سازی واحدهای قابل قیمت‌گذاری
-  const priceRows = useMemo(() => {
-    if (!selectedBaseUnit) return [];
+  if (name.trim().length > 150) {
+    setFormError('نام کالا نمی‌تواند بیشتر از ۱۵۰ نویسه باشد.');
+    return;
+  }
 
-    const rows = [
-      {
-        unitId: selectedBaseUnit.id,
-        unitName: selectedBaseUnit.name,
-        unitSymbol: selectedBaseUnit.symbol,
-        isBaseUnit: true,
-      },
-    ];
+  if (!categories.some((item) => item.id === categoryId)) {
+    setFormError('یک دسته‌بندی فعال انتخاب کن.');
+    return;
+  }
 
-    for (const option of unitOptions) {
-      const unit = units.find(
-        (item) => item.id === option.unitId
-      );
+  // بررسی واحد پایه
+  if (
+    !selectedBaseUnit ||
+    selectedBaseUnit.unitKind !== 'standard'
+  ) {
+    setFormError('واحد پایه باید از میان واحدهای استاندارد انتخاب شود.');
+    return;
+  }
 
-      if (!unit) continue;
+  // هیچ ردیف نیمه‌کاره‌ای نباید ثبت شود
+  if (unitOptions.some((option) => !option.unitId)) {
+    setFormError('واحدهای فرعی انتخاب‌نشده را تکمیل یا حذف کن.');
+    return;
+  }
 
-      rows.push({
-        unitId: unit.id,
-        unitName: unit.name,
-        unitSymbol: unit.symbol,
-        isBaseUnit: false,
-      });
-    }
+  // بررسی تکراری نبودن واحدهای فرعی
+  const selectedUnitIds = unitOptions.map(
+    (option) => option.unitId
+  );
 
-    return rows;
-  }, [selectedBaseUnit, unitOptions, units]);
+  if (new Set(selectedUnitIds).size !== selectedUnitIds.length) {
+    setFormError('یک واحد بیش از یک بار انتخاب شده است.');
+    return;
+  }
 
-  // اعتبارسنجی و ثبت کالا
-  async function handleSubmit(event) {
-    event.preventDefault();
+  // ساخت اطلاعات واحدهای فرعی مطابق قرارداد backend
+  const preparedUnitOptions = [];
 
-    if (isSaving) return;
-
-    setFormError('');
-
-    // بررسی اطلاعات اصلی
-    if (!name.trim()) {
-      setFormError('نام کالا را وارد کن.');
-      return;
-    }
-
-    if (name.trim().length > 150) {
-      setFormError('نام کالا نمی‌تواند بیشتر از ۱۵۰ نویسه باشد.');
-      return;
-    }
-
-    if (!categories.some((item) => item.id === categoryId)) {
-      setFormError('یک دسته‌بندی فعال انتخاب کن.');
-      return;
-    }
-
-    // بررسی واحد پایه
-    if (
-      !selectedBaseUnit ||
-      selectedBaseUnit.unitKind !== 'standard'
-    ) {
-      setFormError('واحد پایه باید از میان واحدهای استاندارد انتخاب شود.');
-      return;
-    }
-
-    // دقت مقدار پایه و دقت ورود آن مستقل هستند
-    if (
-      !isValidDecimalPlaces(baseQuantityDecimalPlaces) ||
-      !isValidDecimalPlaces(baseInputDecimalPlaces)
-    ) {
-      setFormError('دقت اعشاری واحد پایه معتبر نیست.');
-      return;
-    }
-
-    // هیچ ردیف نیمه‌کاره‌ای نباید ثبت شود
-    if (unitOptions.some((option) => !option.unitId)) {
-      setFormError('واحدهای فرعی انتخاب‌نشده را تکمیل یا حذف کن.');
-      return;
-    }
-
-    // بررسی تکراری نبودن واحدهای فرعی
-    const selectedUnitIds = unitOptions.map(
-      (option) => option.unitId
+  for (const option of unitOptions) {
+    const unit = units.find(
+      (item) => item.id === option.unitId
     );
 
-    if (new Set(selectedUnitIds).size !== selectedUnitIds.length) {
-      setFormError('یک واحد بیش از یک بار انتخاب شده است.');
+    if (!unit) {
+      setFormError('یکی از واحدهای انتخاب‌شده معتبر نیست.');
       return;
     }
 
-    // ساخت اطلاعات واحدهای فرعی مطابق قرارداد backend
-    const preparedUnitOptions = [];
+    const preparedOption = {
+      unitId: unit.id,
+      inputDecimalPlaces: 2,
+    };
 
-    for (const option of unitOptions) {
-      const unit = units.find(
-        (item) => item.id === option.unitId
-      );
-
-      if (!unit) {
-        setFormError('یکی از واحدهای انتخاب‌شده معتبر نیست.');
+    if (unit.unitKind === 'standard') {
+      if (
+        unit.dimensionCode !== selectedBaseUnit.dimensionCode
+      ) {
+        setFormError(
+          `واحد استاندارد «${unit.name}» با واحد پایه هم‌بُعد نیست.`
+        );
         return;
       }
+    } else {
+      const numerator = Number(option.conversionNum);
+      const denominator = Number(option.conversionDen);
 
-      if (!isValidDecimalPlaces(option.inputDecimalPlaces)) {
+      if (
+        !Number.isSafeInteger(numerator) ||
+        numerator <= 0 ||
+        !Number.isSafeInteger(denominator) ||
+        denominator <= 0
+      ) {
         setFormError(
-          `دقت ورود واحد «${unit.name}» باید بین صفر تا شش باشد.`
+          `ضریب تبدیل واحد بسته‌بندی «${unit.name}» باید شامل دو عدد صحیح مثبت باشد.`
         );
         return;
       }
 
-      const preparedOption = {
-        unitId: unit.id,
-        inputDecimalPlaces: Number(option.inputDecimalPlaces),
-      };
-
-      if (unit.unitKind === 'standard') {
-        if (
-          unit.dimensionCode !== selectedBaseUnit.dimensionCode
-        ) {
-          setFormError(
-            `واحد استاندارد «${unit.name}» با واحد پایه هم‌بُعد نیست.`
-          );
-          return;
-        }
-      } else {
-        const numerator = Number(option.conversionNum);
-        const denominator = Number(option.conversionDen);
-
-        if (
-          !Number.isSafeInteger(numerator) ||
-          numerator <= 0 ||
-          !Number.isSafeInteger(denominator) ||
-          denominator <= 0
-        ) {
-          setFormError(
-            `ضریب تبدیل واحد بسته‌بندی «${unit.name}» باید شامل دو عدد صحیح مثبت باشد.`
-          );
-          return;
-        }
-
-        preparedOption.conversionNum = numerator;
-        preparedOption.conversionDen = denominator;
-      }
-
-      preparedUnitOptions.push(preparedOption);
+      preparedOption.conversionNum = numerator;
+      preparedOption.conversionDen = denominator;
     }
 
-    // جمع‌آوری قیمت‌های واردشده
-    const preparedPrices = [];
+    preparedUnitOptions.push(preparedOption);
+  }
 
-    for (const row of priceRows) {
-      for (const currency of currencies) {
-        const key = `${row.unitId}::${currency.code}`;
-        const values = priceValues[key] || {};
+  // جمع‌آوری قیمت‌های واردشده
+  const preparedPrices = [];
 
-        for (const priceType of ['purchase', 'sale']) {
-          const rawValue = values[priceType] ?? '';
+  for (const row of priceRows) {
+    for (const currency of currencies) {
+      const key = `${row.unitId}::${currency.code}`;
+      const values = priceValues[key] || {};
 
-          // قیمت خالی به معنی ثبت‌نشدن آن است
-          if (rawValue.trim() === '') continue;
+      for (const priceType of ['purchase', 'sale']) {
+        const rawValue = values[priceType] ?? '';
 
-          const normalizedValue = normalizeDigits(rawValue);
+        // قیمت خالی به معنی ثبت‌نشدن آن است
+        if (rawValue.trim() === '') continue;
 
-          if (!isValidPrice(normalizedValue)) {
-            const typeLabel =
-              priceType === 'purchase' ? 'خرید' : 'فروش';
+        const normalizedValue = normalizeDigits(rawValue);
 
-            setFormError(
-              `قیمت ${typeLabel} «${row.unitName}» به ارز ${currency.code} معتبر نیست. حداکثر شش رقم اعشار مجاز است.`
-            );
+        if (!isValidPrice(normalizedValue)) {
+          const typeLabel =
+            priceType === 'purchase' ? 'خرید' : 'فروش';
 
-            return;
-          }
+          setFormError(
+            `قیمت ${typeLabel} «${row.unitName}» به ارز ${currency.code} معتبر نیست. حداکثر شش رقم اعشار مجاز است.`
+          );
 
-          preparedPrices.push({
-            unitId: row.unitId,
-            currencyCode: currency.code,
-            priceType,
-            unitPrice: normalizedValue,
-          });
+          return;
         }
+
+        preparedPrices.push({
+          unitId: row.unitId,
+          currencyCode: currency.code,
+          priceType,
+          unitPrice: normalizedValue,
+        });
       }
     }
 
@@ -456,12 +384,8 @@ function ProductFormModal({
       name: name.trim(),
       categoryId,
       baseUnitId,
-      baseQuantityDecimalPlaces: Number(
-        baseQuantityDecimalPlaces
-      ),
-      baseInputDecimalPlaces: Number(
-        baseInputDecimalPlaces
-      ),
+      baseQuantityDecimalPlaces: 2,
+      baseInputDecimalPlaces: 2,
       unitOptions: preparedUnitOptions,
       prices: preparedPrices,
     };
@@ -627,18 +551,6 @@ function ProductFormModal({
                       ))}
                   </select>
                 </label>
-
-                <DecimalPlacesSelect
-                  label="دقت اعشاری مقدار پایه *"
-                  value={baseQuantityDecimalPlaces}
-                  onChange={setBaseQuantityDecimalPlaces}
-                />
-
-                <DecimalPlacesSelect
-                  label="دقت ورود با واحد پایه *"
-                  value={baseInputDecimalPlaces}
-                  onChange={setBaseInputDecimalPlaces}
-                />
               </div>
 
               <p className="product-form-help">
@@ -747,16 +659,6 @@ function ProductFormModal({
                           ))}
                         </select>
                       </label>
-
-                      <DecimalPlacesSelect
-                        label="دقت ورود مقدار"
-                        value={option.inputDecimalPlaces}
-                        onChange={(value) =>
-                          updateUnitOption(option.rowId, {
-                            inputDecimalPlaces: value,
-                          })
-                        }
-                      />
                     </div>
 
                     {selectedUnit?.unitKind === 'package' && (
@@ -956,5 +858,6 @@ function ProductFormModal({
     </div>
   );
 }
+
 
 export default ProductFormModal;

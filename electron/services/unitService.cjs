@@ -117,9 +117,8 @@ function validateUnitInput(input) {
 
   const unitKind = input.unitKind;
 
-  const defaultDecimalPlaces = Number(
-    input.defaultDecimalPlaces
-  );
+  // دقت اعشاری همه واحدهای جدید و ویرایش‌شده ثابت است
+  const defaultDecimalPlaces = 2;
 
 
   if (!name || !symbol) {
@@ -147,20 +146,6 @@ function validateUnitInput(input) {
     );
 
   }
-
-
-  if (
-    !Number.isInteger(defaultDecimalPlaces) ||
-    defaultDecimalPlaces < 0 ||
-    defaultDecimalPlaces > 6
-  ) {
-
-    throw new Error(
-      'دقت اعشاری باید عدد صحیحی بین صفر تا شش باشد.'
-    );
-
-  }
-
 
   if (!['standard', 'package'].includes(unitKind)) {
 

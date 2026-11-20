@@ -27,6 +27,20 @@
   color: #1f2937;
 }
 
+/* تنظیم فرم به‌عنوان ناحیه انعطاف‌پذیر داخل مودال */
+.product-form-modal>form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* جلوگیری از کوچک شدن سربرگ */
+.product-form-header {
+  flex: 0 0 auto;
+}
+
 /* سربرگ فرم */
 .product-form-header {
   display: flex;
@@ -75,7 +89,10 @@
 
 /* ناحیه قابل پیمایش فرم */
 .product-form-body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 22px 24px;
 }
 
@@ -358,6 +375,7 @@
 /* دکمه‌های پایین فرم */
 .product-form-footer {
   display: flex;
+  flex: 0 0 auto;
   justify-content: flex-end;
   gap: 9px;
   padding: 14px 24px;

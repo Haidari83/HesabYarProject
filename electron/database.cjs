@@ -3,7 +3,7 @@ const { DatabaseSync } = require('node:sqlite');
 const { randomUUID } = require('node:crypto');
 
 // آخرین نسخه ساختار پایگاه داده
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 // نسخه ساختار اولیه‌ای که جدول‌های کاربران را ایجاد می‌کند
 const INITIAL_SCHEMA_VERSION = 3;
@@ -1726,6 +1726,43 @@ function migrateToVersion5(database) {
 
 }
 
+/* =========================================
+   مهاجرت ساختار پایگاه داده از نسخه ۵ به ۶
+   یکسان‌سازی دقت اعشاری واحدها و کالاها
+========================================= */
+
+function migrateToVersion6(database) {
+  // آغاز تراکنش مهاجرت
+  database.exec('BEGIN IMMEDIATE');
+
+  try {
+    // یکسان‌سازی دقت پیش‌فرض واحدهای اندازه‌گیری
+    database.exec(`
+      UPDATE units
+      SET default_decimal_places = 2;
+    `);
+
+    // یکسان‌سازی دقت مقدار پایه تمام کالاها
+    database.exec(`
+      UPDATE products
+      SET base_quantity_decimal_places = 2;
+    `);
+
+    // ثبت نسخه ششم پس از تکمیل موفق عملیات
+    database.exec('PRAGMA user_version = 6');
+
+    database.exec('COMMIT');
+  } catch (error) {
+    // در صورت شکست، تمام تغییرات مهاجرت لغو می‌شوند
+    try {
+      database.exec('ROLLBACK');
+    } catch {
+      // نادیده‌گرفتن خطای احتمالی بازگشت تراکنش
+    }
+
+    throw error;
+  }
+}
 
 // اتصال به پایگاه داده یا ایجاد آن
 function openDatabase(databasePath) {
@@ -1809,72 +1846,53 @@ function openDatabase(databasePath) {
 
     const currentVersion = Number(result.user_version);
 
-
     // جلوگیری از بازکردن پایگاه داده با نسخه جدیدتر و ناسازگار
     if (currentVersion > SCHEMA_VERSION) {
-
       throw new Error(
         'نسخه پایگاه داده از نسخه پشتیبانی‌شده برنامه جدیدتر است.'
       );
-
     }
-
-
-
 
     // ایجاد پایگاه داده در اولین اجرا
     if (currentVersion === 0) {
-
-      // ایجاد ساختار اولیه کاربران در نسخه ۳
       createInitialSchema(database);
-
-      // ایجاد ارزها، واحدها و دسته‌بندی‌ها در نسخه ۴
       migrateToVersion4(database);
-
-      // ایجاد ساختار کالاها در نسخه ۵
       migrateToVersion5(database);
-
+      migrateToVersion6(database);
     }
 
-    // ارتقای پایگاه داده نسخه ۲ به نسخه ۵
+    // ارتقای پایگاه داده نسخه ۲ به نسخه ۶
     else if (currentVersion === 2) {
-
-      // ابتدا ارتقا به نسخه ۳
       migrateToVersion3(database);
-
-      // سپس ارتقا به نسخه ۴
       migrateToVersion4(database);
-
-      // در پایان ارتقا به نسخه ۵
       migrateToVersion5(database);
-
+      migrateToVersion6(database);
     }
 
-    // ارتقای پایگاه داده نسخه ۳ به نسخه ۵
+    // ارتقای پایگاه داده نسخه ۳ به نسخه ۶
     else if (currentVersion === 3) {
-
       migrateToVersion4(database);
-
       migrateToVersion5(database);
-
+      migrateToVersion6(database);
     }
 
-    // ارتقای پایگاه داده نسخه ۴ به نسخه ۵
+    // ارتقای پایگاه داده نسخه ۴ به نسخه ۶
     else if (currentVersion === 4) {
-
       migrateToVersion5(database);
-
+      migrateToVersion6(database);
     }
 
-    // نسخه ۵ آخرین نسخه است؛ نیازی به مهاجرت ندارد
-    else if (currentVersion !== SCHEMA_VERSION) {
+    // ارتقای پایگاه داده نسخه ۵ به نسخه ۶
+    else if (currentVersion === 5) {
+      migrateToVersion6(database);
+    }
 
+    // بررسی سازگاری نسخه نهایی
+    else if (currentVersion !== SCHEMA_VERSION) {
       throw new Error(
         'نسخه ساختار پایگاه داده پشتیبانی نمی‌شود.'
       );
-
     }
-
 
     return database;
 

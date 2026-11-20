@@ -34,27 +34,6 @@ function validatePositiveInteger(value, label) {
   return number;
 }
 
-
-// بررسی تعداد ارقام اعشاری
-function validateDecimalPlaces(value, label) {
-  if (value === '' || value === null || value === undefined) {
-    throw new Error(`${label} را مشخص کن.`);
-  }
-
-  const number = Number(value);
-
-  if (
-    !Number.isInteger(number) ||
-    number < 0 ||
-    number > 6
-  ) {
-    throw new Error(`${label} باید عدد صحیحی بین صفر تا شش باشد.`);
-  }
-
-  return number;
-}
-
-
 // محاسبه بزرگ‌ترین مقسوم‌علیه مشترک
 function greatestCommonDivisor(first, second) {
   let a = BigInt(first);
@@ -237,19 +216,9 @@ function validateProductInput(
     );
   }
 
-  const baseQuantityDecimalPlaces =
-    validateDecimalPlaces(
-      input.baseQuantityDecimalPlaces,
-      'دقت اعشاری مقدار پایه'
-    );
-
-  const baseInputDecimalPlaces =
-    input.baseInputDecimalPlaces === undefined
-      ? Number(baseUnit.default_decimal_places)
-      : validateDecimalPlaces(
-        input.baseInputDecimalPlaces,
-        'دقت ورود مقدار با واحد پایه'
-      );
+  // دقت مقدار پایه و دقت ورود آن همیشه دو است
+  const baseQuantityDecimalPlaces = 2;
+  const baseInputDecimalPlaces = 2;
 
   // واحدهای فرعی محصول؛ واحد پایه جداگانه ثبت می‌شود
   const rawUnitOptions = input.unitOptions ?? [];
@@ -292,13 +261,8 @@ function validateProductInput(
 
     const unit = selectActiveUnit(database, unitId);
 
-    const inputDecimalPlaces =
-      option.inputDecimalPlaces === undefined
-        ? Number(unit.default_decimal_places)
-        : validateDecimalPlaces(
-          option.inputDecimalPlaces,
-          `دقت ورود واحد «${unit.name}»`
-        );
+    // دقت ورود تمام واحدهای وابسته به کالا همیشه دو است
+    const inputDecimalPlaces = 2;
 
     let conversionNum = null;
     let conversionDen = null;
@@ -810,9 +774,8 @@ function selectProducts(database, productId = null) {
           ? null
           : Number(row.reference_factor_den),
 
-      inputDecimalPlaces: Number(
-        row.input_decimal_places
-      ),
+      // نمایش دقت عملیاتی واحدهای کالا به‌صورت ثابت
+      inputDecimalPlaces: 2,
 
       createdAt: row.created_at,
     });
@@ -1096,8 +1059,7 @@ function createProduct(database, actor, input) {
   )[0];
 }
 
-
-// مقایسه تعریف فعلی و تعریف درخواستی یک واحد محصول
+// مقایسه ساختار واحد فعلی و واحد درخواستی کالا
 function isSameProductUnitDefinition(existing, target) {
   const existingNum =
     existing.conversion_num === null
@@ -1112,11 +1074,9 @@ function isSameProductUnitDefinition(existing, target) {
   return (
     Boolean(existing.is_base_unit) === target.isBaseUnit &&
     existingNum === target.conversionNum &&
-    existingDen === target.conversionDen &&
-    Number(existing.input_decimal_places) === target.inputDecimalPlaces
+    existingDen === target.conversionDen
   );
 }
-
 
 // غیرفعال‌سازی نسخه قبلی تعریف واحد محصول
 function deactivateProductUnit(

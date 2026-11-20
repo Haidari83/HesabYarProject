@@ -35,7 +35,6 @@ function createEmptyUnitForm() {
     dimensionCode: 'count',
     referenceFactorNum: '1',
     referenceFactorDen: '1',
-    defaultDecimalPlaces: '0',
   };
 }
 
@@ -108,9 +107,8 @@ function buildUnitPayload(values) {
       ? Number(values.referenceFactorDen)
       : null,
 
-    defaultDecimalPlaces: Number(
-      values.defaultDecimalPlaces
-    ),
+    // دقت اعشاری تمام واحدهای جدید همیشه دو است
+    defaultDecimalPlaces: 2,
   };
 }
 
@@ -156,14 +154,6 @@ function validateUnitPayload(payload, units, excludedId = null) {
     ) {
       errors.push('مخرج نسبت مرجع باید عدد صحیح مثبت باشد.');
     }
-  }
-
-  if (
-    !Number.isInteger(payload.defaultDecimalPlaces) ||
-    payload.defaultDecimalPlaces < 0 ||
-    payload.defaultDecimalPlaces > 6
-  ) {
-    errors.push('دقت اعشاری باید عدد صحیحی بین صفر تا شش باشد.');
   }
 
   // بررسی تکراری نبودن نام یا نماد در واحدهای موجود
@@ -398,10 +388,6 @@ function UnitList({ currentUser }) {
         unit.referenceFactorDen === null
           ? ''
           : String(unit.referenceFactorDen),
-
-      defaultDecimalPlaces: String(
-        unit.defaultDecimalPlaces
-      ),
     });
 
     setFormError('');
@@ -1017,7 +1003,6 @@ function UnitList({ currentUser }) {
                     <th>نوع واحد</th>
                     <th>بُعد</th>
                     <th>نسبت به واحد مرجع</th>
-                    <th>دقت اعشاری</th>
                     <th>کالاهای وابسته</th>
                     <th>وضعیت</th>
                     <th>عملیات</th>
@@ -1075,10 +1060,6 @@ function UnitList({ currentUser }) {
 
                         <td className="unit-reference-cell">
                           {getReferenceRatioText(unit)}
-                        </td>
-
-                        <td>
-                          {formatNumber(unit.defaultDecimalPlaces)}
                         </td>
 
                         <td>
@@ -1158,7 +1139,7 @@ function UnitList({ currentUser }) {
 
                   {filteredUnits.length === 0 && (
                     <tr>
-                      <td colSpan="10">
+                      <td colSpan="9">
                         <div className="unit-empty-state">
                           <strong>واحدی پیدا نشد</strong>
                           <p>
@@ -1360,31 +1341,12 @@ function UnitList({ currentUser }) {
                     </div>
                   )}
 
-                  <label className="unit-form-field">
-                    <span>دقت اعشاری پیشنهادی</span>
-
-                    <input
-                      type="number"
-                      name="defaultDecimalPlaces"
-                      min="0"
-                      max="6"
-                      step="1"
-                      value={unitForm.defaultDecimalPlaces}
-                      onChange={handleUnitFormChange}
-                      required
-                    />
-
-                    <small className="unit-field-description">
-                      عددی بین صفر تا شش؛ این مقدار پیشنهاد پیش‌فرض است.
-                    </small>
-                  </label>
-
                 </div>
 
                 {isStructureLocked && (
                   <div className="unit-structure-lock-note">
                     {editingUnit?.isSystem
-                      ? 'ساختار واحدهای پیش‌فرض قابل تغییر نیست؛ فقط نام، نماد و دقت اعشاری را می‌توان ویرایش کرد.'
+                      ? 'ساختار واحدهای پیش‌فرض قابل تغییر نیست؛ فقط نام و نماد را می‌توان ویرایش کرد.'
                       : 'این واحد در کالاها استفاده شده است؛ نوع، بُعد و نسبت مرجع آن قابل تغییر نیست.'}
                   </div>
                 )}
@@ -1446,7 +1408,6 @@ function UnitList({ currentUser }) {
                         <th>بُعد</th>
                         <th>صورت</th>
                         <th>مخرج</th>
-                        <th>دقت اعشاری</th>
                         <th>عملیات</th>
                       </tr>
                     </thead>
@@ -1567,21 +1528,6 @@ function UnitList({ currentUser }) {
                             ) : (
                               '—'
                             )}
-                          </td>
-
-                          <td>
-                            <input
-                              type="number"
-                              min="0"
-                              max="6"
-                              step="1"
-                              value={row.defaultDecimalPlaces}
-                              onChange={(event) =>
-                                updateBulkRow(row.rowId, {
-                                  defaultDecimalPlaces: event.target.value,
-                                })
-                              }
-                            />
                           </td>
 
                           <td>
