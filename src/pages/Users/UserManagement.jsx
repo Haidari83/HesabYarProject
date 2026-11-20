@@ -682,7 +682,6 @@ function UserManagement() {
 
               <thead>
                 <tr>
-                  <th>عملیات</th>
                   <th>ردیف</th>
                   <th>نام و نام خانوادگی</th>
                   <th>نام کاربری</th>
@@ -691,6 +690,7 @@ function UserManagement() {
                   <th>وضعیت</th>
                   <th>تاریخ ایجاد</th>
                   <th>آخرین ورود</th>
+                  <th>عملیات</th>
                 </tr>
               </thead>
 
