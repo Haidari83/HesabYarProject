@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+
+import ProductFormModal from './ProductFormModal';
 import './product-list.css';
 
 // نمایش اعداد با ارقام فارسی
@@ -112,6 +114,12 @@ function ProductList({ currentUser }) {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [unitFilter, setUnitFilter] = useState('all');
+
+  // وضعیت پنجره ثبت کالای جدید
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+
+  // پیام نتیجه ثبت کالا
+  const [createSuccessMessage, setCreateSuccessMessage] = useState('');
 
   // دریافت فهرست محصولات و اطلاعات فرم از SQLite
   useEffect(() => {
@@ -266,10 +274,41 @@ function ProductList({ currentUser }) {
             برای مشاهده فهرست محصولات مجوز لازم را نداری.
           </p>
         </div>
+        {/* پنجره مستقل ثبت کالای جدید */}
+        {isCreateFormOpen && (
+          <ProductFormModal
+            categories={categories}
+            units={units}
+            currencies={currencies}
+            onClose={() => setIsCreateFormOpen(false)}
+            onCreated={handleProductCreated}
+          />
+        )}
       </div>
     );
   }
 
+  // افزودن کالای ثبت‌شده به فهرست بدون بارگذاری مجدد صفحه
+  function handleProductCreated(createdProduct) {
+    setProducts((previous) => [
+      createdProduct,
+      ...previous,
+    ]);
+
+    // بستن فرم
+    setIsCreateFormOpen(false);
+
+    // پاک‌کردن فیلترها تا کالای تازه ثبت‌شده دیده شود
+    setSearch('');
+    setCategoryFilter('all');
+    setStatusFilter('all');
+    setUnitFilter('all');
+
+    // نمایش پیام موفقیت
+    setCreateSuccessMessage(
+      `کالای «${createdProduct.name}» با کد ${createdProduct.code} ثبت شد.`
+    );
+  }
   return (
     <div className="product-page">
 
@@ -300,6 +339,23 @@ function ProductList({ currentUser }) {
       {/* نمایش صفحه پس از دریافت موفق اطلاعات */}
       {!isLoading && !loadError && (
         <>
+          {/* پیام موفقیت ثبت کالا */}
+          {createSuccessMessage && (
+            <div className="product-success-message" role="status">
+              <span>✓</span>
+
+              <p>{createSuccessMessage}</p>
+
+              <button
+                type="button"
+                onClick={() => setCreateSuccessMessage('')}
+                aria-label="بستن پیام"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
           {/* یادداشت دسترسی‌های کاربر */}
           {!canCreateProducts &&
             !canUpdateProducts &&
@@ -417,6 +473,21 @@ function ProductList({ currentUser }) {
               </select>
 
             </div>
+
+            {/* دکمه ثبت کالا برای کاربران دارای مجوز */}
+            {canCreateProducts && (
+              <button
+                type="button"
+                className="product-add-button"
+                onClick={() => {
+                  setCreateSuccessMessage('');
+                  setIsCreateFormOpen(true);
+                }}
+              >
+                <span>+</span>
+                ثبت کالای جدید
+              </button>
+            )}
 
           </section>
 
