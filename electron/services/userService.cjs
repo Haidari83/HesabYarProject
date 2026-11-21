@@ -37,6 +37,10 @@ const PERMISSION_GROUPS = [
         label: 'ویرایش محصول',
       },
       {
+        key: 'products.prices.manage',
+        label: 'مدیریت قیمت محصولات',
+      },
+      {
         key: 'products.deactivate',
         label: 'فعال و غیرفعال کردن محصول',
       },

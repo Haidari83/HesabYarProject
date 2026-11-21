@@ -252,6 +252,13 @@ contextBridge.exposeInMainWorld('hesabyar', {
         input
       ),
 
+    // ثبت یا تغییر قیمت‌های محصول
+    savePrices: (productId, input) =>
+      ipcRenderer.invoke(
+        'products:prices:save',
+        productId,
+        input
+      ),
 
     // فعال یا غیرفعال کردن محصول
     setActive: (productId, isActive) =>

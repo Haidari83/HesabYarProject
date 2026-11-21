@@ -1465,7 +1465,373 @@ function updateProduct(
   }
 }
 
+// ثبت یا تغییر قیمت‌های محصول بدون دست‌کاری اطلاعات اصلی کالا
+function saveProductPrices(
+  database,
+  actor,
+  productId,
+  input
+) {
+  // بررسی مجوز مستقل مدیریت قیمت محصولات
+  assertPermission(
+    database,
+    actor,
+    'products.prices.manage'
+  );
 
+  // اعتبارسنجی شناسه محصول
+  if (
+    typeof productId !== 'string' ||
+    !productId.trim()
+  ) {
+    throw new Error('شناسه محصول معتبر نیست.');
+  }
+
+  // اعتبارسنجی ساختار اطلاعات دریافتی
+  if (
+    !input ||
+    typeof input !== 'object' ||
+    Array.isArray(input)
+  ) {
+    throw new Error('اطلاعات قیمت‌ها معتبر نیست.');
+  }
+
+  const rawPrices = input.prices ?? [];
+  const rawRemovals = input.removePrices ?? [];
+
+  if (
+    !Array.isArray(rawPrices) ||
+    !Array.isArray(rawRemovals)
+  ) {
+    throw new Error('فهرست قیمت‌ها معتبر نیست.');
+  }
+
+  if (
+    rawPrices.length > 500 ||
+    rawRemovals.length > 500
+  ) {
+    throw new Error('تعداد قیمت‌های ارسالی بیش از حد مجاز است.');
+  }
+
+  // زمان مشترک ثبت تغییرات
+  const createdAt = new Date().toISOString();
+
+  // آغاز تراکنش برای حفظ یکپارچگی اطلاعات
+  database.exec('BEGIN IMMEDIATE');
+
+  try {
+    // دریافت محصول
+    const product = database.prepare(`
+      SELECT
+        id,
+        code,
+        name,
+        is_active
+      FROM products
+      WHERE id = ?
+    `).get(productId);
+
+    if (!product) {
+      throw new Error('محصول موردنظر پیدا نشد.');
+    }
+
+    if (!product.is_active) {
+      throw new Error(
+        'برای مدیریت قیمت، محصول باید فعال باشد.'
+      );
+    }
+
+    // دریافت واحدهای فعال اختصاص‌یافته به این محصول
+    const activeUnitRows = database.prepare(`
+      SELECT
+        pu.id AS product_unit_id,
+        pu.unit_id
+      FROM product_units pu
+      JOIN units u
+        ON u.id = pu.unit_id
+      WHERE pu.product_id = ?
+        AND pu.is_active = 1
+        AND u.is_active = 1
+    `).all(productId);
+
+    // نگاشت شناسه واحد عمومی به شناسه واحد اختصاصی محصول
+    const activeProductUnitByUnitId = new Map(
+      activeUnitRows.map((row) => [
+        row.unit_id,
+        row.id,
+      ])
+    );
+
+    // دریافت ارزهای فعال
+    const activeCurrencies = new Set(
+      database.prepare(`
+        SELECT code
+        FROM currencies
+        WHERE is_active = 1
+      `).all().map((currency) => currency.code)
+    );
+
+    // جلوگیری از ثبت یا حذف تکراری یک ترکیب قیمت
+    const usedPriceKeys = new Set();
+
+    // بررسی و آماده‌سازی قیمت‌های جدید
+    const preparedPrices = rawPrices.map((price) => {
+      if (
+        !price ||
+        typeof price !== 'object' ||
+        Array.isArray(price)
+      ) {
+        throw new Error('اطلاعات یکی از قیمت‌ها معتبر نیست.');
+      }
+
+      const unitId =
+        typeof price.unitId === 'string'
+          ? price.unitId.trim()
+          : '';
+
+      if (!activeProductUnitByUnitId.has(unitId)) {
+        throw new Error(
+          'واحد انتخاب‌شده به این محصول تعلق ندارد یا فعال نیست.'
+        );
+      }
+
+      const currencyCode =
+        typeof price.currencyCode === 'string'
+          ? price.currencyCode.trim().toUpperCase()
+          : '';
+
+      if (!activeCurrencies.has(currencyCode)) {
+        throw new Error('ارز انتخاب‌شده فعال یا معتبر نیست.');
+      }
+
+      const priceType = price.priceType;
+
+      if (!['purchase', 'sale'].includes(priceType)) {
+        throw new Error('نوع قیمت باید خرید یا فروش باشد.');
+      }
+
+      const key = `${unitId}|${currencyCode}|${priceType}`;
+
+      if (usedPriceKeys.has(key)) {
+        throw new Error(
+          'یک قیمت برای واحد، ارز و نوع یکسان تکرار شده است.'
+        );
+      }
+
+      usedPriceKeys.add(key);
+
+      // تبدیل قیمت به عدد صحیح مقیاس‌شده
+      const unitPriceScaled = parsePriceToScaled(
+        price.unitPrice,
+        priceType === 'purchase'
+          ? 'قیمت خرید'
+          : 'قیمت فروش'
+      );
+
+      return {
+        key,
+        unitId,
+        productUnitId:
+          activeProductUnitByUnitId.get(unitId),
+        currencyCode,
+        priceType,
+        unitPriceScaled,
+      };
+    });
+
+    // بررسی قیمت‌هایی که باید از وضعیت جاری خارج شوند
+    const preparedRemovals = rawRemovals.map((item) => {
+      if (
+        !item ||
+        typeof item !== 'object' ||
+        Array.isArray(item)
+      ) {
+        throw new Error(
+          'اطلاعات یکی از قیمت‌های قابل حذف معتبر نیست.'
+        );
+      }
+
+      const unitId =
+        typeof item.unitId === 'string'
+          ? item.unitId.trim()
+          : '';
+
+      if (!activeProductUnitByUnitId.has(unitId)) {
+        throw new Error(
+          'واحد یکی از قیمت‌های انتخاب‌شده معتبر یا فعال نیست.'
+        );
+      }
+
+      const currencyCode =
+        typeof item.currencyCode === 'string'
+          ? item.currencyCode.trim().toUpperCase()
+          : '';
+
+      if (!activeCurrencies.has(currencyCode)) {
+        throw new Error('ارز یکی از قیمت‌ها معتبر نیست.');
+      }
+
+      const priceType = item.priceType;
+
+      if (!['purchase', 'sale'].includes(priceType)) {
+        throw new Error('نوع قیمت برای حذف معتبر نیست.');
+      }
+
+      const key = `${unitId}|${currencyCode}|${priceType}`;
+
+      if (usedPriceKeys.has(key)) {
+        throw new Error(
+          'یک قیمت هم‌زمان برای ثبت و حذف انتخاب شده است.'
+        );
+      }
+
+      usedPriceKeys.add(key);
+
+      return {
+        key,
+        unitId,
+        productUnitId:
+          activeProductUnitByUnitId.get(unitId),
+        currencyCode,
+        priceType,
+      };
+    });
+
+    // جست‌وجوی قیمت جاری یک واحد، ارز و نوع مشخص
+    const findCurrentPrice = database.prepare(`
+      SELECT
+        id,
+        unit_price_scaled
+      FROM product_prices
+      WHERE product_id = ?
+        AND product_unit_id = ?
+        AND currency_code = ?
+        AND price_type = ?
+        AND is_current = 1
+    `);
+
+    // تبدیل قیمت جاری به سابقه تاریخی
+    const archiveCurrentPrice = database.prepare(`
+      UPDATE product_prices
+      SET is_current = 0
+      WHERE id = ?
+        AND is_current = 1
+    `);
+
+    const changedPrices = [];
+    const removedPrices = [];
+
+    // ثبت یا تغییر قیمت‌ها
+    for (const price of preparedPrices) {
+      const current = findCurrentPrice.get(
+        productId,
+        price.productUnitId,
+        price.currencyCode,
+        price.priceType
+      );
+
+      const previousPriceScaled = current
+        ? Number(current.unit_price_scaled)
+        : null;
+
+      // اگر قیمت تغییر نکرده باشد، سابقه تکراری ایجاد نمی‌شود
+      if (
+        previousPriceScaled === price.unitPriceScaled
+      ) {
+        continue;
+      }
+
+      // تبدیل قیمت قبلی به سابقه تاریخی
+      if (current) {
+        archiveCurrentPrice.run(current.id);
+      }
+
+      // ثبت قیمت جدید به‌عنوان قیمت جاری
+      insertProductPrice(
+        database,
+        actor,
+        productId,
+        price.productUnitId,
+        {
+          currencyCode: price.currencyCode,
+          priceType: price.priceType,
+          unitPriceScaled: price.unitPriceScaled,
+        },
+        createdAt
+      );
+
+      changedPrices.push({
+        unitId: price.unitId,
+        currencyCode: price.currencyCode,
+        priceType: price.priceType,
+        previousPriceScaled,
+        newPriceScaled: price.unitPriceScaled,
+      });
+    }
+
+    // خارج کردن قیمت‌های انتخاب‌شده از وضعیت جاری
+    for (const item of preparedRemovals) {
+      const current = findCurrentPrice.get(
+        productId,
+        item.productUnitId,
+        item.currencyCode,
+        item.priceType
+      );
+
+      // اگر قیمت جاری وجود نداشته باشد، کاری انجام نمی‌شود
+      if (!current) {
+        continue;
+      }
+
+      archiveCurrentPrice.run(current.id);
+
+      removedPrices.push({
+        unitId: item.unitId,
+        currencyCode: item.currencyCode,
+        priceType: item.priceType,
+        previousPriceScaled: Number(
+          current.unit_price_scaled
+        ),
+      });
+    }
+
+    // ثبت رویداد حسابرسی فقط در صورت وقوع تغییر واقعی
+    if (
+      changedPrices.length > 0 ||
+      removedPrices.length > 0
+    ) {
+      writeProductAudit(
+        database,
+        actor,
+        'products.prices.updated',
+        productId,
+        {
+          code: product.code,
+          name: product.name,
+          changedPrices,
+          removedPrices,
+        },
+        createdAt
+      );
+    }
+
+    // تأیید تراکنش
+    database.exec('COMMIT');
+
+    // بازگرداندن اطلاعات به‌روز محصول و قیمت‌های جاری
+    return selectProducts(database, productId)[0] || null;
+
+  } catch (error) {
+    // لغو کامل عملیات در صورت بروز خطا
+    try {
+      database.exec('ROLLBACK');
+    } catch {
+      // نادیده‌گرفتن خطای احتمالی بازگشت تراکنش
+    }
+
+    throw error;
+  }
+}
 // فعال یا غیرفعال کردن محصول
 function setProductActive(
   database,
@@ -1566,5 +1932,6 @@ module.exports = {
   createProduct,
   createProducts,
   updateProduct,
+  saveProductPrices,
   setProductActive,
 };

@@ -62,6 +62,7 @@ const {
   createProduct,
   createProducts,
   updateProduct,
+  saveProductPrices,
   setProductActive,
 } = require('./services/productService.cjs');
 
@@ -893,6 +894,22 @@ function registerIpcHandlers() {
     }
   );
 
+  // ثبت یا تغییر قیمت‌های محصول
+  ipcMain.handle(
+    'products:prices:save',
+    (event, productId, input) => {
+      // دریافت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      // اجرای عملیات مستقل مدیریت قیمت
+      return saveProductPrices(
+        database,
+        actor,
+        productId,
+        input
+      );
+    }
+  );
 
   // فعال یا غیرفعال کردن محصول
   ipcMain.handle(
