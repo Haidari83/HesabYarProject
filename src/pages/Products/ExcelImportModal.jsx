@@ -89,6 +89,7 @@ function ExcelImportModal({
   categories,
   units,
   products,
+  onImported,
 }) {
   // شناسه یکتای ورودی فایل
   const inputId = useId();
@@ -107,6 +108,15 @@ function ExcelImportModal({
 
   // نتیجه اعتبارسنجی محصولات و ردیف‌های Excel
   const [validationResult, setValidationResult] = useState(null);
+
+  // وضعیت اجرای ثبت گروهی محصولات
+  const [isImporting, setIsImporting] = useState(false);
+
+  // خطای احتمالی ثبت محصولات در دیتابیس
+  const [importError, setImportError] = useState('');
+
+  // گزارش نهایی ثبت محصولات
+  const [importReport, setImportReport] = useState(null);
 
   // وضعیت خواندن فایل
   const [isReading, setIsReading] = useState(false);
@@ -133,6 +143,8 @@ function ExcelImportModal({
     setTotalRows(0);
     setValidationResult(null);
     setReadError('');
+    setImportError('');
+    setImportReport(null);
 
     // در این نسخه فقط فایل XLSX پذیرفته می‌شود
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
@@ -300,6 +312,72 @@ function ExcelImportModal({
     }
   }
 
+  // ثبت محصولات معتبر در پایگاه داده
+  async function handleImport() {
+    // بررسی وجود نتیجه اعتبارسنجی و جلوگیری از ثبت چندباره
+    if (
+      !validationResult ||
+      validationResult.validProductCount === 0 ||
+      isImporting ||
+      importReport
+    ) {
+      return;
+    }
+
+    // دریافت فقط محصولات معتبر
+    const validProducts = validationResult.validProducts;
+
+    // پاک‌کردن خطای قبلی
+    setImportError('');
+
+    setIsImporting(true);
+
+    try {
+      // دریافت API ثبت گروهی محصولات از Preload
+      const createBulk =
+        window.hesabyar?.products?.createBulk;
+
+      if (typeof createBulk !== 'function') {
+        throw new Error(
+          'سرویس ثبت گروهی محصولات در دسترس نیست.'
+        );
+      }
+
+      // ارسال محصولات معتبر به Main Process
+      const createdProducts = await createBulk(validProducts);
+
+      // بررسی پاسخ سرویس
+      if (!Array.isArray(createdProducts)) {
+        throw new Error(
+          'پاسخ سرویس ثبت گروهی محصولات معتبر نیست.'
+        );
+      }
+
+      // ثبت گزارش عملیات موفق
+      const report = {
+        createdCount: createdProducts.length,
+        skippedCount: validationResult.invalidProductCount,
+        totalCount: validationResult.totalProducts,
+        products: createdProducts,
+      };
+
+      setImportReport(report);
+
+      // اطلاع‌رسانی به صفحه اصلی درباره محصولات ثبت‌شده
+      onImported(createdProducts);
+
+    } catch (error) {
+      // نمایش خطای احتمالی؛ تراکنش ناموفق در بک‌اند بازگردانده می‌شود
+      setImportError(
+        error.message ||
+        'ثبت گروهی محصولات ناموفق بود.'
+      );
+
+    } finally {
+      // پایان وضعیت ثبت
+      setIsImporting(false);
+    }
+  }
 
   return (
     <div
@@ -683,20 +761,159 @@ function ExcelImportModal({
 
         </div>
 
+        {/* خطای ثبت گروهی */}
+        {importError && (
+          <div
+            className="excel-import-error"
+            role="alert"
+          >
+            <strong>ثبت محصولات ناموفق بود.</strong>
+            <p>{importError}</p>
+            <p>
+              در صورت بروز خطا در تراکنش، هیچ‌یک از محصولات این
+              درخواست ثبت نشده‌اند.
+            </p>
+          </div>
+        )}
+
+
+        {/* گزارش نهایی واردسازی */}
+        {importReport && (
+          <section className="excel-import-report">
+
+            <header>
+              <h3>گزارش نهایی ورود محصولات</h3>
+
+              <p>
+                عملیات ثبت گروهی به پایان رسید.
+              </p>
+            </header>
+
+
+            {/* خلاصه نتیجه */}
+            <div className="excel-import-summary">
+
+              <div className="excel-import-summary-card valid">
+                <span>محصولات ثبت‌شده</span>
+
+                <strong>
+                  {importReport.createdCount.toLocaleString('fa-IR')}
+                </strong>
+              </div>
+
+              <div className="excel-import-summary-card invalid">
+                <span>محصولات ثبت‌نشده به علت خطای اعتبارسنجی</span>
+
+                <strong>
+                  {importReport.skippedCount.toLocaleString('fa-IR')}
+                </strong>
+              </div>
+
+              <div className="excel-import-summary-card">
+                <span>کل محصولات شناسایی‌شده</span>
+
+                <strong>
+                  {importReport.totalCount.toLocaleString('fa-IR')}
+                </strong>
+              </div>
+
+            </div>
+
+
+            {/* فهرست محصولات ثبت‌شده */}
+            {importReport.products.length > 0 && (
+              <div className="excel-import-table-wrapper">
+                <table className="excel-import-table">
+
+                  <thead>
+                    <tr>
+                      <th>کد محصول</th>
+                      <th>نام محصول</th>
+                      <th>دسته‌بندی</th>
+                      <th>واحد پایه</th>
+                      <th>وضعیت</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {importReport.products.map((product) => (
+                      <tr key={product.id}>
+
+                        <td>{product.code}</td>
+
+                        <td>{product.name}</td>
+
+                        <td>{product.categoryName || '—'}</td>
+
+                        <td>{product.baseUnitName || '—'}</td>
+
+                        <td>
+                          <span className="excel-import-status-valid">
+                            ثبت‌شده
+                          </span>
+                        </td>
+
+                      </tr>
+                    ))}
+                  </tbody>
+
+                </table>
+              </div>
+            )}
+
+          </section>
+        )}
 
         {/* پایین پنجره */}
         <footer className="excel-import-footer">
+
+          {/* راهنمای وضعیت ثبت */}
           <p>
-            در این مرحله هیچ محصولی در پایگاه داده ثبت نمی‌شود.
+            {importReport
+              ? 'گزارش ثبت محصولات آماده است.'
+              : validationResult
+                ? validationResult.validProductCount > 0
+                  ? `${validationResult.validProductCount.toLocaleString('fa-IR')} محصول معتبر آماده ثبت است.`
+                  : 'محصول معتبری برای ثبت وجود ندارد.'
+                : 'تا پیش از تأیید نهایی، هیچ محصولی در پایگاه داده ثبت نمی‌شود.'}
           </p>
 
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isReading}
-          >
-            بستن
-          </button>
+
+          <div className="excel-import-footer-actions">
+
+            {/* دکمه ثبت نهایی */}
+            {!importReport && (
+              <button
+                type="button"
+                className="excel-import-submit-button"
+                disabled={
+                  isReading ||
+                  isImporting ||
+                  !validationResult ||
+                  validationResult.validProductCount === 0
+                }
+                onClick={handleImport}
+              >
+                {isImporting
+                  ? 'در حال ثبت محصولات...'
+                  : validationResult?.validProductCount > 0
+                    ? `تأیید و ثبت ${validationResult.validProductCount.toLocaleString('fa-IR')} محصول`
+                    : 'محصول معتبری برای ثبت وجود ندارد'}
+              </button>
+            )}
+
+
+            {/* بستن پنجره */}
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isReading || isImporting}
+            >
+              {importReport ? 'پایان' : 'بستن'}
+            </button>
+
+          </div>
+
         </footer>
 
       </section>

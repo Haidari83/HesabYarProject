@@ -337,6 +337,34 @@ function ProductList({ currentUser }) {
     );
   }
 
+  // دریافت محصولات ثبت‌شده از واردسازی Excel
+  function handleExcelProductsImported(importedProducts) {
+    // فقط پاسخ معتبر و غیرخالی پذیرفته می‌شود
+    if (
+      !Array.isArray(importedProducts) ||
+      importedProducts.length === 0
+    ) {
+      return;
+    }
+
+    // اضافه‌کردن محصولات جدید به ابتدای فهرست
+    setProducts((previous) => [
+      ...importedProducts,
+      ...previous,
+    ]);
+
+    // پاک‌کردن فیلترها تا محصولات تازه ثبت‌شده دیده شوند
+    setSearch('');
+    setCategoryFilter('all');
+    setStatusFilter('all');
+    setUnitFilter('all');
+
+    // نمایش نتیجه عملیات در صفحه محصولات
+    setCreateSuccessMessage(
+      `${importedProducts.length.toLocaleString('fa-IR')} محصول از فایل Excel با موفقیت ثبت شد.`
+    );
+  }
+
   // بازکردن پنجره تأیید تغییر وضعیت محصول
   function openProductStatusDialog(product) {
     setStatusChangeError('');
@@ -931,13 +959,13 @@ function ProductList({ currentUser }) {
           </section>
         </div>
       )}
-
       {isExcelImportOpen && (
         <ExcelImportModal
           categories={categories}
           units={units}
           products={products}
           onClose={() => setIsExcelImportOpen(false)}
+          onImported={handleExcelProductsImported}
         />
       )}
     </div>

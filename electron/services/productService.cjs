@@ -929,6 +929,44 @@ function createProducts(database, actor, inputs) {
   database.exec('BEGIN IMMEDIATE');
 
   try {
+    // جست‌وجوی محصولی با نام استانداردشده یکسان
+    const findExistingProduct = database.prepare(`
+    SELECT
+      id,
+      name
+    FROM products
+    WHERE normalized_name = ?
+    LIMIT 1
+  `);
+
+    // جلوگیری از تکرار نام در خود فهرست ارسالی
+    const submittedNames = new Set();
+
+    // بررسی نام تمام محصولات پیش از شروع ثبت
+    for (const validated of validatedProducts) {
+      const normalizedName = validated.normalizedName;
+
+      // بررسی تکرار نام در فایل یا درخواست گروهی
+      if (submittedNames.has(normalizedName)) {
+        throw new Error(
+          `محصول «${validated.name}» بیش از یک بار برای ثبت ارسال شده است.`
+        );
+      }
+
+      submittedNames.add(normalizedName);
+
+      // بررسی وجود نام در محصولات قبلی، اعم از فعال و غیرفعال
+      const existingProduct = findExistingProduct.get(
+        normalizedName
+      );
+
+      if (existingProduct) {
+        throw new Error(
+          `محصول «${existingProduct.name}» از قبل در حساب‌یار ثبت شده است.`
+        );
+      }
+    }
+
     // محاسبه شماره بعدی داخل تراکنش برای جلوگیری از تداخل کدها
     let nextNumber = getInitialProductNumber(database);
 

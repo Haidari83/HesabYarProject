@@ -477,6 +477,72 @@
   line-height: 1.8;
 }
 
+/* بخش گزارش نهایی واردسازی */
+.excel-import-report {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e8edf3;
+}
+
+.excel-import-report>header {
+  margin-bottom: 14px;
+}
+
+.excel-import-report h3 {
+  margin: 0;
+  color: #172554;
+  font-size: 14px;
+}
+
+.excel-import-report>header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 11px;
+}
+
+/* دکمه‌های پایین پنجره */
+.excel-import-footer-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.excel-import-footer-actions button {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.excel-import-submit-button {
+  border: none;
+  background: #172554;
+  color: #fff;
+}
+
+.excel-import-submit-button:hover {
+  background: #263b70;
+}
+
+.excel-import-submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.excel-import-footer-actions button:last-child {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+}
+
+.excel-import-footer-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (max-width: 850px) {
   .excel-import-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -509,6 +575,19 @@
 
   .excel-import-footer button {
     flex: 0 0 auto;
+  }
+
+  .excel-import-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .excel-import-footer-actions {
+    width: 100%;
+  }
+
+  .excel-import-footer-actions button {
+    flex: 1;
   }
 }
 
