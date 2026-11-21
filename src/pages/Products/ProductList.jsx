@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import ProductFormModal from './ProductFormModal';
+import ExcelImportModal from './ExcelImportModal';
+
 import './product-list.css';
 
 // نمایش اعداد با ارقام فارسی
@@ -117,6 +119,9 @@ function ProductList({ currentUser }) {
 
   // وضعیت پنجره ثبت کالای جدید
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+
+  // وضعیت پنجره ورود محصولات از Excel
+  const [isExcelImportOpen, setIsExcelImportOpen] = useState(false);
 
   // محصول انتخاب‌شده برای ویرایش
   const [productToEdit, setProductToEdit] = useState(null);
@@ -591,19 +596,37 @@ function ProductList({ currentUser }) {
 
             </div>
 
-            {/* دکمه ثبت کالا برای کاربران دارای مجوز */}
+            {/* عملیات ثبت دستی و ورود گروهی محصولات */}
             {canCreateProducts && (
-              <button
-                type="button"
-                className="product-add-button"
-                onClick={() => {
-                  setCreateSuccessMessage('');
-                  setIsCreateFormOpen(true);
-                }}
-              >
-                <span>+</span>
-                ثبت کالای جدید
-              </button>
+              <>
+
+                {/* دکمه ورود محصولات از Excel */}
+                <button
+                  type="button"
+                  className="product-import-button"
+                  onClick={() => {
+                    setCreateSuccessMessage('');
+                    setIsExcelImportOpen(true);
+                  }}
+                >
+                  <span>⇧</span>
+                  ورود از Excel
+                </button>
+
+                {/* دکمه ثبت دستی محصول */}
+                <button
+                  type="button"
+                  className="product-add-button"
+                  onClick={() => {
+                    setCreateSuccessMessage('');
+                    setIsCreateFormOpen(true);
+                  }}
+                >
+                  <span>+</span>
+                  ثبت کالای جدید
+                </button>
+
+              </>
             )}
 
           </section>
@@ -907,6 +930,13 @@ function ProductList({ currentUser }) {
             </div>
           </section>
         </div>
+      )}
+
+      {/* پنجره ورود محصولات از Excel */}
+      {isExcelImportOpen && (
+        <ExcelImportModal
+          onClose={() => setIsExcelImportOpen(false)}
+        />
       )}
     </div>
 
