@@ -932,9 +932,11 @@ function ProductList({ currentUser }) {
         </div>
       )}
 
-      {/* پنجره ورود محصولات از Excel */}
       {isExcelImportOpen && (
         <ExcelImportModal
+          categories={categories}
+          units={units}
+          products={products}
           onClose={() => setIsExcelImportOpen(false)}
         />
       )}

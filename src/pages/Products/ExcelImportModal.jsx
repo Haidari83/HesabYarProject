@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 import { readSheet } from 'read-excel-file/browser';
 
 import './excel-import-modal.css';
+import { validateExcelProductRows } from './excel-import-validation';
 
 
 // تعریف ستون‌های مورد انتظار فایل Excel
@@ -83,7 +84,12 @@ function formatFileSize(bytes) {
 }
 
 
-function ExcelImportModal({ onClose }) {
+function ExcelImportModal({
+  onClose,
+  categories,
+  units,
+  products,
+}) {
   // شناسه یکتای ورودی فایل
   const inputId = useId();
 
@@ -98,6 +104,9 @@ function ExcelImportModal({ onClose }) {
 
   // تعداد کل ردیف‌های اطلاعاتی
   const [totalRows, setTotalRows] = useState(0);
+
+  // نتیجه اعتبارسنجی محصولات و ردیف‌های Excel
+  const [validationResult, setValidationResult] = useState(null);
 
   // وضعیت خواندن فایل
   const [isReading, setIsReading] = useState(false);
@@ -122,6 +131,7 @@ function ExcelImportModal({ onClose }) {
     setFileSize(formatFileSize(file.size));
     setPreviewRows([]);
     setTotalRows(0);
+    setValidationResult(null);
     setReadError('');
 
     // در این نسخه فقط فایل XLSX پذیرفته می‌شود
@@ -251,8 +261,30 @@ function ExcelImportModal({ onClose }) {
         );
       }
 
-      // نمایش پیش‌نمایش حداکثر ۵۰ ردیف
-      setPreviewRows(dataRows.slice(0, 50));
+      // بررسی در دسترس بودن اطلاعات موردنیاز برای اعتبارسنجی
+      if (
+        !Array.isArray(categories) ||
+        !Array.isArray(units) ||
+        !Array.isArray(products)
+      ) {
+        throw new Error(
+          'اطلاعات محصولات، دسته‌بندی‌ها یا واحدها در دسترس نیست.'
+        );
+      }
+
+      // اعتبارسنجی تمام ردیف‌ها و گروه‌بندی محصولات
+      const result = validateExcelProductRows({
+        rows: dataRows,
+        categories,
+        units,
+        products,
+      });
+
+      // نگهداری نتیجه کامل اعتبارسنجی
+      setValidationResult(result);
+
+      // نمایش پیش‌نمایش حداکثر ۵۰ ردیف نخست
+      setPreviewRows(result.rows.slice(0, 50));
 
       // نگهداری تعداد کل ردیف‌ها
       setTotalRows(dataRows.length);
@@ -438,6 +470,141 @@ function ExcelImportModal({ onClose }) {
                 </span>
               </header>
 
+              {/* خلاصه نتیجه اعتبارسنجی */}
+              {validationResult && (
+                <>
+                  <div className="excel-import-summary">
+
+                    <div className="excel-import-summary-card">
+                      <span>کل محصولات شناسایی‌شده</span>
+
+                      <strong>
+                        {validationResult.totalProducts.toLocaleString('fa-IR')}
+                      </strong>
+                    </div>
+
+                    <div className="excel-import-summary-card valid">
+                      <span>محصولات معتبر</span>
+
+                      <strong>
+                        {validationResult.validProductCount.toLocaleString('fa-IR')}
+                      </strong>
+                    </div>
+
+                    <div className="excel-import-summary-card invalid">
+                      <span>محصولات نیازمند اصلاح</span>
+
+                      <strong>
+                        {validationResult.invalidProductCount.toLocaleString('fa-IR')}
+                      </strong>
+                    </div>
+
+                    <div className="excel-import-summary-card">
+                      <span>ردیف‌های دارای خطا</span>
+
+                      <strong>
+                        {validationResult.invalidRowCount.toLocaleString('fa-IR')}
+                      </strong>
+                    </div>
+
+                  </div>
+
+
+                  {/* نتیجه گروه‌بندی و اعتبارسنجی محصولات */}
+                  <section className="excel-import-product-results">
+
+                    <header>
+                      <h3>نتیجه بررسی محصولات</h3>
+
+                      <p>
+                        ردیف‌های مربوط به یک محصول در یک گروه قرار گرفته‌اند.
+                      </p>
+                    </header>
+
+
+                    {validationResult.groups.length === 0 ? (
+                      <div className="excel-import-no-groups">
+                        محصولی با نام معتبر برای بررسی پیدا نشد.
+                        خطاهای ردیف‌ها را در جدول زیر بررسی کن.
+                      </div>
+                    ) : (
+                      <div className="excel-import-table-wrapper">
+                        <table className="excel-import-table">
+
+                          <thead>
+                            <tr>
+                              <th>نام محصول</th>
+                              <th>دسته‌بندی</th>
+                              <th>واحد پایه</th>
+                              <th>تعداد واحدهای فرعی</th>
+                              <th>ردیف‌های فایل</th>
+                              <th>وضعیت</th>
+                              <th>نتیجه بررسی</th>
+                            </tr>
+                          </thead>
+
+                          <tbody>
+                            {validationResult.groups.map((group) => (
+                              <tr key={group.key}>
+
+                                <td>{group.name}</td>
+
+                                <td>{group.categoryName || '—'}</td>
+
+                                <td>{group.baseUnitName || '—'}</td>
+
+                                <td>
+                                  {group.unitOptions.length.toLocaleString('fa-IR')}
+                                </td>
+
+                                <td>
+                                  {group.rowNumbers
+                                    .map((number) =>
+                                      number.toLocaleString('fa-IR')
+                                    )
+                                    .join('، ')}
+                                </td>
+
+                                <td>
+                                  <span
+                                    className={
+                                      group.status === 'valid'
+                                        ? 'excel-import-status-valid'
+                                        : 'excel-import-status-invalid'
+                                    }
+                                  >
+                                    {group.status === 'valid'
+                                      ? 'معتبر'
+                                      : 'نیازمند اصلاح'}
+                                  </span>
+                                </td>
+
+                                <td>
+                                  {group.errors.length > 0 ? (
+                                    <ul className="excel-import-error-list">
+                                      {group.errors.map((error, index) => (
+                                        <li key={index}>{error}</li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <span className="excel-import-no-error">
+                                      اطلاعات قابل قبول است.
+                                    </span>
+                                  )}
+                                </td>
+
+                              </tr>
+                            ))}
+                          </tbody>
+
+                        </table>
+                      </div>
+                    )}
+
+                  </section>
+                </>
+              )}
+
 
               <div className="excel-import-table-wrapper">
                 <table className="excel-import-table">
@@ -451,13 +618,18 @@ function ExcelImportModal({ onClose }) {
                       <th>واحد فرعی</th>
                       <th>صورت تبدیل</th>
                       <th>مخرج تبدیل</th>
+                      <th>وضعیت</th>
+                      <th>خطاها</th>
                     </tr>
                   </thead>
 
                   <tbody>
                     {previewRows.map((row) => (
                       <tr key={row.excelRow}>
-                        <td>{row.excelRow.toLocaleString('fa-IR')}</td>
+
+                        <td>
+                          {row.excelRow.toLocaleString('fa-IR')}
+                        </td>
 
                         <td>{row.name || '—'}</td>
 
@@ -470,6 +642,27 @@ function ExcelImportModal({ onClose }) {
                         <td>{row.numerator || '—'}</td>
 
                         <td>{row.denominator || '—'}</td>
+
+                        <td>
+                          <span
+                            className={
+                              row.status === 'valid'
+                                ? 'excel-import-status-valid'
+                                : 'excel-import-status-invalid'
+                            }
+                          >
+                            {row.status === 'valid'
+                              ? 'معتبر'
+                              : 'نیازمند اصلاح'}
+                          </span>
+                        </td>
+
+                        <td>
+                          {row.errors.length > 0
+                            ? row.errors.join('؛ ')
+                            : '—'}
+                        </td>
+
                       </tr>
                     ))}
                   </tbody>

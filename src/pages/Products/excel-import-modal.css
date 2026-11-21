@@ -346,6 +346,143 @@
   cursor: not-allowed;
 }
 
+/* کارت‌های خلاصه اعتبارسنجی */
+.excel-import-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.excel-import-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid #e8edf3;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.excel-import-summary-card span {
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+.excel-import-summary-card strong {
+  color: #172554;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.excel-import-summary-card.valid {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+
+.excel-import-summary-card.valid strong {
+  color: #047857;
+}
+
+.excel-import-summary-card.invalid {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.excel-import-summary-card.invalid strong {
+  color: #b91c1c;
+}
+
+/* بخش نتیجه بررسی محصولات */
+.excel-import-product-results {
+  margin: 20px 0;
+}
+
+.excel-import-product-results>header {
+  margin-bottom: 11px;
+}
+
+.excel-import-product-results h3 {
+  margin: 0;
+  color: #172554;
+  font-size: 13px;
+}
+
+.excel-import-product-results>header p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+/* وضعیت معتبر و نامعتبر */
+.excel-import-status-valid,
+.excel-import-status-invalid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.excel-import-status-valid {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.excel-import-status-invalid {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* فهرست خطاهای یک محصول */
+.excel-import-error-list {
+  min-width: 190px;
+  margin: 0;
+  padding-right: 17px;
+  color: #b91c1c;
+  font-size: 10px;
+  line-height: 1.9;
+  white-space: normal;
+}
+
+.excel-import-no-error {
+  color: #047857;
+  font-size: 10px;
+}
+
+.excel-import-no-groups {
+  padding: 17px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.9;
+  text-align: center;
+}
+
+/* افزایش عرض جدول برای ستون‌های جدید */
+.excel-import-table {
+  min-width: 1050px;
+}
+
+/* نمایش بهتر خطاهای جدول ردیف‌ها */
+.excel-import-table td {
+  max-width: 300px;
+  white-space: normal;
+  line-height: 1.8;
+}
+
+@media (max-width: 850px) {
+  .excel-import-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* نمایشگرهای کوچک */
 @media (max-width: 650px) {
   .excel-import-backdrop {
@@ -372,5 +509,11 @@
 
   .excel-import-footer button {
     flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 450px) {
+  .excel-import-summary {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
