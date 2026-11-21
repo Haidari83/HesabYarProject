@@ -121,6 +121,15 @@ function ProductList({ currentUser }) {
   // محصول انتخاب‌شده برای ویرایش
   const [productToEdit, setProductToEdit] = useState(null);
 
+  // محصول انتخاب‌شده برای تغییر وضعیت
+  const [productToChangeStatus, setProductToChangeStatus] = useState(null);
+
+  // وضعیت اجرای عملیات فعال‌سازی یا غیرفعال‌سازی
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+
+  // پیام خطای تغییر وضعیت
+  const [statusChangeError, setStatusChangeError] = useState('');
+
   // پیام نتیجه ثبت کالا
   const [createSuccessMessage, setCreateSuccessMessage] = useState('');
 
@@ -321,6 +330,84 @@ function ProductList({ currentUser }) {
     setCreateSuccessMessage(
       `اطلاعات محصول «${updatedProduct.name}» با موفقیت به‌روزرسانی شد.`
     );
+  }
+
+  // بازکردن پنجره تأیید تغییر وضعیت محصول
+  function openProductStatusDialog(product) {
+    setStatusChangeError('');
+    setProductToChangeStatus(product);
+  }
+
+  // اجرای عملیات فعال‌سازی یا غیرفعال‌سازی محصول
+  async function handleConfirmProductStatusChange() {
+    // جلوگیری از اجرای عملیات بدون انتخاب محصول یا در حین عملیات قبلی
+    if (!productToChangeStatus || isChangingStatus) {
+      return;
+    }
+
+    // تعیین وضعیت جدید محصول
+    const nextIsActive = !productToChangeStatus.isActive;
+
+    // پاک‌کردن خطای قبلی
+    setStatusChangeError('');
+
+    setIsChangingStatus(true);
+
+    try {
+      // دریافت API تغییر وضعیت محصول
+      const changeProductStatus =
+        window.hesabyar?.products?.setActive;
+
+      if (typeof changeProductStatus !== 'function') {
+        throw new Error(
+          'سرویس تغییر وضعیت محصول در دسترس نیست.'
+        );
+      }
+
+      // ارسال شناسه محصول و وضعیت جدید به Electron
+      const updatedProduct = await changeProductStatus(
+        productToChangeStatus.id,
+        nextIsActive
+      );
+
+      // اعتبارسنجی پاسخ سرویس
+      if (
+        !updatedProduct?.id ||
+        updatedProduct.isActive !== nextIsActive
+      ) {
+        throw new Error(
+          'پاسخ سرویس تغییر وضعیت محصول معتبر نیست.'
+        );
+      }
+
+      // به‌روزرسانی محصول در فهرست
+      setProducts((previous) =>
+        previous.map((product) =>
+          product.id === updatedProduct.id
+            ? updatedProduct
+            : product
+        )
+      );
+
+      // بستن پنجره تأیید
+      setProductToChangeStatus(null);
+
+      // نمایش پیام موفقیت
+      setCreateSuccessMessage(
+        `محصول «${updatedProduct.name}» با موفقیت ${nextIsActive ? 'فعال شد' : 'غیرفعال شد'
+        }.`
+      );
+
+    } catch (error) {
+      // نمایش خطای احتمالی به کاربر
+      setStatusChangeError(
+        error.message || 'تغییر وضعیت محصول ناموفق بود.'
+      );
+
+    } finally {
+      // پایان وضعیت اجرای عملیات
+      setIsChangingStatus(false);
+    }
   }
 
   // حفظ دسته‌بندی قبلی محصول، حتی اگر اکنون غیرفعال باشد
@@ -634,6 +721,8 @@ function ProductList({ currentUser }) {
 
                         <td>
                           <div className="product-table-actions">
+
+                            {/* دکمه ویرایش برای محصولات فعال */}
                             {canUpdateProducts && product.isActive && (
                               <button
                                 type="button"
@@ -646,6 +735,29 @@ function ProductList({ currentUser }) {
                                 ویرایش
                               </button>
                             )}
+
+                            {/* دکمه فعال‌سازی یا غیرفعال‌سازی */}
+                            {canDeactivateProducts && (
+                              <button
+                                type="button"
+                                className={
+                                  product.isActive
+                                    ? 'product-deactivate-action'
+                                    : 'product-activate-action'
+                                }
+                                onClick={() => openProductStatusDialog(product)}
+                              >
+                                {product.isActive
+                                  ? 'غیرفعال‌کردن'
+                                  : 'فعال‌کردن'}
+                              </button>
+                            )}
+
+                            {/* پیام برای کاربری که مجوز عملیات ندارد */}
+                            {!canUpdateProducts && !canDeactivateProducts && (
+                              <span className="product-price-empty">—</span>
+                            )}
+
                           </div>
                         </td>
 
@@ -697,6 +809,104 @@ function ProductList({ currentUser }) {
           onClose={() => setProductToEdit(null)}
           onUpdated={handleProductUpdated}
         />
+      )}
+
+      {/* پنجره تأیید فعال‌سازی یا غیرفعال‌سازی محصول */}
+      {productToChangeStatus && (
+        <div
+          className="product-form-backdrop"
+          onClick={(event) => {
+            // بستن پنجره با کلیک بیرون از آن
+            if (
+              event.target === event.currentTarget &&
+              !isChangingStatus
+            ) {
+              setProductToChangeStatus(null);
+            }
+          }}
+        >
+          <section
+            className="product-status-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="product-status-title"
+          >
+            {/* آیکون هشدار */}
+            <div className="product-status-modal-icon">
+              !
+            </div>
+
+            {/* عنوان پنجره */}
+            <h2 id="product-status-title">
+              {productToChangeStatus.isActive
+                ? 'غیرفعال‌سازی محصول'
+                : 'فعال‌سازی محصول'}
+            </h2>
+
+            {/* توضیح عملیات */}
+            <p>
+              آیا از{' '}
+              <strong>
+                {productToChangeStatus.isActive
+                  ? 'غیرفعال‌کردن'
+                  : 'فعال‌کردن'}
+              </strong>
+              {' '}محصول{' '}
+              <strong>
+                «{productToChangeStatus.name}»
+              </strong>
+              {' '}اطمینان داری؟
+            </p>
+
+            {/* توضیح پیامد عملیات */}
+            <div className="product-status-warning">
+              {productToChangeStatus.isActive
+                ? 'غیرفعال‌سازی محصول به معنای حذف آن نیست. اطلاعات محصول و سوابق ثبت‌شده آن حفظ می‌شوند و امکان فعال‌سازی مجدد وجود دارد.'
+                : 'با فعال‌سازی مجدد، محصول دوباره در فهرست محصولات فعال قرار می‌گیرد.'}
+            </div>
+
+            {/* نمایش خطای عملیات */}
+            {statusChangeError && (
+              <div
+                className="product-form-error-message"
+                role="alert"
+              >
+                {statusChangeError}
+              </div>
+            )}
+
+            {/* دکمه‌های عملیات */}
+            <div className="product-status-actions">
+
+              <button
+                type="button"
+                className="product-form-cancel"
+                disabled={isChangingStatus}
+                onClick={() => setProductToChangeStatus(null)}
+              >
+                انصراف
+              </button>
+
+              <button
+                type="button"
+                className={
+                  productToChangeStatus.isActive
+                    ? 'product-confirm-deactivate'
+                    : 'product-confirm-activate'
+                }
+                disabled={isChangingStatus}
+                onClick={handleConfirmProductStatusChange}
+              >
+                {isChangingStatus
+                  ? 'در حال انجام...'
+                  : productToChangeStatus.isActive
+                    ? 'بله، غیرفعال کن'
+                    : 'بله، فعال کن'}
+              </button>
+
+            </div>
+          </section>
+        </div>
       )}
     </div>
 
