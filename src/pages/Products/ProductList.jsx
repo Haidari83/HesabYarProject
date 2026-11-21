@@ -118,6 +118,9 @@ function ProductList({ currentUser }) {
   // وضعیت پنجره ثبت کالای جدید
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
 
+  // محصول انتخاب‌شده برای ویرایش
+  const [productToEdit, setProductToEdit] = useState(null);
+
   // پیام نتیجه ثبت کالا
   const [createSuccessMessage, setCreateSuccessMessage] = useState('');
 
@@ -299,6 +302,43 @@ function ProductList({ currentUser }) {
       `کالای «${createdProduct.name}» با کد ${createdProduct.code} ثبت شد.`
     );
   }
+
+  // به‌روزرسانی محصول ویرایش‌شده در فهرست
+  function handleProductUpdated(updatedProduct) {
+    // جایگزینی اطلاعات قدیمی با اطلاعات جدید
+    setProducts((previous) =>
+      previous.map((product) =>
+        product.id === updatedProduct.id
+          ? updatedProduct
+          : product
+      )
+    );
+
+    // بستن پنجره ویرایش
+    setProductToEdit(null);
+
+    // نمایش پیام موفقیت
+    setCreateSuccessMessage(
+      `اطلاعات محصول «${updatedProduct.name}» با موفقیت به‌روزرسانی شد.`
+    );
+  }
+
+  // حفظ دسته‌بندی قبلی محصول، حتی اگر اکنون غیرفعال باشد
+  const editCategories =
+    productToEdit &&
+      !categories.some(
+        (category) => category.id === productToEdit.categoryId
+      )
+      ? [
+        ...categories,
+        {
+          id: productToEdit.categoryId,
+          name: productToEdit.categoryName || 'دسته‌بندی قبلی',
+          isActive: false,
+        },
+      ]
+      : categories;
+
   return (
     <div className="product-page">
 
@@ -509,6 +549,7 @@ function ProductList({ currentUser }) {
                     <th>قیمت خرید پایه</th>
                     <th>قیمت فروش پایه</th>
                     <th>وضعیت</th>
+                    <th>عملیات</th>
                   </tr>
                 </thead>
 
@@ -591,13 +632,30 @@ function ProductList({ currentUser }) {
                           </span>
                         </td>
 
+                        <td>
+                          <div className="product-table-actions">
+                            {canUpdateProducts && product.isActive && (
+                              <button
+                                type="button"
+                                className="product-edit-action"
+                                onClick={() => {
+                                  setCreateSuccessMessage('');
+                                  setProductToEdit(product);
+                                }}
+                              >
+                                ویرایش
+                              </button>
+                            )}
+                          </div>
+                        </td>
+
                       </tr>
                     );
                   })}
 
                   {filteredProducts.length === 0 && (
                     <tr>
-                      <td colSpan="8">
+                      <td colSpan="9">
                         <div className="product-empty-state">
                           <span>⌕</span>
 
@@ -630,7 +688,18 @@ function ProductList({ currentUser }) {
         />
       )}
 
+      {/* پنجره ویرایش محصول */}
+      {productToEdit && (
+        <ProductFormModal
+          product={productToEdit}
+          categories={editCategories}
+          units={units}
+          onClose={() => setProductToEdit(null)}
+          onUpdated={handleProductUpdated}
+        />
+      )}
     </div>
+
   );
 }
 

@@ -21,18 +21,50 @@ function ProductFormModal({
   units,
   onClose,
   onCreated,
+  product = null,
+  onUpdated,
 }) {
-  // اطلاعات اصلی کالا
-  const [name, setName] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  // تعیین حالت فرم: ثبت محصول یا ویرایش محصول
+  const isEditMode = Boolean(product);
 
-  // اطلاعات واحد پایه
-  const [baseUnitId, setBaseUnitId] = useState('');
+  // مقداردهی اولیه اطلاعات محصول در حالت ویرایش
+  const [name, setName] = useState(
+    () => product?.name || ''
+  );
 
-  // واحدهای فرعی و بسته‌بندی
-  const [unitOptions, setUnitOptions] = useState([]);
+  const [categoryId, setCategoryId] = useState(
+    () => product?.categoryId || ''
+  );
 
-  // وضعیت ثبت
+  // مقداردهی اولیه واحد پایه
+  const [baseUnitId, setBaseUnitId] = useState(
+    () => product?.baseUnitId || ''
+  );
+
+  // بازیابی واحدهای فرعی محصول برای نمایش در فرم ویرایش
+  const [unitOptions, setUnitOptions] = useState(() => {
+    const existingUnits = Array.isArray(product?.units)
+      ? product.units
+      : [];
+
+    return existingUnits
+      .filter((unit) => !unit.isBaseUnit)
+      .map((unit) => ({
+        ...createUnitOption(unit.unitKind),
+
+        unitId: unit.unitId,
+
+        conversionNum: String(
+          unit.conversionNum ?? 1
+        ),
+
+        conversionDen: String(
+          unit.conversionDen ?? 1
+        ),
+      }));
+  });
+
+  // وضعیت ثبت و ویرایش
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -272,29 +304,43 @@ function ProductFormModal({
     setIsSaving(true);
 
     try {
-      const createProduct =
-        window.hesabyar?.products?.create;
+      // دریافت APIهای مدیریت محصولات
+      const productApi = window.hesabyar?.products;
 
-      if (typeof createProduct !== 'function') {
+      // انتخاب سرویس مناسب بر اساس حالت فرم
+      const saveProduct = isEditMode
+        ? productApi?.update
+        : productApi?.create;
+
+      if (typeof saveProduct !== 'function') {
         throw new Error(
-          'سرویس ثبت کالا در دسترس نیست.'
+          'سرویس ذخیره اطلاعات محصول در دسترس نیست.'
         );
       }
 
-      // ثبت کالا در Main Process و پایگاه داده SQLite
-      const createdProduct = await createProduct(payload);
+      // اجرای عملیات ثبت یا ویرایش
+      const savedProduct = isEditMode
+        ? await saveProduct(product.id, payload)
+        : await saveProduct(payload);
 
-      if (!createdProduct?.id) {
+      if (!savedProduct?.id) {
         throw new Error(
-          'پاسخ سرویس ثبت کالا معتبر نیست.'
+          'پاسخ سرویس ذخیره محصول معتبر نیست.'
         );
       }
 
-      onCreated(createdProduct);
+      // ارسال نتیجه به صفحه محصولات
+      if (isEditMode) {
+        onUpdated(savedProduct);
+      } else {
+        onCreated(savedProduct);
+      }
+
     } catch (error) {
       setFormError(
-        error.message || 'ثبت کالا ناموفق بود.'
+        error.message || 'ذخیره اطلاعات محصول ناموفق بود.'
       );
+
     } finally {
       setIsSaving(false);
     }
@@ -317,7 +363,10 @@ function ProductFormModal({
       >
         <header className="product-form-header">
           <div>
-            <h2 id="product-form-title">ثبت کالای جدید</h2>
+            <h2 id="product-form-title">
+              {isEditMode ? 'ویرایش محصول' : 'ثبت کالای جدید'}
+            </h2>
+
             <p>
               مشخصات اصلی و واحدهای اندازه‌گیری کالا را وارد کن.            </p>
           </div>
@@ -381,6 +430,9 @@ function ProductFormModal({
                         value={category.id}
                       >
                         {category.name}
+                        {category.isActive === false
+                          ? ' (غیرفعال؛ دسته‌بندی فعلی)'
+                          : ''}
                       </option>
                     ))}
                   </select>
@@ -626,7 +678,11 @@ function ProductFormModal({
               className="product-form-submit"
               disabled={isSaving || categories.length === 0}
             >
-              {isSaving ? 'در حال ثبت...' : 'ثبت کالا'}
+              {isSaving
+                ? 'در حال ذخیره...'
+                : isEditMode
+                  ? 'ذخیره تغییرات'
+                  : 'ثبت کالا'}
             </button>
           </footer>
         </form>

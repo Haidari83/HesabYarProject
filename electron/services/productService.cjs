@@ -1247,9 +1247,21 @@ function updateProduct(
     );
   }
 
+  // اعتبارسنجی اطلاعات دریافتی؛ قیمت‌ها در این عملیات ویرایش نمی‌شوند
+  if (
+    !input ||
+    typeof input !== 'object' ||
+    Array.isArray(input)
+  ) {
+    throw new Error('اطلاعات محصول معتبر نیست.');
+  }
+
   const validated = validateProductInput(
     database,
-    input,
+    {
+      ...input,
+      prices: [],
+    },
     existingProduct
   );
 
@@ -1352,6 +1364,39 @@ function updateProduct(
   database.exec('BEGIN IMMEDIATE');
 
   try {
+    // شناسایی واحدهایی که پس از ویرایش همچنان متعلق به محصول هستند
+    const retainedUnitIds = new Set([
+      validated.baseUnitId,
+
+      ...validated.unitOptions.map(
+        (option) => option.unitId
+      ),
+    ]);
+
+    // دریافت قیمت‌های جاری پیش از غیرفعال‌سازی نسخه‌های قدیمی واحد
+    const currentPrices = database.prepare(`
+    SELECT
+      pu.unit_id AS unitId,
+      pp.currency_code AS currencyCode,
+      pp.price_type AS priceType,
+      pp.unit_price_scaled AS unitPriceScaled
+    FROM product_prices pp
+    JOIN product_units pu
+      ON pu.id = pp.product_unit_id
+    WHERE pp.product_id = ?
+      AND pp.is_current = 1
+  `).all(productId);
+
+    // حفظ قیمت واحدهایی که در تعریف جدید محصول باقی می‌مانند
+    validated.prices = currentPrices
+      .filter((price) =>
+        retainedUnitIds.has(price.unitId)
+      )
+      .map((price) => ({
+        ...price,
+        unitPriceScaled: Number(price.unitPriceScaled),
+      }));
+
     // به‌روزرسانی اطلاعات محصول و تعیین واحد پایه موقت یا نهایی
     database.prepare(`
       UPDATE products
@@ -1446,7 +1491,7 @@ function updateProduct(
 
         newProductUnitCount: rowsToInsert.length,
 
-        submittedPriceCount: validated.prices.length,
+        preservedPriceCount: validated.prices.length,
       },
       updatedAt
     );
