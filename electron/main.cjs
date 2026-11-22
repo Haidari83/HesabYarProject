@@ -69,6 +69,7 @@ const {
 // سرویس مدیریت موجودی انبار
 const {
   getInventoryEntryFormOptions,
+  createInventoryEntryDraft,
 } = require('./services/inventoryService.cjs');
 
 const fs = require('node:fs');
@@ -944,6 +945,24 @@ function registerIpcHandlers() {
         database,
         actor,
         documentType
+      );
+
+    }
+  );
+
+  // ثبت پیش‌نویس سند ورود کالا
+  ipcMain.handle(
+    'inventory:entry:create-draft',
+    (event, input) => {
+
+      // احراز هویت کاربر درخواست‌کننده
+      const actor = requireAuthenticatedSession(event);
+
+      // ثبت پیش‌نویس در پایگاه داده
+      return createInventoryEntryDraft(
+        database,
+        actor,
+        input
       );
 
     }

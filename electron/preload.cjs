@@ -280,5 +280,12 @@ contextBridge.exposeInMainWorld('hesabyar', {
         documentType
       ),
 
+    // ثبت پیش‌نویس سند ورود کالا
+    createEntryDraft: (input) =>
+      ipcRenderer.invoke(
+        'inventory:entry:create-draft',
+        input
+      ),
+
   },
 });
