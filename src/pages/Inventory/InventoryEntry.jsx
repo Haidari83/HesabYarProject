@@ -667,6 +667,9 @@ function InventoryEntry() {
   // اطلاعات عمومی سند
   const [documentDate, setDocumentDate] = useState(getLocalDate);
 
+  // تاریخ امروز بر اساس ساعت رسمی افغانستان
+  const [todayDate, setTodayDate] = useState(getLocalDate);
+
   // تاریخ موقت؛ تا زمان تأیید نباید تاریخ اصلی سند تغییر کند.
   const [draftDocumentDate, setDraftDocumentDate] = useState(getLocalDate);
 
@@ -723,6 +726,12 @@ function InventoryEntry() {
   const persianDraftDate = useMemo(
     () => getPersianDateValue(draftDocumentDate),
     [draftDocumentDate]
+  );
+
+  // حداکثر تاریخ قابل انتخاب در تقویم شمسی
+  const persianMaxDate = useMemo(
+    () => getPersianDateValue(todayDate),
+    [todayDate]
   );
 
 
@@ -893,9 +902,7 @@ function InventoryEntry() {
 
   // مدیریت بسته‌شدن تقویم
   function handleDatePickerClose() {
-
-    // اگر بسته‌شدن به دلیل انتخاب یک روز باشد،
-    // تقویم باز می‌ماند.
+    // جلوگیری از بسته‌شدن خودکار تقویم هنگام انتخاب روز
     if (keepCalendarOpenRef.current) {
 
       keepCalendarOpenRef.current = false;
@@ -905,38 +912,44 @@ function InventoryEntry() {
     }
 
 
+    // دریافت دلیل بسته‌شدن تقویم
     const closeReason = datePickerCloseReasonRef.current;
 
     datePickerCloseReasonRef.current = null;
 
+
+    // تغییر وضعیت تقویم به بسته
     setIsDatePickerOpen(false);
 
 
     // اگر کاربر دکمه تأیید را زده باشد،
-    // تاریخ انتخاب‌شده حفظ می‌شود.
+    // تاریخ قبلاً در تابع تأیید اعمال شده است.
     if (closeReason === 'confirm') {
       return;
     }
 
 
     // اگر کاربر بیرون تقویم کلیک کند،
-    // تاریخ امروز جایگزین تاریخ ورودی می‌شود.
-    const today = getLocalDate();
+    // تاریخ انتخاب‌شده موقت اعمال می‌شود.
+    const selectedDate =
+      draftDocumentDate ||
+      documentDate ||
+      getLocalDate();
 
-    setDocumentDate(today);
-
-    setDraftDocumentDate(today);
+    setDocumentDate(selectedDate);
 
   }
-
 
   // انتخاب تاریخ امروز در داخل تقویم
   function handleSelectTodayInCalendar() {
 
-    setDraftDocumentDate(getLocalDate());
+    const today = getLocalDate();
+
+    setTodayDate(today);
+
+    setDraftDocumentDate(today);
 
   }
-
 
   // تأیید تاریخ موقت
   function handleConfirmDate() {
@@ -1535,6 +1548,8 @@ function InventoryEntry() {
                 // تاریخ موقت به تقویم داده می‌شود، نه تاریخ اصلی سند
                 value={persianDraftDate}
 
+                // جلوگیری از انتخاب روزهای بعد از امروز
+                maxDate={persianMaxDate}
 
                 // انتخاب روز فقط تاریخ موقت را تغییر می‌دهد
                 onChange={(selectedDate) => {
