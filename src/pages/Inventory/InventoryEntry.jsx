@@ -742,23 +742,15 @@ function InventoryEntry() {
 
     let isCurrent = true;
 
-    // تشخیص اینکه آیا این نخستین بارگذاری فرم است
-    const isInitialLoad = !hasLoadedFormOptionsRef.current;
-
-    if (isInitialLoad) {
-      setIsLoadingOptions(true);
-    } else {
-      // در تغییر نوع سند، فقط مجوز بررسی می‌شود.
-      // فرم و اطلاعات فعلی آن باقی می‌مانند.
-      setIsCheckingEntryType(true);
-    }
-
-    setLoadError('');
-
 
     async function loadFormOptions() {
 
       try {
+
+        // اگر کامپوننت دیگر فعال نیست، درخواست اجرا نشود.
+        if (!isCurrent) {
+          return;
+        }
 
         const getEntryFormOptions =
           window.hesabyar?.inventory?.getEntryFormOptions;
@@ -789,7 +781,6 @@ function InventoryEntry() {
 
 
         // اطلاعات محصولات و ارزها فقط یک بار ذخیره می‌شوند.
-        // در تغییر نوع سند، فقط پاسخ مجوز بررسی می‌شود.
         if (
           isCurrent &&
           !hasLoadedFormOptionsRef.current
@@ -827,7 +818,9 @@ function InventoryEntry() {
     }
 
 
-    loadFormOptions();
+    // اجرای درخواست در صف غیرهم‌زمان؛
+    // تا داخل بدنه مستقیم useEffect تغییری در state انجام نشود.
+    void Promise.resolve().then(loadFormOptions);
 
 
     // جلوگیری از تغییر وضعیت توسط درخواست‌های قدیمی
@@ -1381,6 +1374,28 @@ function InventoryEntry() {
   }
 
 
+  // تلاش مجدد برای دریافت اطلاعات یا بررسی مجوز
+  function handleRetryFormOptions() {
+
+    setLoadError('');
+
+    // اگر اطلاعات اولیه دریافت شده‌اند، فقط مجوز بررسی می‌شود.
+    if (hasLoadedFormOptionsRef.current) {
+
+      setIsCheckingEntryType(true);
+
+    } else {
+
+      // در غیر این صورت، بارگذاری اولیه دوباره انجام می‌شود.
+      setIsLoadingOptions(true);
+
+    }
+
+    setReloadToken((previous) => previous + 1);
+
+  }
+
+
   // تغییر نوع سند
   function handleEntryTypeChange(value) {
 
@@ -1388,10 +1403,15 @@ function InventoryEntry() {
       return;
     }
 
+    // پاک‌کردن خطای قبلی در پاسخ به اقدام کاربر
+    setLoadError('');
+
+    // آغاز بررسی مجوز نوع جدید
+    setIsCheckingEntryType(true);
+
     setEntryType(value);
 
   }
-
 
   // حالت دریافت اطلاعات
   if (isLoadingOptions && !formOptions) {
@@ -1428,8 +1448,8 @@ function InventoryEntry() {
 
           <button
             type="button"
-            onClick={() => setReloadToken((previous) => previous + 1)}
-          >
+            onClick={handleRetryFormOptions
+            }          >
             تلاش مجدد
           </button>
 
@@ -1458,9 +1478,7 @@ function InventoryEntry() {
 
           <button
             type="button"
-            onClick={() =>
-              setReloadToken((previous) => previous + 1)
-            }
+            onClick={handleRetryFormOptions}
           >
             تلاش مجدد
           </button>
