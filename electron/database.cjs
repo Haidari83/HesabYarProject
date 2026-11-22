@@ -3,7 +3,7 @@ const { DatabaseSync } = require('node:sqlite');
 const { randomUUID } = require('node:crypto');
 
 // آخرین نسخه ساختار پایگاه داده
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 
 // نسخه ساختار اولیه‌ای که جدول‌های کاربران را ایجاد می‌کند
 const INITIAL_SCHEMA_VERSION = 3;
@@ -1764,6 +1764,1289 @@ function migrateToVersion6(database) {
   }
 }
 
+/* =========================================
+   مهاجرت ساختار پایگاه داده از نسخه ۶ به ۷
+
+   ایجاد ساختار اسناد انبار، گردش موجودی
+   و لایه‌های بهای تمام‌شده FIFO
+========================================= */
+
+function migrateToVersion7(database) {
+
+  // آغاز تراکنش مهاجرت
+  // تمام جداول، شاخص‌ها و محدودیت‌ها باید با هم ایجاد شوند.
+  database.exec('BEGIN IMMEDIATE');
+
+  try {
+
+    database.exec(`
+
+      /* =====================================
+         ۱. اسناد انبار
+      ===================================== */
+
+      CREATE TABLE IF NOT EXISTS inventory_documents (
+
+        id TEXT PRIMARY KEY,
+
+        /* شماره یکتای سند که در سرویس انبار تولید می‌شود */
+        document_number TEXT NOT NULL UNIQUE COLLATE NOCASE
+          CHECK (
+            length(trim(document_number)) > 0
+          ),
+
+        /* نوع سند انبار */
+        document_type TEXT NOT NULL
+          CHECK (
+            document_type IN (
+              'purchase',
+              'sales_return',
+              'opening',
+              'other',
+              'sale',
+              'purchase_return',
+              'adjustment_in',
+              'adjustment_out'
+            )
+          ),
+
+        /* تاریخ سند با قالب YYYY-MM-DD */
+        document_date TEXT NOT NULL
+          CHECK (
+            date(document_date) IS NOT NULL
+            AND date(document_date) = document_date
+          ),
+
+        /* وضعیت سند */
+        status TEXT NOT NULL DEFAULT 'draft'
+          CHECK (
+            status IN (
+              'draft',
+              'posted',
+              'cancelled'
+            )
+          ),
+
+        /* نوع طرف حساب سند */
+        source_party_type TEXT
+          CHECK (
+            source_party_type IS NULL
+            OR source_party_type IN (
+              'supplier',
+              'customer',
+              'other'
+            )
+          ),
+
+        /* نام تأمین‌کننده، مشتری یا طرف حساب */
+        source_party_name TEXT,
+
+        /* شماره فاکتور یا مرجع خارجی */
+        source_invoice_number TEXT,
+
+        /* علت ثبت سند؛ برای اسناد متفرقه و اصلاحی */
+        reason TEXT,
+
+        /* توضیحات تکمیلی */
+        notes TEXT,
+
+        /* اطلاعات ایجاد */
+        created_at TEXT NOT NULL,
+
+        created_by_user_id TEXT NOT NULL,
+
+        /* اطلاعات آخرین ویرایش پیش‌نویس */
+        updated_at TEXT,
+
+        updated_by_user_id TEXT,
+
+        /* اطلاعات ثبت نهایی */
+        posted_at TEXT,
+
+        posted_by_user_id TEXT,
+
+        /* اطلاعات لغو پیش‌نویس */
+        cancelled_at TEXT,
+
+        cancelled_by_user_id TEXT,
+
+        /* اطلاعات ویرایش باید هم‌زمان ثبت شوند */
+        CHECK (
+          (
+            updated_at IS NULL
+            AND updated_by_user_id IS NULL
+          )
+          OR
+          (
+            updated_at IS NOT NULL
+            AND updated_by_user_id IS NOT NULL
+          )
+        ),
+
+        /* وضعیت سند باید با اطلاعات ثبت و لغو هماهنگ باشد */
+        CHECK (
+
+          (
+            status = 'draft'
+
+            AND posted_at IS NULL
+            AND posted_by_user_id IS NULL
+
+            AND cancelled_at IS NULL
+            AND cancelled_by_user_id IS NULL
+          )
+
+          OR
+
+          (
+            status = 'posted'
+
+            AND posted_at IS NOT NULL
+            AND posted_by_user_id IS NOT NULL
+
+            AND cancelled_at IS NULL
+            AND cancelled_by_user_id IS NULL
+          )
+
+          OR
+
+          (
+            status = 'cancelled'
+
+            AND posted_at IS NULL
+            AND posted_by_user_id IS NULL
+
+            AND cancelled_at IS NOT NULL
+            AND cancelled_by_user_id IS NOT NULL
+          )
+
+        ),
+
+        FOREIGN KEY (created_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (updated_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (posted_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (cancelled_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT
+
+      );
+
+
+      /* =====================================
+         ۲. اقلام اسناد انبار
+      ===================================== */
+
+      CREATE TABLE IF NOT EXISTS inventory_document_items (
+
+        id TEXT PRIMARY KEY,
+
+        document_id TEXT NOT NULL,
+
+        /* شماره ردیف در داخل سند */
+        line_number INTEGER NOT NULL
+          CHECK (line_number > 0),
+
+        product_id TEXT NOT NULL,
+
+        /* شناسه نسخه واحد مجاز برای محصول */
+        product_unit_id TEXT NOT NULL,
+
+        /* اطلاعات تاریخی محصول در زمان ثبت سند */
+        product_code_snapshot TEXT NOT NULL,
+
+        product_name_snapshot TEXT NOT NULL
+          CHECK (
+            length(trim(product_name_snapshot)) > 0
+          ),
+
+        unit_name_snapshot TEXT NOT NULL
+          CHECK (
+            length(trim(unit_name_snapshot)) > 0
+          ),
+
+        unit_symbol_snapshot TEXT,
+
+        /* نسبت تبدیل واحد انتخاب‌شده به واحد پایه */
+        conversion_num INTEGER NOT NULL
+          CHECK (conversion_num > 0),
+
+        conversion_den INTEGER NOT NULL
+          CHECK (conversion_den > 0),
+
+        /*
+          مقدار با مقیاس یک میلیون ذخیره می‌شود.
+
+          مثال:
+          ۲۵٫۵ کیلوگرم = ۲۵۵۰۰۰۰۰
+        */
+        quantity_scaled INTEGER NOT NULL
+          CHECK (
+            typeof(quantity_scaled) = 'integer'
+            AND quantity_scaled > 0
+          ),
+
+        /*
+          مقدار تبدیل‌شده به واحد پایه محصول
+          با همان مقیاس یک میلیون
+        */
+        base_quantity_scaled INTEGER NOT NULL
+          CHECK (
+            typeof(base_quantity_scaled) = 'integer'
+            AND base_quantity_scaled > 0
+          ),
+
+        /*
+          قیمت خرید هر واحد در ارز انتخاب‌شده
+          برای اسنادی که قیمت ندارند، این فیلد NULL است.
+        */
+        unit_price_scaled INTEGER
+          CHECK (
+            unit_price_scaled IS NULL
+            OR (
+              typeof(unit_price_scaled) = 'integer'
+              AND unit_price_scaled >= 0
+            )
+          ),
+
+        /* ارز قیمت ثبت‌شده در سند */
+        currency_code TEXT,
+
+        /* ارز مبنای ارزش‌گذاری موجودی */
+        valuation_currency_code TEXT,
+
+        /*
+          نرخ تبدیل ارز به‌صورت نسبت صحیح
+
+          نرخ = exchange_rate_num / exchange_rate_den
+
+          جهت تبدیل:
+          ارز سند به ارز مبنای ارزش‌گذاری
+        */
+        exchange_rate_num INTEGER,
+
+        exchange_rate_den INTEGER,
+
+        notes TEXT,
+
+        created_at TEXT NOT NULL,
+
+        created_by_user_id TEXT NOT NULL,
+
+        /* شماره ردیف در یک سند نباید تکرار شود */
+        UNIQUE (
+          document_id,
+          line_number
+        ),
+
+        /*
+          این قید برای اطمینان از ارتباط صحیح
+          سند، محصول و ردیف آن استفاده می‌شود.
+        */
+        UNIQUE (
+          id,
+          product_id,
+          document_id
+        ),
+
+        /*
+          اطلاعات قیمت یا باید کاملاً خالی باشند
+          یا تمام اطلاعات قیمت و نرخ ارز ثبت شده باشند.
+        */
+        CHECK (
+
+          (
+            unit_price_scaled IS NULL
+            AND currency_code IS NULL
+            AND valuation_currency_code IS NULL
+            AND exchange_rate_num IS NULL
+            AND exchange_rate_den IS NULL
+          )
+
+          OR
+
+          (
+            unit_price_scaled IS NOT NULL
+
+            AND currency_code IS NOT NULL
+
+            AND valuation_currency_code IS NOT NULL
+
+            AND exchange_rate_num IS NOT NULL
+            AND exchange_rate_num > 0
+
+            AND exchange_rate_den IS NOT NULL
+            AND exchange_rate_den > 0
+          )
+
+        ),
+
+        FOREIGN KEY (document_id)
+          REFERENCES inventory_documents(id)
+          ON DELETE CASCADE,
+
+        FOREIGN KEY (product_id)
+          REFERENCES products(id)
+          ON DELETE RESTRICT,
+
+        /* واحد حتماً باید متعلق به همین محصول باشد */
+        FOREIGN KEY (product_unit_id, product_id)
+          REFERENCES product_units(id, product_id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (currency_code)
+          REFERENCES currencies(code)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (valuation_currency_code)
+          REFERENCES currencies(code)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (created_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT
+
+      );
+
+
+      /* =====================================
+         ۳. گردش موجودی انبار
+      ===================================== */
+
+      CREATE TABLE IF NOT EXISTS inventory_movements (
+
+        id TEXT PRIMARY KEY,
+
+        document_id TEXT NOT NULL,
+
+        document_item_id TEXT NOT NULL,
+
+        product_id TEXT NOT NULL,
+
+        /* جهت گردش */
+        movement_direction TEXT NOT NULL
+          CHECK (
+            movement_direction IN (
+              'in',
+              'out'
+            )
+          ),
+
+        /* مقدار گردش در واحد پایه محصول */
+        base_quantity_scaled INTEGER NOT NULL
+          CHECK (
+            typeof(base_quantity_scaled) = 'integer'
+            AND base_quantity_scaled > 0
+          ),
+
+        /* تاریخ وقوع گردش */
+        movement_at TEXT NOT NULL,
+
+        created_at TEXT NOT NULL,
+
+        created_by_user_id TEXT NOT NULL,
+
+        /*
+          هر ردیف سند فقط یک گردش ایجاد می‌کند.
+          خروجی‌های چندلایه FIFO در جدول تخصیص ثبت می‌شوند.
+        */
+        UNIQUE (document_item_id),
+
+        /* کلید مرکب برای ارتباط با لایه‌های FIFO */
+        UNIQUE (
+          id,
+          product_id
+        ),
+
+        FOREIGN KEY (document_id)
+          REFERENCES inventory_documents(id)
+          ON DELETE RESTRICT,
+
+        /*
+          اطمینان از اینکه محصول و سند ردیف گردش
+          دقیقاً با ردیف سند انبار یکسان هستند.
+        */
+        FOREIGN KEY (
+          document_item_id,
+          product_id,
+          document_id
+        )
+          REFERENCES inventory_document_items (
+            id,
+            product_id,
+            document_id
+          )
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (product_id)
+          REFERENCES products(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (created_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT
+
+      );
+
+
+      /* =====================================
+         ۴. لایه‌های بهای تمام‌شده FIFO
+      ===================================== */
+
+      CREATE TABLE IF NOT EXISTS inventory_cost_layers (
+
+        id TEXT PRIMARY KEY,
+
+        /* گردش ورودی ایجادکننده لایه */
+        source_movement_id TEXT NOT NULL UNIQUE,
+
+        product_id TEXT NOT NULL,
+
+        /* تاریخ ورود کالا به انبار */
+        received_at TEXT NOT NULL,
+
+        /* مقدار اولیه لایه در واحد پایه */
+        original_quantity_base_scaled INTEGER NOT NULL
+          CHECK (
+            typeof(original_quantity_base_scaled) = 'integer'
+            AND original_quantity_base_scaled > 0
+          ),
+
+        /*
+          بهای هر واحد پایه در ارز مبنای ارزش‌گذاری
+          با مقیاس یک میلیون
+        */
+        unit_cost_scaled INTEGER NOT NULL
+          CHECK (
+            typeof(unit_cost_scaled) = 'integer'
+            AND unit_cost_scaled >= 0
+          ),
+
+        valuation_currency_code TEXT NOT NULL,
+
+        created_at TEXT NOT NULL,
+
+        created_by_user_id TEXT NOT NULL,
+
+        /*
+          کلید مرکب برای اطمینان از ارتباط ارز،
+          محصول و لایه در تخصیص FIFO
+        */
+        UNIQUE (
+          id,
+          product_id,
+          valuation_currency_code
+        ),
+
+        /* هر لایه باید از گردش ورودی همان محصول ساخته شود */
+        FOREIGN KEY (source_movement_id, product_id)
+          REFERENCES inventory_movements(id, product_id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (product_id)
+          REFERENCES products(id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (valuation_currency_code)
+          REFERENCES currencies(code)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (created_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT
+
+      );
+
+
+      /* =====================================
+         ۵. تخصیص خروج کالا به لایه‌های FIFO
+      ===================================== */
+
+      CREATE TABLE IF NOT EXISTS inventory_fifo_allocations (
+
+        id TEXT PRIMARY KEY,
+
+        /* گردش خروجی که از این لایه مصرف کرده است */
+        outbound_movement_id TEXT NOT NULL,
+
+        /* لایه بهای تمام‌شده مصرف‌شده */
+        cost_layer_id TEXT NOT NULL,
+
+        product_id TEXT NOT NULL,
+
+        /* مقدار مصرف‌شده از لایه در واحد پایه */
+        allocated_quantity_base_scaled INTEGER NOT NULL
+          CHECK (
+            typeof(allocated_quantity_base_scaled) = 'integer'
+            AND allocated_quantity_base_scaled > 0
+          ),
+
+        /* بهای واحد مصرف‌شده */
+        unit_cost_scaled INTEGER NOT NULL
+          CHECK (
+            typeof(unit_cost_scaled) = 'integer'
+            AND unit_cost_scaled >= 0
+          ),
+
+        /* بهای کل تخصیص */
+        allocated_cost_scaled INTEGER NOT NULL
+          CHECK (
+            typeof(allocated_cost_scaled) = 'integer'
+            AND allocated_cost_scaled >= 0
+          ),
+
+        valuation_currency_code TEXT NOT NULL,
+
+        created_at TEXT NOT NULL,
+
+        created_by_user_id TEXT NOT NULL,
+
+        /*
+          یک گردش خروجی نمی‌تواند
+          یک لایه را چند بار تخصیص دهد.
+        */
+        UNIQUE (
+          outbound_movement_id,
+          cost_layer_id
+        ),
+
+        FOREIGN KEY (outbound_movement_id, product_id)
+          REFERENCES inventory_movements(id, product_id)
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (
+          cost_layer_id,
+          product_id,
+          valuation_currency_code
+        )
+          REFERENCES inventory_cost_layers (
+            id,
+            product_id,
+            valuation_currency_code
+          )
+          ON DELETE RESTRICT,
+
+        FOREIGN KEY (created_by_user_id)
+          REFERENCES users(id)
+          ON DELETE RESTRICT
+
+      );
+
+
+      /* =====================================
+         ۶. شاخص‌های بهینه‌سازی جست‌وجو
+      ===================================== */
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_documents_type_date
+
+      ON inventory_documents (
+        document_type,
+        document_date DESC
+      );
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_documents_status_date
+
+      ON inventory_documents (
+        status,
+        document_date DESC
+      );
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_documents_created_by
+
+      ON inventory_documents (
+        created_by_user_id,
+        created_at DESC
+      );
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_document_items_document
+
+      ON inventory_document_items (
+        document_id,
+        line_number
+      );
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_document_items_product
+
+      ON inventory_document_items(product_id);
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_movements_product_date
+
+      ON inventory_movements (
+        product_id,
+        movement_at,
+        created_at
+      );
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_movements_document
+
+      ON inventory_movements(document_id);
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_cost_layers_product_fifo
+
+      ON inventory_cost_layers (
+        product_id,
+        received_at,
+        created_at,
+        id
+      );
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_fifo_allocations_layer
+
+      ON inventory_fifo_allocations(cost_layer_id);
+
+
+      CREATE INDEX IF NOT EXISTS
+      idx_inventory_fifo_allocations_outbound
+
+      ON inventory_fifo_allocations(outbound_movement_id);
+
+
+      /* =====================================
+         ۷. مشاهده مانده هر لایه FIFO
+      ===================================== */
+
+      /*
+        مانده لایه از تفاضل مقدار اولیه و
+        مجموع تخصیص‌های انجام‌شده محاسبه می‌شود.
+
+        این View مقدار موجودی را ذخیره نمی‌کند؛
+        بلکه آن را از سابقه تخصیص FIFO به دست می‌آورد.
+      */
+
+      CREATE VIEW IF NOT EXISTS inventory_cost_layer_balances AS
+
+      SELECT
+
+        layer.id,
+
+        layer.source_movement_id,
+
+        layer.product_id,
+
+        layer.received_at,
+
+        layer.original_quantity_base_scaled,
+
+        layer.unit_cost_scaled,
+
+        layer.valuation_currency_code,
+
+        layer.created_at,
+
+        layer.created_by_user_id,
+
+        layer.original_quantity_base_scaled
+          - COALESCE(
+              SUM(
+                allocation.allocated_quantity_base_scaled
+              ),
+              0
+            ) AS remaining_quantity_base_scaled
+
+      FROM inventory_cost_layers AS layer
+
+      LEFT JOIN inventory_fifo_allocations AS allocation
+
+        ON allocation.cost_layer_id = layer.id
+
+      GROUP BY layer.id;
+
+
+      /* =====================================
+         ۸. محافظت از اسناد ثبت‌شده
+      ===================================== */
+
+      /* جلوگیری از ویرایش سند ثبت‌شده یا لغوشده */
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_document_update_after_posting
+
+      BEFORE UPDATE ON inventory_documents
+
+      WHEN OLD.status <> 'draft'
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'Posted or cancelled inventory documents are immutable.'
+        );
+
+      END;
+
+
+      /* فقط انتقال پیش‌نویس به ثبت‌شده یا لغوشده مجاز است */
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_document_status_reversal
+
+      BEFORE UPDATE OF status ON inventory_documents
+
+      WHEN OLD.status <> 'draft'
+        OR NEW.status NOT IN ('posted', 'cancelled')
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'Invalid inventory document status transition.'
+        );
+
+      END;
+
+
+      /* سند بدون قلم قابل ثبت نهایی نیست */
+
+      CREATE TRIGGER IF NOT EXISTS
+      require_inventory_document_items_before_posting
+
+      BEFORE UPDATE OF status ON inventory_documents
+
+      WHEN OLD.status = 'draft'
+        AND NEW.status = 'posted'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM inventory_document_items
+          WHERE document_id = OLD.id
+        )
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'An inventory document must contain at least one item.'
+        );
+
+      END;
+
+
+      /* اسناد ثبت‌شده یا لغوشده حذف نمی‌شوند */
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_document_delete_after_draft
+
+      BEFORE DELETE ON inventory_documents
+
+      WHEN OLD.status <> 'draft'
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'Only draft inventory documents can be deleted.'
+        );
+
+      END;
+
+
+      /* =====================================
+         ۹. محافظت از اقلام سند
+      ===================================== */
+
+      /* افزودن قلم فقط به سند پیش‌نویس مجاز است */
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_document_item_insert_after_draft
+
+      BEFORE INSERT ON inventory_document_items
+
+      WHEN COALESCE(
+        (
+          SELECT status
+          FROM inventory_documents
+          WHERE id = NEW.document_id
+        ),
+        ''
+      ) <> 'draft'
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'Inventory document items can only be added to drafts.'
+        );
+
+      END;
+
+
+      /* ویرایش قلم فقط برای اسناد پیش‌نویس مجاز است */
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_document_item_update_after_draft
+
+      BEFORE UPDATE ON inventory_document_items
+
+      WHEN
+
+        COALESCE(
+          (
+            SELECT status
+            FROM inventory_documents
+            WHERE id = OLD.document_id
+          ),
+          ''
+        ) <> 'draft'
+
+        OR
+
+        COALESCE(
+          (
+            SELECT status
+            FROM inventory_documents
+            WHERE id = NEW.document_id
+          ),
+          ''
+        ) <> 'draft'
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'Only draft inventory document items can be changed.'
+        );
+
+      END;
+
+
+      /* حذف قلم فقط از اسناد پیش‌نویس مجاز است */
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_document_item_delete_after_draft
+
+      BEFORE DELETE ON inventory_document_items
+
+      WHEN COALESCE(
+        (
+          SELECT status
+          FROM inventory_documents
+          WHERE id = OLD.document_id
+        ),
+        ''
+      ) <> 'draft'
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'Only draft inventory document items can be deleted.'
+        );
+
+      END;
+
+
+      /* =====================================
+         ۱۰. کنترل ثبت گردش موجودی
+      ===================================== */
+
+      /*
+        گردش فقط برای سند ثبت‌شده مجاز است.
+
+        نوع سند و جهت گردش نیز باید هماهنگ باشند.
+      */
+
+      CREATE TRIGGER IF NOT EXISTS
+      validate_inventory_movement_insert
+
+      BEFORE INSERT ON inventory_movements
+
+      WHEN NOT EXISTS (
+
+        SELECT 1
+
+        FROM inventory_documents AS document
+
+        WHERE document.id = NEW.document_id
+
+          AND document.status = 'posted'
+
+          AND (
+
+            (
+              document.document_type IN (
+                'purchase',
+                'sales_return',
+                'opening',
+                'other',
+                'adjustment_in'
+              )
+
+              AND NEW.movement_direction = 'in'
+            )
+
+            OR
+
+            (
+              document.document_type IN (
+                'sale',
+                'purchase_return',
+                'adjustment_out'
+              )
+
+              AND NEW.movement_direction = 'out'
+            )
+
+          )
+
+      )
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'Inventory movement does not match a posted document type.'
+        );
+
+      END;
+
+
+      /* گردش موجودی تغییرناپذیر است */
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_movement_update
+
+      BEFORE UPDATE ON inventory_movements
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'Inventory movements are immutable.'
+        );
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_movement_delete
+
+      BEFORE DELETE ON inventory_movements
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'Inventory movements cannot be deleted.'
+        );
+
+      END;
+
+
+      /* =====================================
+         ۱۱. کنترل ایجاد لایه FIFO
+      ===================================== */
+
+      /* لایه فقط از یک گردش ورودی ثبت‌شده ساخته می‌شود */
+
+      CREATE TRIGGER IF NOT EXISTS
+      validate_inventory_cost_layer_insert
+
+      BEFORE INSERT ON inventory_cost_layers
+
+      WHEN NOT EXISTS (
+
+        SELECT 1
+
+        FROM inventory_movements AS movement
+
+        JOIN inventory_documents AS document
+
+          ON document.id = movement.document_id
+
+        WHERE movement.id = NEW.source_movement_id
+
+          AND movement.product_id = NEW.product_id
+
+          AND movement.movement_direction = 'in'
+
+          AND document.status = 'posted'
+
+      )
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'A FIFO cost layer must originate from a posted inbound movement.'
+        );
+
+      END;
+
+
+      /* لایه بهای FIFO تغییرناپذیر است */
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_cost_layer_update
+
+      BEFORE UPDATE ON inventory_cost_layers
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'FIFO cost layers are immutable.'
+        );
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_cost_layer_delete
+
+      BEFORE DELETE ON inventory_cost_layers
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'FIFO cost layers cannot be deleted.'
+        );
+
+      END;
+
+
+      /* =====================================
+         ۱۲. کنترل تخصیص FIFO
+      ===================================== */
+
+      /*
+        تخصیص باید:
+
+        ۱. به یک گردش خروجی ثبت‌شده متصل باشد.
+        ۲. متعلق به همان محصول باشد.
+        ۳. از یک لایه موجود استفاده کند.
+        ۴. از مقدار باقی‌مانده لایه بیشتر نباشد.
+        ۵. بهای واحد آن با لایه مبدأ برابر باشد.
+        ۶. ترتیب FIFO را رعایت کند.
+      */
+
+      CREATE TRIGGER IF NOT EXISTS
+      validate_inventory_fifo_allocation_insert
+
+      BEFORE INSERT ON inventory_fifo_allocations
+
+      WHEN
+
+        /* بررسی گردش خروجی */
+
+        NOT EXISTS (
+
+          SELECT 1
+
+          FROM inventory_movements AS movement
+
+          JOIN inventory_documents AS document
+
+            ON document.id = movement.document_id
+
+          WHERE movement.id = NEW.outbound_movement_id
+
+            AND movement.product_id = NEW.product_id
+
+            AND movement.movement_direction = 'out'
+
+            AND document.status = 'posted'
+
+        )
+
+        OR
+
+        /* بررسی موجودی قابل تخصیص در لایه انتخاب‌شده */
+
+        NOT EXISTS (
+
+          SELECT 1
+
+          FROM inventory_cost_layers AS layer
+
+          WHERE layer.id = NEW.cost_layer_id
+
+            AND layer.product_id = NEW.product_id
+
+            AND layer.valuation_currency_code =
+              NEW.valuation_currency_code
+
+            AND layer.unit_cost_scaled = NEW.unit_cost_scaled
+
+            AND layer.original_quantity_base_scaled
+
+              - COALESCE(
+
+                  (
+
+                    SELECT SUM(
+                      allocation.allocated_quantity_base_scaled
+                    )
+
+                    FROM inventory_fifo_allocations AS allocation
+
+                    WHERE allocation.cost_layer_id = layer.id
+
+                  ),
+
+                  0
+
+                ) >= NEW.allocated_quantity_base_scaled
+
+        )
+
+        OR
+
+        /* جلوگیری از مصرف لایه جدیدتر در حضور لایه قدیمی‌تر */
+
+        EXISTS (
+
+          SELECT 1
+
+          FROM inventory_cost_layers AS older_layer
+
+          JOIN inventory_cost_layers AS selected_layer
+
+            ON selected_layer.id = NEW.cost_layer_id
+
+          WHERE older_layer.product_id = NEW.product_id
+
+            AND (
+
+              older_layer.received_at < selected_layer.received_at
+
+              OR (
+
+                older_layer.received_at = selected_layer.received_at
+
+                AND older_layer.created_at < selected_layer.created_at
+
+              )
+
+              OR (
+
+                older_layer.received_at = selected_layer.received_at
+
+                AND older_layer.created_at = selected_layer.created_at
+
+                AND older_layer.id < selected_layer.id
+
+              )
+
+            )
+
+            AND older_layer.original_quantity_base_scaled
+
+              - COALESCE(
+
+                  (
+
+                    SELECT SUM(
+                      allocation.allocated_quantity_base_scaled
+                    )
+
+                    FROM inventory_fifo_allocations AS allocation
+
+                    WHERE allocation.cost_layer_id = older_layer.id
+
+                  ),
+
+                  0
+
+                ) > 0
+
+        )
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'FIFO allocation is invalid or violates FIFO order.'
+        );
+
+      END;
+
+
+      /* تخصیص‌های FIFO تغییرناپذیر هستند */
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_fifo_allocation_update
+
+      BEFORE UPDATE ON inventory_fifo_allocations
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'FIFO allocations are immutable.'
+        );
+
+      END;
+
+
+      CREATE TRIGGER IF NOT EXISTS
+      prevent_inventory_fifo_allocation_delete
+
+      BEFORE DELETE ON inventory_fifo_allocations
+
+      BEGIN
+
+        SELECT RAISE(
+          ABORT,
+          'FIFO allocations cannot be deleted.'
+        );
+
+      END;
+
+    `);
+
+
+    // ثبت نسخه هفتم فقط پس از ایجاد موفق تمام ساختارها
+    database.exec('PRAGMA user_version = 7');
+
+
+    // پایان موفق تراکنش مهاجرت
+    database.exec('COMMIT');
+
+
+  } catch (error) {
+
+    // در صورت شکست، تمام ساختارهای ایجادشده بازگردانده می‌شوند
+    try {
+
+      database.exec('ROLLBACK');
+
+    } catch {
+
+      // نادیده‌گرفتن خطای احتمالی هنگام بازگشت تراکنش
+
+    }
+
+    // انتقال خطای اصلی به بخش راه‌اندازی برنامه
+    throw error;
+
+  }
+
+}
 // اتصال به پایگاه داده یا ایجاد آن
 function openDatabase(databasePath) {
 
@@ -1859,6 +3142,7 @@ function openDatabase(databasePath) {
       migrateToVersion4(database);
       migrateToVersion5(database);
       migrateToVersion6(database);
+      migrateToVersion7(database);
     }
 
     // ارتقای پایگاه داده نسخه ۲ به نسخه ۶
@@ -1867,6 +3151,7 @@ function openDatabase(databasePath) {
       migrateToVersion4(database);
       migrateToVersion5(database);
       migrateToVersion6(database);
+      migrateToVersion7(database);
     }
 
     // ارتقای پایگاه داده نسخه ۳ به نسخه ۶
@@ -1874,17 +3159,25 @@ function openDatabase(databasePath) {
       migrateToVersion4(database);
       migrateToVersion5(database);
       migrateToVersion6(database);
+      migrateToVersion7(database);
     }
 
     // ارتقای پایگاه داده نسخه ۴ به نسخه ۶
     else if (currentVersion === 4) {
       migrateToVersion5(database);
       migrateToVersion6(database);
+      migrateToVersion7(database);
     }
 
     // ارتقای پایگاه داده نسخه ۵ به نسخه ۶
     else if (currentVersion === 5) {
       migrateToVersion6(database);
+      migrateToVersion7(database);
+    }
+
+    // ارتقای پایگاه داده نسخه ۶ به نسخه ۷
+    else if (currentVersion === 6) {
+      migrateToVersion7(database);
     }
 
     // بررسی سازگاری نسخه نهایی
