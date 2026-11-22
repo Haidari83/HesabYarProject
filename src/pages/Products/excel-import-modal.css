@@ -1,3 +1,10 @@
+:root {
+  --excel-text-xs: 11px;
+  --excel-text-sm: 12px;
+  --excel-text-md: 13px;
+  --excel-text-lg: 15px;
+}
+
 /* پس‌زمینه پنجره ورود از Excel */
 .excel-import-backdrop {
   position: fixed;
@@ -48,13 +55,13 @@
 .excel-import-header h2 {
   margin: 0;
   color: #172554;
-  font-size: 16px;
+  font-size: 22px;
 }
 
 .excel-import-header p {
   margin: 7px 0 0;
   color: #64748b;
-  font-size: 11px;
+  font-size: var(--excel-text-lg);
   line-height: 1.8;
 }
 
@@ -102,12 +109,12 @@
 .excel-import-guide h3 {
   margin: 0 0 8px;
   color: #1e3a8a;
-  font-size: 13px;
+  font-size: var(--excel-text-lg);
 }
 
 .excel-import-guide p {
   margin: 7px 0;
-  font-size: 11px;
+  font-size: var(--excel-text-lg);
   line-height: 1.9;
 }
 
@@ -124,13 +131,13 @@
   border-radius: 6px;
   background: #fff;
   color: #1e40af;
-  font-size: 10px;
+  font-size: var(--excel-text-md);
 }
 
 .excel-import-guide ul {
   margin: 8px 0;
   padding-right: 20px;
-  font-size: 10px;
+  font-size: var(--excel-text-md);
   line-height: 2;
 }
 
@@ -168,7 +175,7 @@
   color: #fff;
 
   font: inherit;
-  font-size: 11px;
+  font-size: var(--excel-text-md);
 
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -188,24 +195,6 @@
   cursor: not-allowed;
 }
 
-.excel-import-file-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  padding: 0 17px;
-  border-radius: 8px;
-  background: #172554;
-  color: #fff;
-  font-size: 11px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.excel-import-file-button:hover {
-  background: #263b70;
-}
-
 .excel-import-file-info {
   display: flex;
   flex-direction: column;
@@ -216,12 +205,12 @@
 .excel-import-file-info strong {
   overflow-wrap: anywhere;
   color: #334155;
-  font-size: 11px;
+  font-size: var(--excel-text-xs);
 }
 
 .excel-import-file-info small {
   color: #94a3b8;
-  font-size: 10px;
+  font-size: var(--excel-text-xs);
 }
 
 /* وضعیت خواندن فایل */
@@ -231,7 +220,7 @@
   border-radius: 8px;
   background: #f1f5f9;
   color: #475569;
-  font-size: 11px;
+  font-size: var(--excel-text-sm);
   text-align: center;
 }
 
@@ -243,7 +232,7 @@
   border-radius: 8px;
   background: #fef2f2;
   color: #b91c1c;
-  font-size: 11px;
+  font-size: var(--excel-text-sm);
   line-height: 1.9;
 }
 
@@ -256,24 +245,13 @@
   margin: 0;
 }
 
-.excel-import-preview-header h3 {
-  margin: 0;
-  color: #172554;
-  font-size: 13px;
-}
-
-.excel-import-preview-header p {
-  margin: 5px 0 0;
-  color: #64748b;
-  font-size: 10px;
-}
 
 .excel-import-preview-count {
   padding: 6px 10px;
   border-radius: 7px;
   background: #ecfdf5;
   color: #047857;
-  font-size: 10px;
+  font-size: var(--excel-text-sm);
   white-space: nowrap;
 }
 
@@ -283,7 +261,7 @@
   min-width: 760px;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 11px;
+  font-size: var(--excel-text-sm);
   text-align: right;
 }
 
@@ -332,7 +310,7 @@
 .excel-import-footer p {
   margin: 0;
   color: #64748b;
-  font-size: 10px;
+  font-size: var(--excel-text-xs);
   line-height: 1.8;
 }
 
@@ -342,7 +320,7 @@
   padding: 0 14px;
   border-radius: 7px;
   font: inherit;
-  font-size: 11px;
+  font-size: var(--excel-text-sm);
   cursor: pointer;
 }
 
@@ -376,13 +354,13 @@
 
 .excel-import-summary-card span {
   color: #64748b;
-  font-size: 10px;
+  font-size: var(--excel-text-sm);
   line-height: 1.8;
 }
 
 .excel-import-summary-card strong {
   color: #172554;
-  font-size: 20px;
+  font-size: 22px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -404,23 +382,6 @@
   color: #b91c1c;
 }
 
-.excel-import-product-results>header {
-  margin-bottom: 11px;
-}
-
-.excel-import-product-results h3 {
-  margin: 0;
-  color: #172554;
-  font-size: 13px;
-}
-
-.excel-import-product-results>header p {
-  margin: 5px 0 0;
-  color: #64748b;
-  font-size: 10px;
-  line-height: 1.8;
-}
-
 /* وضعیت معتبر و نامعتبر */
 .excel-import-status-valid,
 .excel-import-status-invalid {
@@ -429,7 +390,7 @@
   justify-content: center;
   padding: 5px 8px;
   border-radius: 6px;
-  font-size: 10px;
+  font-size: var(--excel-text-sm);
   white-space: nowrap;
 }
 
@@ -449,14 +410,14 @@
   margin: 0;
   padding-right: 17px;
   color: #b91c1c;
-  font-size: 10px;
+  font-size: var(--excel-text-xs);
   line-height: 1.9;
   white-space: normal;
 }
 
 .excel-import-no-error {
   color: #047857;
-  font-size: 10px;
+  font-size: var(--excel-text-xs);
 }
 
 .excel-import-no-groups {
@@ -464,50 +425,9 @@
   border: 1px dashed #cbd5e1;
   border-radius: 8px;
   color: #64748b;
-  font-size: 11px;
+  font-size: var(--excel-text-sm);
   line-height: 1.9;
   text-align: center;
-}
-
-/* بخش گزارش نهایی واردسازی */
-.excel-import-report {
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid #e8edf3;
-}
-
-.excel-import-report>header {
-  margin-bottom: 14px;
-}
-
-.excel-import-result-file {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 12px;
-  margin-top: 17px;
-}
-
-.excel-import-result-file>div {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 0;
-  padding: 12px 14px;
-  border: 1px solid #e8edf3;
-  border-radius: 9px;
-  background: #f8fafc;
-}
-
-.excel-import-report h3 {
-  margin: 0;
-  color: #172554;
-  font-size: 14px;
-}
-
-.excel-import-report>header p {
-  margin: 6px 0 0;
-  color: #64748b;
-  font-size: 11px;
 }
 
 /* دکمه‌های پایین پنجره */
@@ -523,7 +443,7 @@
   padding: 0 14px;
   border-radius: 7px;
   font: inherit;
-  font-size: 11px;
+  font-size: var(--excel-text-sm);
   cursor: pointer;
 }
 
@@ -569,38 +489,6 @@
   background: #263b70;
 }
 
-.excel-import-result-file span {
-  color: #64748b;
-  font-size: 10px;
-}
-
-.excel-import-result-file strong {
-  overflow-wrap: anywhere;
-  color: #334155;
-  font-size: 11px;
-}
-
-/* سربرگ جدول نهایی */
-.excel-import-selected-content>header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.excel-import-selected-content h3 {
-  margin: 0;
-  color: #172554;
-  font-size: 13px;
-}
-
-.excel-import-selected-content>header p {
-  margin: 5px 0 0;
-  color: #64748b;
-  font-size: 10px;
-  line-height: 1.8;
-}
-
 /* ساختار محتوای صفحات واردسازی */
 .excel-import-review-page {
   display: flex;
@@ -620,20 +508,20 @@
 .excel-import-page-heading h3 {
   margin: 0;
   color: #172554;
-  font-size: 14px;
+  font-size: var(--excel-text-md);
 }
 
 .excel-import-page-heading p {
   margin: 6px 0 0;
   color: #64748b;
-  font-size: 11px;
+  font-size: var(--excel-text-sm);
   line-height: 1.9;
 }
 
 /* فاصله مناسب کارت‌های آمار */
 .excel-import-review-page>.excel-import-summary {
   margin: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .excel-import-review-table,
@@ -667,14 +555,6 @@
 
 @media (max-width: 850px) {
   .excel-import-review-page>.excel-import-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .excel-import-result-file {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .excel-import-summary-report {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

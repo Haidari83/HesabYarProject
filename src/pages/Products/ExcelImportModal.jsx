@@ -479,9 +479,6 @@ function ExcelImportModal({
       // انتقال به صفحه گزارش نهایی
       setCurrentStep('completed');
 
-      // اطلاع‌رسانی به صفحه اصلی درباره محصولات ثبت‌شده
-      onImported(createdProducts);
-
     } catch (error) {
       // نمایش خطای احتمالی؛ تراکنش ناموفق در بک‌اند بازگردانده می‌شود
       setImportError(
@@ -493,6 +490,9 @@ function ExcelImportModal({
       // پایان وضعیت ثبت
       setIsImporting(false);
     }
+
+    // اطلاع‌رسانی به صفحه اصلی درباره محصولات ثبت‌شده
+    onImported(createdProducts);
   }
 
   // فقط کالاهایی که تمام اعتبارسنجی‌های آن‌ها موفق بوده است
@@ -988,6 +988,13 @@ function ExcelImportModal({
                   <span>کل محصولات</span>
                   <strong>
                     {importReport.totalCount.toLocaleString('fa-IR')}
+                  </strong>
+                </div>
+
+                <div className="excel-import-summary-card">
+                  <span>ردیف‌های فاقد نام محصول</span>
+                  <strong>
+                    {importReport.unidentifiedRowCount.toLocaleString('fa-IR')}
                   </strong>
                 </div>
 
