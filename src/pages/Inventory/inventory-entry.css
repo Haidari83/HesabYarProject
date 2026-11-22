@@ -507,6 +507,119 @@
   line-height: 1.8;
 }
 
+/* =========================
+   وضعیت دریافت اطلاعات و پیام‌های عملیات
+========================= */
+
+/* پیام در حال دریافت اطلاعات فرم */
+.entry-options-state {
+  padding: 12px 15px;
+  border: 1px solid #dbeafe;
+  border-radius: 9px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* پیام موفقیت یا خطای عملیات */
+.entry-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 15px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+/* پیام موفقیت */
+.entry-feedback-success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+/* پیام خطا */
+.entry-feedback-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* دکمه تلاش مجدد */
+.entry-feedback button {
+  padding: 7px 12px;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* متن راهنمای انتخاب ارز */
+.entry-item-currency-hint {
+  display: block;
+  margin-top: 6px;
+  color: #a16207;
+  font-size: 10px;
+  line-height: 1.8;
+}
+
+/* حالت غیرفعال دکمه افزودن کالا */
+.entry-add-item-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* حالت غیرفعال جست‌وجوی محصول */
+.entry-product-picker>input:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+
+/* =========================
+   تنظیم عرض هشت ستون جدول ورود
+========================= */
+
+.entry-items-table th:nth-child(1) {
+  width: 4%;
+}
+
+.entry-items-table th:nth-child(2) {
+  width: 20%;
+}
+
+.entry-items-table th:nth-child(3) {
+  width: 12%;
+}
+
+.entry-items-table th:nth-child(4) {
+  width: 12%;
+}
+
+.entry-items-table th:nth-child(5) {
+  width: 14%;
+}
+
+.entry-items-table th:nth-child(6) {
+  width: 11%;
+}
+
+.entry-items-table th:nth-child(7) {
+  width: 17%;
+}
+
+.entry-items-table th:nth-child(8) {
+  width: 8%;
+}
 
 /* =========================
    نمایش کارت‌مانند جدول در موبایل
