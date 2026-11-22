@@ -28,6 +28,38 @@ const DatePicker =
   DatePickerModule?.default ??
   DatePickerModule;
 
+// دکمه‌های عملیاتی داخل پنجره تقویم
+function InventoryDatePickerActions({
+  DatePicker,
+  onSelectToday,
+  onConfirm,
+}) {
+  return (
+    <div className="entry-date-picker-actions">
+
+      <button
+        type="button"
+        className="entry-date-picker-today"
+        onClick={onSelectToday}
+      >
+        رفتن به امروز
+      </button>
+
+      <button
+        type="button"
+        className="entry-date-picker-confirm"
+        onClick={() => {
+          onConfirm();
+          DatePicker?.closeCalendar?.();
+        }}
+      >
+        تأیید
+      </button>
+
+    </div>
+  );
+}
+
 // دریافت تاریخ امروز بر اساس ساعت محلی سیستم
 // دریافت تاریخ روز بر اساس ساعت رسمی افغانستان
 // خروجی همچنان میلادی است تا با SQLite سازگار باشد.
@@ -336,6 +368,18 @@ function InventoryEntry() {
   // اطلاعات عمومی سند
   const [documentDate, setDocumentDate] = useState(getLocalDate);
 
+  // تاریخ موقت؛ تا زمان تأیید نباید تاریخ اصلی سند تغییر کند.
+  const [draftDocumentDate, setDraftDocumentDate] = useState(getLocalDate);
+
+  // وضعیت باز یا بسته بودن تقویم
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  // جلوگیری از بسته‌شدن تقویم هنگام انتخاب یک روز
+  const keepCalendarOpenRef = useRef(false);
+
+  // مشخص‌کردن دلیل بسته‌شدن تقویم
+  const datePickerCloseReasonRef = useRef(null);
+
   const [sourcePartyName, setSourcePartyName] = useState('');
 
   const [sourceInvoiceNumber, setSourceInvoiceNumber] = useState('');
@@ -369,6 +413,23 @@ function InventoryEntry() {
   // وضعیت اعلان شناور
   const [toast, setToast] = useState(null);
 
+  // تبدیل تاریخ موقت میلادی به تاریخ شمسی برای تقویم
+  const persianDraftDate = useMemo(
+    () => getPersianDateValue(draftDocumentDate),
+    [draftDocumentDate]
+  );
+
+
+  // تاریخ قابل نمایش در فیلد اصلی
+  const formattedDocumentDate = useMemo(() => {
+
+    const persianDate = getPersianDateValue(documentDate);
+
+    return persianDate
+      ? persianDate.format('DD MMMM YYYY')
+      : '';
+
+  }, [documentDate]);
 
   // دریافت اطلاعات واقعی فرم از Electron
   useEffect(() => {
@@ -492,6 +553,83 @@ function InventoryEntry() {
 
   }
 
+  // هنگام بازشدن تقویم، تاریخ موقت از تاریخ اصلی سند آغاز می‌شود.
+  function handleDatePickerOpen() {
+
+    keepCalendarOpenRef.current = false;
+
+    datePickerCloseReasonRef.current = null;
+
+    setDraftDocumentDate(
+      documentDate || getLocalDate()
+    );
+
+    setIsDatePickerOpen(true);
+
+  }
+
+
+  // مدیریت بسته‌شدن تقویم
+  function handleDatePickerClose() {
+
+    // اگر بسته‌شدن به دلیل انتخاب یک روز باشد،
+    // تقویم باز می‌ماند.
+    if (keepCalendarOpenRef.current) {
+
+      keepCalendarOpenRef.current = false;
+
+      return false;
+
+    }
+
+
+    const closeReason = datePickerCloseReasonRef.current;
+
+    datePickerCloseReasonRef.current = null;
+
+    setIsDatePickerOpen(false);
+
+
+    // اگر کاربر دکمه تأیید را زده باشد،
+    // تاریخ انتخاب‌شده حفظ می‌شود.
+    if (closeReason === 'confirm') {
+      return;
+    }
+
+
+    // اگر کاربر بیرون تقویم کلیک کند،
+    // تاریخ امروز جایگزین تاریخ ورودی می‌شود.
+    const today = getLocalDate();
+
+    setDocumentDate(today);
+
+    setDraftDocumentDate(today);
+
+  }
+
+
+  // انتخاب تاریخ امروز در داخل تقویم
+  function handleSelectTodayInCalendar() {
+
+    setDraftDocumentDate(getLocalDate());
+
+  }
+
+
+  // تأیید تاریخ موقت
+  function handleConfirmDate() {
+
+    if (!draftDocumentDate) {
+      return;
+    }
+
+    keepCalendarOpenRef.current = false;
+
+    datePickerCloseReasonRef.current = 'confirm';
+
+    setDocumentDate(draftDocumentDate);
+
+  }
 
   // افزودن ردیف جدید
   function addItemRow() {
@@ -877,7 +1015,11 @@ function InventoryEntry() {
       // فرم برای ثبت سند جدید آماده می‌شود.
       setItems([]);
 
-      setDocumentDate(getLocalDate());
+      const today = getLocalDate();
+
+      setDocumentDate(today);
+
+      setDraftDocumentDate(today);
 
       setSourcePartyName('');
 
@@ -1003,7 +1145,7 @@ function InventoryEntry() {
           </label>
 
 
-          <label className="entry-field">
+          <div className="entry-field">
 
             <span>
               {entryType === 'opening'
@@ -1011,48 +1153,88 @@ function InventoryEntry() {
                 : 'تاریخ ورود'}
             </span>
 
+
             <div className="entry-date-picker-wrapper">
 
               <DatePicker
 
-                // تاریخ میلادی داخلی به تاریخ شمسی تبدیل می‌شود
-                value={getPersianDateValue(documentDate)}
+                // تاریخ موقت به تقویم داده می‌شود، نه تاریخ اصلی سند
+                value={persianDraftDate}
 
-                // پس از انتخاب تاریخ، مقدار میلادی ذخیره می‌شود
+
+                // انتخاب روز فقط تاریخ موقت را تغییر می‌دهد
                 onChange={(selectedDate) => {
 
                   if (!selectedDate) {
                     return;
                   }
 
-                  setDocumentDate(
+                  keepCalendarOpenRef.current = true;
+
+                  setDraftDocumentDate(
                     convertToGregorianDate(selectedDate)
                   );
 
                 }}
 
+
+                // مدیریت باز و بسته شدن پنجره تقویم
+                onOpen={handleDatePickerOpen}
+
+                onClose={handleDatePickerClose}
+
+
+                // دکمه‌های عملیاتی داخل خود تقویم
+                plugins={[
+                  <InventoryDatePickerActions
+                    key="inventory-date-picker-actions"
+                    position="bottom"
+                    onSelectToday={handleSelectTodayInCalendar}
+                    onConfirm={handleConfirmDate}
+                  />,
+                ]}
+
+
                 calendar={persianCalendar}
 
                 locale={persianAfghanistan}
 
-                // قالب نمایش افغانستان: روز، نام ماه، سال
                 format="DD MMMM YYYY"
 
                 calendarPosition="bottom-right"
 
+                weekStartDayIndex={0}
+
                 editable={false}
 
-                inputClass="entry-date-picker-input"
+
+                // نمایش تاریخ تأییدشده؛ نه تاریخ موقت
+                render={(_value, openCalendar) => (
+
+                  <input
+                    id="entry-document-date"
+                    type="text"
+                    className="entry-date-picker-input"
+                    value={formattedDocumentDate}
+                    onFocus={openCalendar}
+                    readOnly
+                    autoComplete="off"
+                    placeholder="روز، ماه و سال"
+                    aria-label="انتخاب تاریخ ورود کالا"
+                    aria-haspopup="dialog"
+                    aria-expanded={isDatePickerOpen}
+                  />
+
+                )}
+
 
                 containerClassName="entry-date-picker-container"
-
-                placeholder="روز، ماه و سال"
 
               />
 
             </div>
 
-          </label>
+          </div>
 
 
           <label className="entry-field entry-field-full">

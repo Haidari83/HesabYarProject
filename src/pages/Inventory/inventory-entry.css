@@ -871,6 +871,82 @@
 }
 
 /* =========================
+   دکمه‌های عملیاتی داخل تقویم
+========================= */
+
+.entry-date-picker-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 10px 9px;
+
+  border-top: 1px solid #e5e7eb;
+
+  direction: rtl;
+}
+
+
+/* ظاهر مشترک دکمه‌ها */
+
+.entry-date-picker-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+
+  padding: 8px 12px;
+
+  border: 1px solid transparent;
+  border-radius: 7px;
+
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+
+/* دکمه رفتن به امروز */
+
+.entry-date-picker-today {
+  background: #eff6ff;
+  border-color: #dbeafe !important;
+  color: #1d4ed8;
+}
+
+.entry-date-picker-today:hover {
+  background: #dbeafe;
+}
+
+
+/* دکمه تأیید */
+
+.entry-date-picker-confirm {
+  background: var(--primary, #2684c7);
+  color: #ffffff;
+}
+
+.entry-date-picker-confirm:hover {
+  background: #176da9;
+}
+
+
+
+
+/* =========================
    نمایش کارت‌مانند جدول در موبایل
 ========================= */
 
@@ -1008,6 +1084,16 @@
 
     width: auto;
     min-width: 0;
+  }
+
+  .entry-date-picker-actions {
+    gap: 7px;
+    padding: 9px 7px;
+  }
+
+  .entry-date-picker-actions button {
+    padding: 8px 6px;
+    font-size: 11px;
   }
 
 }
