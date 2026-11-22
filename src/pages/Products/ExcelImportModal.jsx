@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { readSheet } from 'read-excel-file/browser';
 
@@ -91,8 +91,8 @@ function ExcelImportModal({
   products,
   onImported,
 }) {
-  // شناسه یکتای ورودی فایل
-  const inputId = useId();
+  // مرجع ورودی فایل برای باز کردن مستقیم پنجره انتخاب فایل
+  const fileInputRef = useRef(null);
 
   // نام فایل انتخاب‌شده
   const [fileName, setFileName] = useState('');
@@ -100,18 +100,20 @@ function ExcelImportModal({
   // حجم فایل انتخاب‌شده
   const [fileSize, setFileSize] = useState('');
 
-  // اطلاعات ردیف‌های خوانده‌شده
-  const [previewRows, setPreviewRows] = useState([]);
-
-  // تعداد کل ردیف‌های اطلاعاتی
-  const [totalRows, setTotalRows] = useState(0);
-
   // نتیجه اعتبارسنجی محصولات و ردیف‌های Excel
   const [validationResult, setValidationResult] = useState(null);
 
   // وضعیت اجرای ثبت گروهی محصولات
   const [isImporting, setIsImporting] = useState(false);
 
+  // باز کردن مستقیم پنجره انتخاب فایل سیستم‌عامل
+  function openFilePicker() {
+    if (isReading || isImporting) {
+      return;
+    }
+
+    fileInputRef.current?.click();
+  }
   // خطای احتمالی ثبت محصولات در دیتابیس
   const [importError, setImportError] = useState('');
 
@@ -130,6 +132,103 @@ function ExcelImportModal({
   // خطای احتمالی فایل یا ساختار آن
   const [readError, setReadError] = useState('');
 
+  // مراجع مدیریت تمرکز مودال
+  const modalRef = useRef(null);
+  const closeButtonRef = useRef(null);
+
+  // نگهداری آخرین تابع بستن مودال
+  const closeHandlerRef = useRef(onClose);
+
+  // نگهداری وضعیت مشغول بودن مودال
+  const busyRef = useRef(false);
+
+  // به‌روزرسانی مرجع تابع بستن مودال
+  useEffect(() => {
+    closeHandlerRef.current = onClose;
+  }, [onClose]);
+
+  // به‌روزرسانی وضعیت مشغول بودن
+  useEffect(() => {
+    busyRef.current = isReading || isImporting;
+  }, [isReading, isImporting]);
+
+  // مدیریت صفحه‌کلید و تمرکز داخل مودال
+  useEffect(() => {
+    const dialog = modalRef.current;
+    const previousFocusedElement = document.activeElement;
+
+    const focusableSelector = [
+      'button:not(:disabled)',
+      'a[href]',
+      'input:not(:disabled):not([tabindex="-1"])',
+      'select:not(:disabled)',
+      'textarea:not(:disabled)',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(',');
+
+    // انتقال تمرکز به دکمه بستن
+    closeButtonRef.current?.focus();
+
+    function handleDialogKeyDown(event) {
+      // بستن مودال با Escape
+      if (event.key === 'Escape') {
+        if (!busyRef.current) {
+          closeHandlerRef.current?.();
+        }
+        return;
+      }
+
+      if (event.key !== 'Tab' || !dialog) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        dialog.querySelectorAll(focusableSelector)
+      );
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement =
+        focusableElements[focusableElements.length - 1];
+
+      // جلوگیری از خروج تمرکز با Shift + Tab
+      if (
+        event.shiftKey &&
+        document.activeElement === firstElement
+      ) {
+        event.preventDefault();
+        lastElement.focus();
+      }
+
+      // جلوگیری از خروج تمرکز با Tab
+      else if (
+        !event.shiftKey &&
+        document.activeElement === lastElement
+      ) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleDialogKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleDialogKeyDown);
+
+      // بازگرداندن تمرکز به عنصر قبلی
+      if (
+        previousFocusedElement instanceof HTMLElement &&
+        previousFocusedElement.isConnected
+      ) {
+        previousFocusedElement.focus();
+      }
+    };
+  }, []);
 
   // خواندن فایل انتخاب‌شده و آماده‌سازی پیش‌نمایش
   async function handleFileChange(event) {
@@ -145,8 +244,6 @@ function ExcelImportModal({
     // پاک‌کردن نتیجه فایل قبلی
     setFileName(file.name);
     setFileSize(formatFileSize(file.size));
-    setPreviewRows([]);
-    setTotalRows(0);
     setValidationResult(null);
     setReadError('');
     setImportError('');
@@ -305,12 +402,6 @@ function ExcelImportModal({
       // پس از موفقیت اعتبارسنجی، نمایش صفحه بررسی همه موارد
       setCurrentStep('validation');
 
-      // نمایش پیش‌نمایش حداکثر ۵۰ ردیف نخست
-      setPreviewRows(result.rows.slice(0, 50));
-
-      // نگهداری تعداد کل ردیف‌ها
-      setTotalRows(dataRows.length);
-
     } catch (error) {
       setReadError(
         error.message ||
@@ -363,10 +454,22 @@ function ExcelImportModal({
         );
       }
 
+      // شناسایی ردیف‌هایی که به دلیل نداشتن نام محصول گروه نشده‌اند
+      const groupedRows = new Set(
+        validationResult.groups.flatMap(
+          (group) => group.rowNumbers
+        )
+      );
+
+      const unidentifiedRowCount = validationResult.rows.filter(
+        (row) => !groupedRows.has(row.excelRow)
+      ).length;
+
       // ثبت گزارش عملیات موفق
       const report = {
         createdCount: createdProducts.length,
         skippedCount: validationResult.invalidProductCount,
+        unidentifiedRowCount,
         totalCount: validationResult.totalProducts,
         products: createdProducts,
       };
@@ -392,33 +495,6 @@ function ExcelImportModal({
     }
   }
 
-  // ارتباط شماره ردیف‌های Excel با کد محصولات ثبت‌شده
-  const importedProductCodeByRow = new Map();
-
-  if (importReport && validationResult) {
-    // استخراج گروه‌هایی که اعتبارسنجی آن‌ها موفق بوده است
-    const validGroups = validationResult.groups.filter(
-      (group) => group.status === 'valid'
-    );
-
-    // محصولات ثبت‌شده به همان ترتیب گروه‌های معتبر بازمی‌گردند
-    validGroups.forEach((group, index) => {
-      const createdProduct = importReport.products[index];
-
-      if (!createdProduct?.code) {
-        return;
-      }
-
-      // اختصاص کد محصول به تمام ردیف‌های متعلق به آن
-      group.rowNumbers.forEach((rowNumber) => {
-        importedProductCodeByRow.set(
-          rowNumber,
-          createdProduct.code
-        );
-      });
-    });
-  }
-
   // فقط کالاهایی که تمام اعتبارسنجی‌های آن‌ها موفق بوده است
   const approvedGroups =
     validationResult?.groups.filter(
@@ -433,6 +509,10 @@ function ExcelImportModal({
     )
   );
 
+  // ردیف‌هایی که به دلیل نداشتن نام محصول گروه تشکیل نداده‌اند
+  const ungroupedRows = (validationResult?.rows ?? []).filter(
+    (row) => !groupedExcelRows.has(row.excelRow)
+  );
 
   // آماده‌سازی یک ردیف نمایشی برای هر محصول
   const reviewItems = [
@@ -463,19 +543,24 @@ function ExcelImportModal({
       };
     }),
 
-    // ردیف‌هایی که به علت نداشتن نام محصول تشکیل گروه نداده‌اند
-    ...(validationResult?.rows ?? [])
-      .filter((row) => !groupedExcelRows.has(row.excelRow))
-      .map((row) => ({
-        key: `invalid-row-${row.excelRow}`,
-        name: row.name || 'نام محصول مشخص نیست',
-        category: row.category || '—',
-        baseUnit: row.baseUnit || '—',
-        subUnits: row.subUnit || 'ندارد',
-        rowNumbers: [row.excelRow],
-        status: 'invalid',
-        errors: row.errors,
-      })),
+    // افزودن ردیف‌هایی که نام محصول ندارند
+    ...ungroupedRows.map((row) => ({
+      key: `invalid-row-${row.excelRow}`,
+      name: row.name || 'نام محصول مشخص نیست',
+      category: row.category || '—',
+      baseUnit: row.baseUnit || '—',
+
+      subUnits: row.subUnit
+        ? `${row.subUnit}${row.numerator && row.denominator
+          ? ` (${row.numerator}/${row.denominator})`
+          : ''
+        }`
+        : 'ندارد',
+
+      rowNumbers: [row.excelRow],
+      status: 'invalid',
+      errors: row.errors,
+    })),
   ];
   return (
     <div
@@ -491,10 +576,12 @@ function ExcelImportModal({
       }}
     >
       <section
+        ref={modalRef}
         className="excel-import-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="excel-import-title"
+        tabIndex={-1}
       >
 
         {/* سربرگ پنجره */}
@@ -512,6 +599,7 @@ function ExcelImportModal({
           </div>
 
           <button
+            ref={closeButtonRef}
             type="button"
             className="excel-import-close"
             onClick={onClose}
@@ -522,6 +610,17 @@ function ExcelImportModal({
           </button>
         </header>
 
+        {/* ورودی فایل در تمام مراحل مودال در دسترس می‌ماند */}
+        <input
+          ref={fileInputRef}
+          className="excel-import-file-input"
+          type="file"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          onChange={handleFileChange}
+          disabled={isReading || isImporting}
+          tabIndex={-1}
+          aria-label="انتخاب فایل Excel"
+        />
 
         <div className="excel-import-body">
 
@@ -551,29 +650,25 @@ function ExcelImportModal({
                   <li>برای واحد استاندارد، صورت و مخرج تبدیل را خالی بگذار.</li>
                   <li>برای واحد بسته‌بندی، صورت و مخرج تبدیل را مشخص کن.</li>
                   <li>قیمت خرید و فروش در این فایل وارد نمی‌شود.</li>
+                  <li>
+                    اطلاعات فقط از برگه اول فایل Excel خوانده می‌شود.
+                  </li>
                 </ul>
               </section>
 
 
               <section className="excel-import-file-section">
 
-                <input
-                  id={inputId}
-                  className="excel-import-file-input"
-                  type="file"
-                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={handleFileChange}
-                  disabled={isReading}
-                />
-
-                <label
-                  htmlFor={inputId}
+                <button
+                  type="button"
                   className="excel-import-file-button"
+                  onClick={openFilePicker}
+                  disabled={isReading || isImporting}
                 >
                   {isReading
                     ? 'در حال خواندن فایل...'
                     : 'انتخاب فایل Excel'}
-                </label>
+                </button>
 
                 {fileName && (
                   <div className="excel-import-file-info">
@@ -586,7 +681,12 @@ function ExcelImportModal({
 
 
               {isReading && (
-                <div className="excel-import-reading">
+                <div
+                  className="excel-import-reading"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
                   در حال خواندن و بررسی اطلاعات فایل Excel...
                 </div>
               )}
@@ -645,6 +745,13 @@ function ExcelImportModal({
                   <span>موارد ردشده</span>
                   <strong>
                     {validationResult.invalidProductCount.toLocaleString('fa-IR')}
+                  </strong>
+                </div>
+
+                <div className="excel-import-summary-card">
+                  <span>ردیف‌های فاقد نام محصول</span>
+                  <strong>
+                    {ungroupedRows.length.toLocaleString('fa-Af')}
                   </strong>
                 </div>
 
@@ -944,8 +1051,8 @@ function ExcelImportModal({
               <>
                 <button
                   type="button"
-                  onClick={() => setCurrentStep('upload')}
-                  disabled={isImporting}
+                  onClick={openFilePicker}
+                  disabled={isReading || isImporting}
                 >
                   انتخاب فایل دیگر
                 </button>
