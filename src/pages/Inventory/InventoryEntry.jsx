@@ -7,21 +7,77 @@ import {
 
 import './inventory-entry.css';
 
+// کتابخانه انتخاب تاریخ
+import DatePicker from 'react-multi-date-picker';
+import DateObject from 'react-date-object';
+
+// تقویم شمسی و میلادی
+import persianCalendar from 'react-date-object/calendars/persian';
+import gregorianCalendar from 'react-date-object/calendars/gregorian';
+
+// زبان میلادی برای خروجی استاندارد پایگاه داده
+import gregorianEnglish from 'react-date-object/locales/gregorian_en';
+
+// زبان افغانستان برای نمایش تقویم شمسی
+import persianAfghanistan from '../../locales/persianAfghanistan';
+
 
 // دریافت تاریخ امروز بر اساس ساعت محلی سیستم
+// دریافت تاریخ روز بر اساس ساعت رسمی افغانستان
+// خروجی همچنان میلادی است تا با SQLite سازگار باشد.
 function getLocalDate() {
 
-  const today = new Date();
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kabul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
 
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
+  const values = Object.fromEntries(
+    parts.map((part) => [
+      part.type,
+      part.value,
+    ])
+  );
 
-  return `${year}-${month}-${day}`;
+  return `${values.year}-${values.month}-${values.day}`;
+
+}
+
+// تبدیل تاریخ میلادی ذخیره‌شده به تاریخ قابل نمایش شمسی
+function getPersianDateValue(gregorianDate) {
+
+  if (!gregorianDate) {
+    return null;
+  }
+
+  return new DateObject({
+    date: gregorianDate,
+    format: 'YYYY-MM-DD',
+  }).convert(
+    persianCalendar,
+    persianAfghanistan
+  );
 
 }
 
 
+// تبدیل تاریخ انتخاب‌شده شمسی به تاریخ میلادی استاندارد
+function convertToGregorianDate(selectedDate) {
+
+  if (!selectedDate) {
+    return '';
+  }
+
+  return new DateObject(selectedDate)
+    .convert(
+      gregorianCalendar,
+      gregorianEnglish
+    )
+    .format('YYYY-MM-DD');
+
+}
 // قالب‌بندی اعداد با ارقام فارسی
 function formatNumber(value, maximumFractionDigits = 2) {
 
@@ -35,7 +91,7 @@ function formatNumber(value, maximumFractionDigits = 2) {
     return '—';
   }
 
-  return new Intl.NumberFormat('fa-IR', {
+  return new Intl.NumberFormat('fa-AF', {
     maximumFractionDigits,
   }).format(number);
 
@@ -76,6 +132,63 @@ function normalizeSearch(value) {
 
 }
 
+// تبدیل ارقام انگلیسی به ارقام فارسی
+function toPersianDigits(value) {
+
+  return String(value).replace(
+    /\d/g,
+    (digit) => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]
+  );
+
+}
+
+
+// استخراج پیام واقعی از خطاهای Electron
+function getInventoryErrorMessage(error) {
+
+  let message = String(
+    error?.message || ''
+  ).trim();
+
+
+  // حذف پیشوند فنی خطاهای IPC در Electron
+  if (message.startsWith('Error invoking remote method')) {
+
+    const errorPosition = message.lastIndexOf('Error:');
+
+    if (errorPosition !== -1) {
+
+      message = message
+        .slice(errorPosition + 'Error:'.length)
+        .trim();
+
+    }
+
+  } else {
+
+    message = message.replace(/^Error:\s*/i, '');
+
+  }
+
+
+  // جلوگیری از نمایش خطاهای فنی پایگاه داده به کاربر
+  const isTechnicalError = /SQLITE_|constraint failed|database is locked|no such (table|column)|cannot read properties|is not a function|failed to fetch|foreign key/i.test(
+    message
+  );
+
+
+  if (isTechnicalError) {
+
+    return 'ذخیره سند انجام نشد. اطلاعات واردشده را بررسی کن و دوباره تلاش کن.';
+
+  }
+
+
+  return toPersianDigits(
+    message || 'ذخیره پیش‌نویس ناموفق بود.'
+  );
+
+}
 
 // اعلان شناور موفقیت یا خطا
 function EntryToast({ toast }) {
@@ -775,8 +888,7 @@ function InventoryEntry() {
 
       showToast(
         'error',
-        error.message ||
-        'ذخیره پیش‌نویس سند ناموفق بود.'
+        getInventoryErrorMessage(error)
       );
 
     } finally {
@@ -893,13 +1005,46 @@ function InventoryEntry() {
                 : 'تاریخ ورود'}
             </span>
 
-            <input
-              type="date"
-              value={documentDate}
-              onChange={(event) =>
-                setDocumentDate(event.target.value)
-              }
-            />
+            <div className="entry-date-picker-wrapper">
+
+              <DatePicker
+
+                // تاریخ میلادی داخلی به تاریخ شمسی تبدیل می‌شود
+                value={getPersianDateValue(documentDate)}
+
+                // پس از انتخاب تاریخ، مقدار میلادی ذخیره می‌شود
+                onChange={(selectedDate) => {
+
+                  if (!selectedDate) {
+                    return;
+                  }
+
+                  setDocumentDate(
+                    convertToGregorianDate(selectedDate)
+                  );
+
+                }}
+
+                calendar={persianCalendar}
+
+                locale={persianAfghanistan}
+
+                // قالب نمایش افغانستان: روز، نام ماه، سال
+                format="DD MMMM YYYY"
+
+                calendarPosition="bottom-right"
+
+                editable={false}
+
+                inputClass="entry-date-picker-input"
+
+                containerClassName="entry-date-picker-container"
+
+                placeholder="روز، ماه و سال"
+
+              />
+
+            </div>
 
           </label>
 

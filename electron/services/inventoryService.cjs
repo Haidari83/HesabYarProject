@@ -30,7 +30,158 @@ const INVENTORY_ENTRY_TYPES = {
   },
 };
 
+// محاسبه بزرگ‌ترین مقسوم‌علیه مشترک با BigInt
+function greatestCommonDivisorBigInt(first, second) {
 
+  let a = BigInt(first);
+  let b = BigInt(second);
+
+  while (b !== 0n) {
+
+    const remainder = a % b;
+
+    a = b;
+    b = remainder;
+
+  }
+
+  return a;
+
+}
+
+
+// محاسبه نسبت واحد انتخاب‌شده به واحد پایه محصول
+function resolveProductUnitConversion(row) {
+
+  // واحد مبنای محصول همیشه نسبت یک به یک دارد
+  if (Number(row.is_base_unit) === 1) {
+
+    return {
+      conversionNum: 1,
+      conversionDen: 1,
+    };
+
+  }
+
+
+  // واحد بسته‌بندی از نسبت اختصاصی همین محصول استفاده می‌کند
+  if (row.unit_kind === 'package') {
+
+    const conversionNum = Number(row.conversion_num);
+
+    const conversionDen = Number(row.conversion_den);
+
+    if (
+      !Number.isSafeInteger(conversionNum) ||
+      !Number.isSafeInteger(conversionDen) ||
+      conversionNum <= 0 ||
+      conversionDen <= 0
+    ) {
+
+      throw new Error(
+        `نسبت تبدیل واحد بسته‌بندی «${row.unit_name}» معتبر نیست.`
+      );
+
+    }
+
+    return {
+      conversionNum,
+      conversionDen,
+    };
+
+  }
+
+
+  // واحد استاندارد باید هم‌بُعد با واحد پایه باشد
+  if (row.unit_kind === 'standard') {
+
+    if (
+      row.dimension_code !== row.base_unit_dimension_code
+    ) {
+
+      throw new Error(
+        `واحد «${row.unit_name}» با واحد پایه کالا هم‌بُعد نیست.`
+      );
+
+    }
+
+
+    const unitNum = Number(row.reference_factor_num);
+
+    const unitDen = Number(row.reference_factor_den);
+
+    const baseNum = Number(row.base_reference_factor_num);
+
+    const baseDen = Number(row.base_reference_factor_den);
+
+
+    const validFactors = [
+      unitNum,
+      unitDen,
+      baseNum,
+      baseDen,
+    ].every((value) =>
+      Number.isSafeInteger(value) && value > 0
+    );
+
+
+    if (!validFactors) {
+
+      throw new Error(
+        `ضرایب مرجع واحد «${row.unit_name}» معتبر نیست.`
+      );
+
+    }
+
+
+    // نسبت واحد انتخاب‌شده به واحد پایه
+    const numerator =
+      BigInt(unitNum) * BigInt(baseDen);
+
+    const denominator =
+      BigInt(unitDen) * BigInt(baseNum);
+
+
+    // ساده‌سازی کسر
+    const divisor = greatestCommonDivisorBigInt(
+      numerator,
+      denominator
+    );
+
+
+    const conversionNum = numerator / divisor;
+
+    const conversionDen = denominator / divisor;
+
+
+    if (
+      conversionNum > BigInt(Number.MAX_SAFE_INTEGER) ||
+      conversionDen > BigInt(Number.MAX_SAFE_INTEGER)
+    ) {
+
+      throw new Error(
+        `نسبت تبدیل واحد «${row.unit_name}» خارج از محدوده مجاز است.`
+      );
+
+    }
+
+
+    return {
+
+      conversionNum: Number(conversionNum),
+
+      conversionDen: Number(conversionDen),
+
+    };
+
+  }
+
+
+  throw new Error(
+    `نوع واحد «${row.unit_name}» قابل استفاده نیست.`
+  );
+
+}
 // دریافت اطلاعات لازم برای فرم ورود کالا
 function getInventoryEntryFormOptions(
   database,
@@ -137,6 +288,9 @@ function getInventoryEntryFormOptions(
 
       bu.name AS base_unit_name,
       bu.symbol AS base_unit_symbol,
+      bu.dimension_code AS base_unit_dimension_code,
+      bu.reference_factor_num AS base_reference_factor_num,
+      bu.reference_factor_den AS base_reference_factor_den,
 
       pu.id AS product_unit_id,
       pu.unit_id,
@@ -147,6 +301,10 @@ function getInventoryEntryFormOptions(
 
       u.name AS unit_name,
       u.symbol AS unit_symbol
+      u.unit_kind,
+      u.dimension_code,
+      u.reference_factor_num,
+      u.reference_factor_den
 
     FROM products AS p
 
@@ -207,7 +365,9 @@ function getInventoryEntryFormOptions(
 
 
     // افزودن واحد جاری به مجموعه واحدهای محصول
-    const isBaseUnit = row.is_base_unit === 1;
+    const isBaseUnit = Number(row.is_base_unit) === 1;
+
+    const conversion = resolveProductUnitConversion(row);
 
     productsById.get(row.id).productUnits.push({
 
@@ -224,13 +384,9 @@ function getInventoryEntryFormOptions(
 
       // نسبت تبدیل واحد انتخاب‌شده به واحد مبنای محصول
       // واحد مبنا همیشه نسبت ۱ به ۱ دارد.
-      conversionNum: isBaseUnit
-        ? 1
-        : Number(row.conversion_num),
+      conversionNum: conversion.conversionNum,
 
-      conversionDen: isBaseUnit
-        ? 1
-        : Number(row.conversion_den),
+      conversionDen: conversion.conversionDen,
 
       // حداکثر تعداد رقم اعشار مجاز برای ورود مقدار
       inputDecimalPlaces: Number(
@@ -714,6 +870,11 @@ function createInventoryEntryDraft(
         p.code AS product_code,
         p.name AS product_name,
         p.base_quantity_decimal_places,
+        p.base_unit_id,
+
+        base_unit.dimension_code AS base_unit_dimension_code,
+        base_unit.reference_factor_num AS base_reference_factor_num,
+        base_unit.reference_factor_den AS base_reference_factor_den,
 
         pu.id AS product_unit_id,
         pu.unit_id,
@@ -724,6 +885,10 @@ function createInventoryEntryDraft(
 
         u.name AS unit_name,
         u.symbol AS unit_symbol
+        u.unit_kind,
+        u.dimension_code,
+        u.reference_factor_num,
+        u.reference_factor_den
 
       FROM products AS p
 
@@ -818,13 +983,14 @@ function createInventoryEntryDraft(
 
 
         // نسبت تبدیل واحد انتخاب‌شده به واحد پایه
-        const conversionNum = productUnit.is_base_unit
-          ? 1
-          : Number(productUnit.conversion_num);
+        // محاسبه مجدد نسبت تبدیل از اطلاعات معتبر پایگاه داده
+        const conversion = resolveProductUnitConversion(
+          productUnit
+        );
 
-        const conversionDen = productUnit.is_base_unit
-          ? 1
-          : Number(productUnit.conversion_den);
+        const conversionNum = conversion.conversionNum;
+
+        const conversionDen = conversion.conversionDen;
 
 
         if (
