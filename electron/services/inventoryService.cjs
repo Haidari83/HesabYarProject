@@ -300,7 +300,7 @@ function getInventoryEntryFormOptions(
       pu.input_decimal_places,
 
       u.name AS unit_name,
-      u.symbol AS unit_symbol
+      u.symbol AS unit_symbol,
       u.unit_kind,
       u.dimension_code,
       u.reference_factor_num,
@@ -884,7 +884,7 @@ function createInventoryEntryDraft(
         pu.input_decimal_places,
 
         u.name AS unit_name,
-        u.symbol AS unit_symbol
+        u.symbol AS unit_symbol,
         u.unit_kind,
         u.dimension_code,
         u.reference_factor_num,

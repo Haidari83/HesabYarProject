@@ -8,7 +8,7 @@ import {
 import './inventory-entry.css';
 
 // کتابخانه انتخاب تاریخ
-import DatePicker from 'react-multi-date-picker';
+import DatePickerModule from 'react-multi-date-picker';
 import DateObject from 'react-date-object';
 
 // تقویم شمسی و میلادی
@@ -21,6 +21,12 @@ import gregorianEnglish from 'react-date-object/locales/gregorian_en';
 // زبان افغانستان برای نمایش تقویم شمسی
 import persianAfghanistan from '../../locales/persianAfghanistan';
 
+// استخراج کامپوننت واقعی از خروجی کتابخانه تقویم
+// پشتیبانی از حالت خروجی مستقیم و حالت خروجی دارای default
+const DatePicker =
+  DatePickerModule?.default?.default ??
+  DatePickerModule?.default ??
+  DatePickerModule;
 
 // دریافت تاریخ امروز بر اساس ساعت محلی سیستم
 // دریافت تاریخ روز بر اساس ساعت رسمی افغانستان

@@ -1,7 +1,6 @@
 // تنظیم زبان و نام‌های تقویم افغانستان
 const persianAfghanistan = {
-
-  name: 'persian_afghanistan',
+  name: 'persian_fa',
 
   // نام ماه‌های هجری شمسی در افغانستان
   months: [
