@@ -8,14 +8,24 @@ import {
 import './inventory-entry.css';
 
 
+// دریافت تاریخ امروز بر اساس ساعت محلی سیستم
+function getLocalDate() {
+
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+
+}
+
+
 // قالب‌بندی اعداد با ارقام فارسی
 function formatNumber(value, maximumFractionDigits = 2) {
 
-  if (
-    value === null ||
-    value === undefined ||
-    value === ''
-  ) {
+  if (value === null || value === undefined || value === '') {
     return '—';
   }
 
@@ -32,134 +42,67 @@ function formatNumber(value, maximumFractionDigits = 2) {
 }
 
 
-// تبدیل ارقام فارسی و عربی به انگلیسی
-function normalizeNumber(value) {
+// قالب‌بندی مبلغ همراه با نماد ارز
+function formatCurrency(value, currency) {
 
-  return String(value ?? '')
-    .replace(/[۰-۹]/g, (digit) =>
-      String(digit.charCodeAt(0) - 1776)
-    )
-    .replace(/[٠-٩]/g, (digit) =>
-      String(digit.charCodeAt(0) - 1632)
-    )
-    .replace(/٫/g, '.')
-    .replace(/٬/g, '')
-    .trim();
-
-}
-
-
-// تبدیل مقدار ورودی به عدد
-function parseInputNumber(value) {
-
-  const normalized = normalizeNumber(value);
-
-  if (!/^\d+(?:\.\d+)?$/.test(normalized)) {
-    return null;
+  if (value === null || value === undefined) {
+    return '—';
   }
 
-  const number = Number(normalized);
+  const digits = currency?.minorUnitDigits ?? 2;
 
-  return Number.isFinite(number)
-    ? number
-    : null;
-
-}
-
-
-// بررسی اعتبار مقدار و تعداد رقم‌های اعشار
-function isValidDecimalInput(
-  value,
-  maximumDecimalPlaces,
-  allowZero = false
-) {
-
-  const normalized = normalizeNumber(value);
-
-  const match = /^(\d+)(?:\.(\d+))?$/.exec(normalized);
-
-  if (!match) {
-    return false;
-  }
-
-  // صفرهای انتهایی در تعداد رقم اعشار مؤثر نیستند
-  const effectiveFraction = (match[2] || '')
-    .replace(/0+$/, '');
-
-  if (
-    effectiveFraction.length > maximumDecimalPlaces ||
-    effectiveFraction.length > 6
-  ) {
-    return false;
-  }
-
-  const number = Number(normalized);
-
-  if (!Number.isFinite(number)) {
-    return false;
-  }
-
-  return allowZero
-    ? number >= 0
-    : number > 0;
-
-}
-
-
-// دریافت تاریخ امروز بر اساس ساعت محلی سیستم
-function getTodayDate() {
-
-  const today = new Date();
-
-  const year = today.getFullYear();
-
-  const month = String(
-    today.getMonth() + 1
-  ).padStart(2, '0');
-
-  const day = String(
-    today.getDate()
-  ).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-
-}
-
-
-// محاسبه مقدار تبدیل‌شده به واحد پایه
-function convertToBaseUnit(
-  quantity,
-  selectedUnit
-) {
-
-  const numericQuantity = parseInputNumber(quantity);
-
-  if (
-    numericQuantity === null ||
-    numericQuantity <= 0 ||
-    !selectedUnit
-  ) {
-    return null;
-  }
-
-  const numerator = Number(
-    selectedUnit.conversionNum
+  const formattedValue = formatNumber(
+    value,
+    digits
   );
 
-  const denominator = Number(
-    selectedUnit.conversionDen
-  );
+  return `${formattedValue} ${currency?.symbol || currency?.code || ''}`;
 
-  if (
-    !Number.isFinite(numerator) ||
-    !Number.isFinite(denominator) ||
-    numerator <= 0 ||
-    denominator <= 0
-  ) {
+}
+
+
+// یکسان‌سازی متن برای جست‌وجوی فارسی
+function normalizeSearch(value) {
+
+  return String(value || '')
+    .normalize('NFKC')
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[\u200c\u200d]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+}
+
+
+// اعلان شناور موفقیت یا خطا
+function EntryToast({ toast }) {
+
+  if (!toast) {
     return null;
   }
 
-  return numericQuantity * numerator / denominator;
+  const isSuccess = toast.type === 'success';
+
+  return (
+
+    <div
+      className={`entry-toast entry-toast--${toast.type}`}
+      role={isSuccess ? 'status' : 'alert'}
+      aria-live={isSuccess ? 'polite' : 'assertive'}
+    >
+
+      <span className="entry-toast-icon" aria-hidden="true">
+        {isSuccess ? '✓' : '!'}
+      </span>
+
+      <p>{toast.message}</p>
+
+    </div>
+
+  );
 
 }
 
@@ -170,13 +113,10 @@ function EntryProductPicker({
   products,
   onQueryChange,
   onSelect,
-  disabled,
 }) {
 
   const [isOpen, setIsOpen] = useState(false);
 
-
-  // فیلتر کردن محصولات بر اساس نام یا کد
   const filteredProducts = useMemo(() => {
 
     const query = normalizeSearch(value);
@@ -203,7 +143,6 @@ function EntryProductPicker({
       <input
         type="search"
         value={value}
-        disabled={disabled}
         onChange={(event) => {
           onQueryChange(event.target.value);
           setIsOpen(true);
@@ -216,8 +155,7 @@ function EntryProductPicker({
         aria-expanded={isOpen}
       />
 
-
-      {isOpen && !disabled && (
+      {isOpen && (
 
         <div className="entry-product-options">
 
@@ -229,9 +167,7 @@ function EntryProductPicker({
                 type="button"
                 className="entry-product-option"
                 key={product.id}
-                onMouseDown={(event) =>
-                  event.preventDefault()
-                }
+                onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   onSelect(product);
                   setIsOpen(false);
@@ -240,24 +176,14 @@ function EntryProductPicker({
 
                 <span className="entry-product-option-info">
 
-                  <strong>
-                    {product.name}
-                  </strong>
+                  <strong>{product.name}</strong>
 
-                  <small>
-                    کد: {product.code}
-                  </small>
+                  <small>{product.code || 'بدون کد'}</small>
 
                 </span>
 
                 <span className="entry-product-option-price">
-
                   {product.categoryName || 'بدون دسته‌بندی'}
-
-                  {' · '}
-
-                  واحد پایه: {product.baseUnitName}
-
                 </span>
 
               </button>
@@ -283,46 +209,13 @@ function EntryProductPicker({
 }
 
 
-// یکسان‌سازی متن برای جست‌وجوی فارسی
-function normalizeSearch(value) {
-
-  return String(value || '')
-    .normalize('NFKC')
-    .replace(/[يى]/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-
-}
-
-
 function InventoryEntry() {
 
   // نوع سند ورود کالا
   const [entryType, setEntryType] = useState('purchase');
 
-
-  // اطلاعات محصولات، واحدها و ارزها از SQLite
-  const [formOptions, setFormOptions] = useState(null);
-
-
-  // وضعیت دریافت اطلاعات فرم
-  const [loadingOptions, setLoadingOptions] = useState(true);
-
-  const [optionsError, setOptionsError] = useState('');
-
-
-  // کلید تلاش مجدد برای دریافت اطلاعات فرم
-  const [reloadOptionsKey, setReloadOptionsKey] = useState(0);
-
-
   // اطلاعات عمومی سند
-  const [documentDate, setDocumentDate] = useState(
-    getTodayDate()
-  );
+  const [documentDate, setDocumentDate] = useState(getLocalDate);
 
   const [sourcePartyName, setSourcePartyName] = useState('');
 
@@ -333,52 +226,62 @@ function InventoryEntry() {
   const [notes, setNotes] = useState('');
 
 
-  // اقلام سند
+  // اطلاعات واقعی محصولات، واحدها و ارزها
+  const [formOptions, setFormOptions] = useState(null);
+
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+
+  const [loadError, setLoadError] = useState('');
+
+  const [reloadToken, setReloadToken] = useState(0);
+
+
+  // ردیف‌های اقلام ورودی
   const [items, setItems] = useState([]);
 
-
-  // تولید شناسه مستقل برای هر ردیف فرم
+  // شناسه مستقل برای هر ردیف
   const nextItemId = useRef(1);
 
 
-  // وضعیت ذخیره پیش‌نویس
-  const [savingDraft, setSavingDraft] = useState(false);
+  // وضعیت ذخیره سند
+  const [isSaving, setIsSaving] = useState(false);
 
 
-  // پیام نتیجه عملیات
-  const [feedback, setFeedback] = useState(null);
+  // وضعیت اعلان شناور
+  const [toast, setToast] = useState(null);
 
 
-  // بارگذاری محصولات، واحدها و ارزهای معتبر برای نوع سند جاری
+  // دریافت اطلاعات واقعی فرم از Electron
   useEffect(() => {
 
-    let isCurrentRequest = true;
+    let isCurrent = true;
 
 
     async function loadFormOptions() {
 
+      setIsLoadingOptions(true);
+
+      setLoadError('');
+
+      setFormOptions(null);
+
+
       try {
 
-        const getOptions =
+        const getEntryFormOptions =
           window.hesabyar?.inventory?.getEntryFormOptions;
 
 
-        if (typeof getOptions !== 'function') {
+        if (typeof getEntryFormOptions !== 'function') {
           throw new Error(
-            'ارتباط فرم موجودی با سرویس Electron برقرار نیست.'
+            'ارتباط با سرویس موجودی انبار برقرار نیست.'
           );
         }
 
 
-        const result = await getOptions(entryType);
+        const result = await getEntryFormOptions(entryType);
 
 
-        if (!isCurrentRequest) {
-          return;
-        }
-
-
-        // بررسی ساختار اطلاعات دریافتی
         if (
           !result ||
           !Array.isArray(result.products) ||
@@ -386,32 +289,28 @@ function InventoryEntry() {
           !result.baseCurrencyCode
         ) {
           throw new Error(
-            'اطلاعات دریافت‌شده از پایگاه داده معتبر نیست.'
+            'اطلاعات دریافتی فرم ورود کالا معتبر نیست.'
           );
         }
 
 
-        setFormOptions(result);
-
-        setOptionsError('');
+        if (isCurrent) {
+          setFormOptions(result);
+        }
 
       } catch (error) {
 
-        if (!isCurrentRequest) {
-          return;
+        if (isCurrent) {
+          setLoadError(
+            error.message ||
+            'دریافت اطلاعات فرم ورود کالا ناموفق بود.'
+          );
         }
-
-        setFormOptions(null);
-
-        setOptionsError(
-          error?.message ||
-          'دریافت اطلاعات فرم ورود کالا با خطا مواجه شد.'
-        );
 
       } finally {
 
-        if (isCurrentRequest) {
-          setLoadingOptions(false);
+        if (isCurrent) {
+          setIsLoadingOptions(false);
         }
 
       }
@@ -422,33 +321,71 @@ function InventoryEntry() {
     loadFormOptions();
 
 
-    // جلوگیری از به‌روزرسانی وضعیت پس از تغییر نوع سند یا خروج از صفحه
+    // جلوگیری از تغییر وضعیت پس از خروج کامپوننت
     return () => {
-      isCurrentRequest = false;
+      isCurrent = false;
     };
 
-  }, [entryType, reloadOptionsKey]);
+  }, [entryType, reloadToken]);
 
 
-  // محصولات فعال دریافتی از پایگاه داده
-  const activeProducts = formOptions?.products || [];
+  // ناپدید شدن خودکار اعلان پس از سه ثانیه
+  useEffect(() => {
+
+    if (!toast) {
+      return undefined;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setToast(null);
+    }, 3000);
+
+    // پاک کردن زمان‌بندی قبلی هنگام تغییر اعلان
+    return () => {
+      clearTimeout(timeoutId);
+    };
+
+  }, [toast]);
 
 
-  // ارزهای فعال دریافتی از پایگاه داده
-  const currencies = formOptions?.currencies || [];
+  // فهرست محصولات فعال دریافتی از SQLite
+  const activeProducts = useMemo(
+    () => formOptions?.products || [],
+    [formOptions]
+  );
 
 
-  // ارز مبنای ارزش‌گذاری
-  const baseCurrencyCode =
-    formOptions?.baseCurrencyCode || '';
+  // فهرست ارزهای فعال
+  const currencies = useMemo(
+    () => formOptions?.currencies || [],
+    [formOptions]
+  );
+
+
+  // نمایش اعلان
+  function showToast(type, message) {
+
+    setToast({
+      type,
+      message,
+      id: Date.now(),
+    });
+
+  }
 
 
   // افزودن ردیف جدید
   function addItemRow() {
 
-    if (!formOptions || loadingOptions) {
+    if (items.length >= 200) {
+      showToast(
+        'error',
+        'در هر سند حداکثر ۲۰۰ ردیف کالا قابل ثبت است.'
+      );
+
       return;
     }
+
 
     const newItem = {
 
@@ -464,17 +401,12 @@ function InventoryEntry() {
 
       unitPrice: '',
 
-      currencyCode: baseCurrencyCode,
+      currencyCode: formOptions?.baseCurrencyCode || '',
 
     };
 
 
-    setItems((previous) => [
-      ...previous,
-      newItem,
-    ]);
-
-    setFeedback(null);
+    setItems((previous) => [...previous, newItem]);
 
   }
 
@@ -489,8 +421,6 @@ function InventoryEntry() {
           : item
       )
     );
-
-    setFeedback(null);
 
   }
 
@@ -515,10 +445,10 @@ function InventoryEntry() {
   }
 
 
-  // انتخاب کالا
+  // انتخاب کالا از فهرست واقعی محصولات
   function handleProductSelect(rowId, product) {
 
-    // پیدا کردن واحد پایه از فهرست واحدهای اختصاصی محصول
+    // واحد مبنای محصول به‌صورت پیش‌فرض انتخاب می‌شود
     const baseUnit = product.productUnits.find(
       (unit) => unit.isBaseUnit
     );
@@ -530,45 +460,28 @@ function InventoryEntry() {
 
       productSearch: product.name,
 
-      // انتخاب خودکار واحد پایه
       productUnitId: baseUnit?.productUnitId || '',
 
       quantity: '',
 
       unitPrice: '',
 
-      currencyCode: baseCurrencyCode,
+      currencyCode: formOptions.baseCurrencyCode,
 
     });
 
   }
 
 
-  // تغییر واحد اختصاصی محصول
+  // تغییر واحد اختصاصی کالا
   function handleUnitChange(rowId, productUnitId) {
 
     updateItem(rowId, {
 
       productUnitId,
 
-      // با تغییر واحد، مقدار و قیمت قبلی پاک می‌شوند
       quantity: '',
 
-      unitPrice: '',
-
-    });
-
-  }
-
-
-  // تغییر ارز قیمت
-  function handleCurrencyChange(rowId, currencyCode) {
-
-    updateItem(rowId, {
-
-      currencyCode,
-
-      // قیمت قبلی نباید ناخواسته با ارز جدید تفسیر شود
       unitPrice: '',
 
     });
@@ -583,12 +496,10 @@ function InventoryEntry() {
       previous.filter((item) => item.id !== rowId)
     );
 
-    setFeedback(null);
-
   }
 
 
-  // پیدا کردن محصول متناظر با ردیف
+  // دریافت محصول یک ردیف
   function getItemProduct(item) {
 
     return activeProducts.find(
@@ -598,17 +509,40 @@ function InventoryEntry() {
   }
 
 
-  // پیدا کردن واحد انتخاب‌شده از میان واحدهای اختصاصی محصول
-  function getItemSelectedUnit(item, product) {
+  // دریافت واحد انتخاب‌شده یک ردیف
+  function getItemUnit(item, product) {
 
     if (!product) {
       return null;
     }
 
     return product.productUnits.find(
-      (unit) =>
-        unit.productUnitId === item.productUnitId
+      (unit) => unit.productUnitId === item.productUnitId
     ) || null;
+
+  }
+
+
+  // محاسبه مقدار معادل واحد پایه
+  function getBaseQuantity(item, product, selectedUnit) {
+
+    if (
+      !product ||
+      !selectedUnit ||
+      item.quantity === '' ||
+      !Number.isFinite(Number(item.quantity))
+    ) {
+      return null;
+    }
+
+
+    const quantity = Number(item.quantity);
+
+    return (
+      quantity *
+      selectedUnit.conversionNum /
+      selectedUnit.conversionDen
+    );
 
   }
 
@@ -616,40 +550,49 @@ function InventoryEntry() {
   // محاسبه مبلغ یک ردیف
   function getLineAmount(item) {
 
-    const quantity = parseInputNumber(item.quantity);
+    if (
+      item.quantity === '' ||
+      item.unitPrice === ''
+    ) {
+      return null;
+    }
 
-    const unitPrice = parseInputNumber(item.unitPrice);
+
+    const quantity = Number(item.quantity);
+
+    const unitPrice = Number(item.unitPrice);
 
 
     if (
-      quantity === null ||
-      unitPrice === null ||
+      !Number.isFinite(quantity) ||
+      !Number.isFinite(unitPrice) ||
       quantity <= 0 ||
       unitPrice < 0
     ) {
       return null;
     }
 
+
     return quantity * unitPrice;
 
   }
 
 
-  // بررسی کامل بودن و اعتبار تمام ردیف‌ها
+  // بررسی کامل بودن تمام ردیف‌های سند
   const allItemsComplete = items.length > 0 &&
+
     items.every((item) => {
 
       const product = getItemProduct(item);
 
-      const selectedUnit = getItemSelectedUnit(
-        item,
-        product
-      );
+      const selectedUnit = getItemUnit(item, product);
 
+      const quantity = Number(item.quantity);
+
+      const unitPrice = Number(item.unitPrice);
 
       const currencyExists = currencies.some(
-        (currency) =>
-          currency.code === item.currencyCode
+        (currency) => currency.code === item.currencyCode
       );
 
 
@@ -659,16 +602,17 @@ function InventoryEntry() {
 
         Boolean(selectedUnit) &&
 
-        isValidDecimalInput(
-          item.quantity,
-          selectedUnit?.inputDecimalPlaces ?? 0
-        ) &&
+        item.quantity !== '' &&
 
-        isValidDecimalInput(
-          item.unitPrice,
-          6,
-          true
-        ) &&
+        Number.isFinite(quantity) &&
+
+        quantity > 0 &&
+
+        item.unitPrice !== '' &&
+
+        Number.isFinite(unitPrice) &&
+
+        unitPrice >= 0 &&
 
         currencyExists
 
@@ -677,158 +621,90 @@ function InventoryEntry() {
     });
 
 
-  // بررسی فیلدهای عمومی سند
-  const documentFieldsComplete = Boolean(
-    documentDate &&
-    (
-      entryType !== 'other' ||
-      reason.trim()
-    )
-  );
-
-
-  // محاسبه مجموع مبالغ به تفکیک ارز
-  // جمع ارزهای متفاوت در یک عدد واحد صحیح نیست.
-  const totalsByCurrency = (() => {
+  // محاسبه جمع مبالغ به تفکیک ارز
+  // جمع ارزهای متفاوت نباید مستقیماً با یکدیگر ترکیب شود.
+  const totalsByCurrency = useMemo(() => {
 
     if (!allItemsComplete) {
       return [];
     }
 
-    const totals = new Map();
 
+    const totals = {};
 
     for (const item of items) {
 
       const lineAmount = getLineAmount(item);
 
-      if (lineAmount === null) {
-        continue;
-      }
-
-      const previousTotal = totals.get(
-        item.currencyCode
-      ) || 0;
-
-      totals.set(
-        item.currencyCode,
-        previousTotal + lineAmount
-      );
+      totals[item.currencyCode] =
+        (totals[item.currencyCode] || 0) + lineAmount;
 
     }
 
 
-    return Array.from(totals.entries()).map(
-      ([currencyCode, total]) => {
+    return Object.entries(totals).map(
+      ([currencyCode, total]) => ({
 
-        const currency = currencies.find(
-          (item) => item.code === currencyCode
-        );
+        currencyCode,
 
-        return {
-          currencyCode,
-          currency,
-          total,
-        };
+        total,
 
-      }
+        currency: currencies.find(
+          (currency) => currency.code === currencyCode
+        ),
+
+      })
     );
 
-  })();
+  }, [allItemsComplete, items, currencies]);
 
-  // امکان ذخیره پیش‌نویس
+
+  // بررسی تکمیل اطلاعات لازم برای ذخیره پیش‌نویس
   const canSaveDraft = Boolean(
 
     formOptions &&
 
-    !loadingOptions &&
+    !isLoadingOptions &&
 
-    !savingDraft &&
+    !isSaving &&
+
+    documentDate &&
 
     allItemsComplete &&
 
-    documentFieldsComplete
+    (
+      entryType !== 'other' ||
+      Boolean(reason.trim())
+    )
 
   );
 
 
-  // تغییر نوع سند
-  function handleEntryTypeChange(nextType) {
-
-    if (nextType === entryType) {
-      return;
-    }
-
-    setEntryType(nextType);
-
-    // هنگام تغییر نوع سند، اقلام قبلی پاک می‌شوند
-    setItems([]);
-
-    nextItemId.current = 1;
-
-    setSourcePartyName('');
-
-    setSourceInvoiceNumber('');
-
-    setReason('');
-
-    setNotes('');
-
-    setFormOptions(null);
-
-    setLoadingOptions(true);
-
-    setOptionsError('');
-
-    setFeedback(null);
-
-  }
-
-
-  // تلاش مجدد برای دریافت اطلاعات فرم
-  function retryLoadFormOptions() {
-
-    setLoadingOptions(true);
-
-    setOptionsError('');
-
-    setFormOptions(null);
-
-    setReloadOptionsKey((previous) => previous + 1);
-
-  }
-
-
-  // ذخیره پیش‌نویس سند
-  async function handleSaveDraft(event) {
-
-    event.preventDefault();
-
+  // ثبت پیش‌نویس در SQLite
+  async function handleSaveDraft() {
 
     if (!canSaveDraft) {
       return;
     }
 
 
-    setSavingDraft(true);
-
-    setFeedback(null);
+    setIsSaving(true);
 
 
     try {
 
-      const createDraft =
+      const createEntryDraft =
         window.hesabyar?.inventory?.createEntryDraft;
 
 
-      if (typeof createDraft !== 'function') {
+      if (typeof createEntryDraft !== 'function') {
         throw new Error(
-          'قابلیت ثبت پیش‌نویس در ارتباط Electron پیدا نشد.'
+          'سرویس ثبت پیش‌نویس در دسترس نیست.'
         );
       }
 
 
-      // آماده‌سازی اطلاعات عمومی سند و ردیف‌ها
+      // آماده‌سازی اطلاعات برای ارسال به Main Process
       const input = {
 
         documentType: entryType,
@@ -843,17 +719,15 @@ function InventoryEntry() {
 
         notes,
 
-
         items: items.map((item) => ({
 
           productId: item.productId,
 
-          // شناسه نسخه واحد اختصاصی محصول
           productUnitId: item.productUnitId,
 
-          quantity: normalizeNumber(item.quantity),
+          quantity: item.quantity,
 
-          unitPrice: normalizeNumber(item.unitPrice),
+          unitPrice: item.unitPrice,
 
           currencyCode: item.currencyCode,
 
@@ -862,32 +736,29 @@ function InventoryEntry() {
       };
 
 
-      // ارسال درخواست به Main Process
-      const result = await createDraft(input);
+      // درخواست ثبت اطلاعات در پایگاه داده
+      const result = await createEntryDraft(input);
 
 
       if (!result?.id || !result?.documentNumber) {
         throw new Error(
-          'پیش‌نویس ذخیره شد، اما پاسخ سرویس کامل نیست.'
+          'پاسخ ثبت پیش‌نویس معتبر نیست.'
         );
       }
 
 
-      // اعلام موفقیت همراه با شماره سند
-      setFeedback({
-
-        type: 'success',
-
-        message:
-          `پیش‌نویس سند ${result.documentNumber} با موفقیت ذخیره شد.`,
-
-      });
+      // نمایش پیام موفقیت پس از تأیید ذخیره در SQLite
+      showToast(
+        'success',
+        `پیش‌نویس سند ${result.documentNumber} با موفقیت ذخیره شد.`
+      );
 
 
-      // پاک‌سازی فرم برای ورود سند بعدی
+      // پاک کردن اطلاعات سند ذخیره‌شده
+      // فرم برای ثبت سند جدید آماده می‌شود.
       setItems([]);
 
-      nextItemId.current = 1;
+      setDocumentDate(getLocalDate());
 
       setSourcePartyName('');
 
@@ -897,100 +768,90 @@ function InventoryEntry() {
 
       setNotes('');
 
-      setDocumentDate(getTodayDate());
+      nextItemId.current = 1;
 
 
     } catch (error) {
 
-      setFeedback({
-
-        type: 'error',
-
-        message:
-          error?.message ||
-          'ذخیره پیش‌نویس با خطا مواجه شد.',
-
-      });
+      showToast(
+        'error',
+        error.message ||
+        'ذخیره پیش‌نویس سند ناموفق بود.'
+      );
 
     } finally {
 
-      setSavingDraft(false);
+      setIsSaving(false);
 
     }
 
   }
 
 
-  // عنوان فیلد طرف حساب بر اساس نوع سند
-  const sourcePartyLabel =
-    entryType === 'purchase'
-      ? 'تأمین‌کننده'
-      : entryType === 'sales-return'
-        ? 'مشتری'
-        : 'منبع ورود';
+  // تغییر نوع سند
+  function handleEntryTypeChange(value) {
+
+    if (value === entryType) {
+      return;
+    }
+
+    setEntryType(value);
+
+  }
 
 
-  // عنوان شماره فاکتور
-  const invoiceLabel =
-    entryType === 'sales-return'
-      ? 'شماره فاکتور فروش'
-      : 'شماره فاکتور خرید';
+  // حالت دریافت اطلاعات
+  if (isLoadingOptions) {
 
+    return (
 
-  return (
+      <div className="inventory-entry">
 
-    <form
-      className="inventory-entry"
-      onSubmit={handleSaveDraft}
-    >
-
-      {/* وضعیت دریافت اطلاعات واقعی از SQLite */}
-      {loadingOptions && (
-
-        <div className="entry-options-state" role="status">
+        <div className="entry-load-state">
           در حال دریافت محصولات، واحدها و ارزهای فعال...
         </div>
 
-      )}
+      </div>
+
+    );
+
+  }
 
 
-      {optionsError && (
+  // حالت بروز خطا در دریافت اطلاعات
+  if (loadError || !formOptions) {
 
-        <div
-          className="entry-feedback entry-feedback-error"
-          role="alert"
-        >
+    return (
 
-          <span>{optionsError}</span>
+      <div className="inventory-entry">
+
+        <div className="entry-load-error">
+
+          <strong>دریافت اطلاعات فرم ناموفق بود.</strong>
+
+          <p>
+            {loadError || 'اطلاعات موردنیاز فرم در دسترس نیست.'}
+          </p>
 
           <button
             type="button"
-            onClick={retryLoadFormOptions}
+            onClick={() => setReloadToken((previous) => previous + 1)}
           >
             تلاش مجدد
           </button>
 
         </div>
 
-      )}
+      </div>
+
+    );
+
+  }
 
 
-      {/* پیام نتیجه عملیات */}
-      {feedback && (
+  return (
 
-        <div
-          className={`entry-feedback ${feedback.type === 'success'
-            ? 'entry-feedback-success'
-            : 'entry-feedback-error'
-            }`}
-          role="status"
-          aria-live="polite"
-        >
-          {feedback.message}
-        </div>
-
-      )}
-
+    <div className="inventory-entry">
 
       {/* اطلاعات عمومی سند */}
       <section className="entry-section">
@@ -999,10 +860,7 @@ function InventoryEntry() {
 
           <div>
             <h2>اطلاعات سند</h2>
-
-            <p>
-              اطلاعات عمومی ورود کالا به انبار
-            </p>
+            <p>اطلاعات عمومی ورود کالا به انبار</p>
           </div>
 
           <span className="entry-status">
@@ -1020,7 +878,7 @@ function InventoryEntry() {
 
             <input
               type="text"
-              value="پس از ذخیره به‌صورت خودکار تولید می‌شود"
+              value="خودکار هنگام ذخیره"
               disabled
             />
 
@@ -1038,11 +896,9 @@ function InventoryEntry() {
             <input
               type="date"
               value={documentDate}
-              onChange={(event) => {
-                setDocumentDate(event.target.value);
-                setFeedback(null);
-              }}
-              required
+              onChange={(event) =>
+                setDocumentDate(event.target.value)
+              }
             />
 
           </label>
@@ -1091,7 +947,6 @@ function InventoryEntry() {
 
           <div>
             <h2>اطلاعات منبع ورود</h2>
-
             <p>
               اطلاعات تکمیلی درباره منشأ کالاهای ورودی
             </p>
@@ -1109,17 +964,23 @@ function InventoryEntry() {
 
                 <label className="entry-field">
 
-                  <span>{sourcePartyLabel}</span>
+                  <span>
+                    {entryType === 'purchase'
+                      ? 'تأمین‌کننده'
+                      : 'مشتری'}
+                  </span>
 
                   <input
                     type="text"
                     value={sourcePartyName}
-                    onChange={(event) => {
-                      setSourcePartyName(event.target.value);
-                      setFeedback(null);
-                    }}
-                    placeholder={`نام ${sourcePartyLabel} را وارد کن...`}
-                    maxLength={150}
+                    onChange={(event) =>
+                      setSourcePartyName(event.target.value)
+                    }
+                    placeholder={
+                      entryType === 'purchase'
+                        ? 'نام تأمین‌کننده...'
+                        : 'نام مشتری...'
+                    }
                   />
 
                 </label>
@@ -1127,17 +988,19 @@ function InventoryEntry() {
 
                 <label className="entry-field">
 
-                  <span>{invoiceLabel}</span>
+                  <span>
+                    {entryType === 'purchase'
+                      ? 'شماره فاکتور خرید'
+                      : 'شماره فاکتور فروش'}
+                  </span>
 
                   <input
                     type="text"
                     value={sourceInvoiceNumber}
-                    onChange={(event) => {
-                      setSourceInvoiceNumber(event.target.value);
-                      setFeedback(null);
-                    }}
+                    onChange={(event) =>
+                      setSourceInvoiceNumber(event.target.value)
+                    }
                     placeholder="شماره فاکتور (اختیاری)"
-                    maxLength={100}
                   />
 
                 </label>
@@ -1149,61 +1012,20 @@ function InventoryEntry() {
 
           {entryType === 'other' && (
 
-            <>
+            <label className="entry-field entry-field-full">
 
-              <label className="entry-field">
+              <span>علت ورود کالا</span>
 
-                <span>منبع ورود (اختیاری)</span>
+              <input
+                type="text"
+                value={reason}
+                onChange={(event) =>
+                  setReason(event.target.value)
+                }
+                placeholder="علت ورود کالا را بنویس..."
+              />
 
-                <input
-                  type="text"
-                  value={sourcePartyName}
-                  onChange={(event) => {
-                    setSourcePartyName(event.target.value);
-                    setFeedback(null);
-                  }}
-                  placeholder="منبع ورود کالا..."
-                  maxLength={150}
-                />
-
-              </label>
-
-
-              <label className="entry-field">
-
-                <span>علت ورود کالا</span>
-
-                <input
-                  type="text"
-                  value={reason}
-                  onChange={(event) => {
-                    setReason(event.target.value);
-                    setFeedback(null);
-                  }}
-                  placeholder="علت ورود کالا را بنویس..."
-                  maxLength={500}
-                  required
-                />
-
-              </label>
-
-            </>
-
-          )}
-
-
-          {entryType === 'opening' && (
-
-            <div className="entry-field entry-field-full">
-
-              <span>توضیح موجودی اولیه</span>
-
-              <p className="entry-unit-hint">
-                تاریخ مبنا و بهای واحد هر کالا برای ارزش‌گذاری
-                موجودی اولیه ثبت می‌شود.
-              </p>
-
-            </div>
+            </label>
 
           )}
 
@@ -1218,13 +1040,10 @@ function InventoryEntry() {
         <div className="entry-section-header">
 
           <div>
-
             <h2>اقلام ورودی</h2>
-
             <p>
-              کالاها، واحدها، مقادیر و بهای ورود به انبار
+              کالاها، واحدها، مقادیر و قیمت‌های ورود به انبار
             </p>
-
           </div>
 
 
@@ -1235,14 +1054,11 @@ function InventoryEntry() {
             </span>
 
 
+            {/* دکمه افزودن کالا در بالای فهرست */}
             <button
               type="button"
               className="entry-add-item-button"
               onClick={addItemRow}
-              disabled={
-                !formOptions ||
-                loadingOptions
-              }
             >
               <span>＋</span>
               افزودن کالا
@@ -1251,18 +1067,6 @@ function InventoryEntry() {
           </div>
 
         </div>
-
-
-        {activeProducts.length === 0 &&
-          formOptions &&
-          !loadingOptions && (
-
-            <p className="entry-summary-note">
-              در حال حاضر محصول فعالی با واحد معتبر برای ورود به انبار
-              پیدا نشد.
-            </p>
-
-          )}
 
 
         {items.length === 0 ? (
@@ -1282,11 +1086,6 @@ function InventoryEntry() {
             <button
               type="button"
               onClick={addItemRow}
-              disabled={
-                !formOptions ||
-                loadingOptions ||
-                activeProducts.length === 0
-              }
             >
               افزودن اولین کالا
             </button>
@@ -1295,152 +1094,122 @@ function InventoryEntry() {
 
         ) : (
 
-          <div className="entry-items-table-scroll">
+          <>
 
-            <table className="entry-items-table">
+            <div className="entry-items-table-scroll">
 
-              <thead>
+              <table className="entry-items-table">
 
-                <tr>
-                  <th>ردیف</th>
-                  <th>کالا</th>
-                  <th>واحد</th>
-                  <th>مقدار ورودی</th>
-                  <th>بهای واحد</th>
-                  <th>ارز</th>
-                  <th>مبلغ ردیف</th>
-                  <th>عملیات</th>
-                </tr>
+                <thead>
 
-              </thead>
+                  <tr>
+                    <th>ردیف</th>
+                    <th>کالا</th>
+                    <th>واحد</th>
+                    <th>مقدار ورودی</th>
+                    <th>قیمت واحد</th>
+                    <th>مبلغ ردیف</th>
+                    <th>عملیات</th>
+                  </tr>
 
-
-              <tbody>
-
-                {items.map((item, index) => {
-
-                  const product = getItemProduct(item);
-
-                  const selectedUnit = getItemSelectedUnit(
-                    item,
-                    product
-                  );
-
-                  const baseUnit = product?.productUnits.find(
-                    (unit) => unit.isBaseUnit
-                  ) || null;
+                </thead>
 
 
-                  const lineAmount = getLineAmount(item);
+                <tbody>
+
+                  {items.map((item, index) => {
+
+                    const product = getItemProduct(item);
+
+                    const selectedUnit = getItemUnit(
+                      item,
+                      product
+                    );
+
+                    const baseQuantity = getBaseQuantity(
+                      item,
+                      product,
+                      selectedUnit
+                    );
+
+                    const lineAmount = getLineAmount(item);
+
+                    const currency = currencies.find(
+                      (currentCurrency) =>
+                        currentCurrency.code === item.currencyCode
+                    );
+
+                    const duplicateProduct = Boolean(
+                      item.productId &&
+                      items.some(
+                        (otherItem) =>
+                          otherItem.id !== item.id &&
+                          otherItem.productId === item.productId
+                      )
+                    );
 
 
-                  const currency = currencies.find(
-                    (entry) =>
-                      entry.code === item.currencyCode
-                  );
+                    return (
+
+                      <tr key={item.id}>
+
+                        {/* شماره ردیف */}
+                        <td data-label="ردیف">
+                          {formatNumber(index + 1)}
+                        </td>
 
 
-                  const duplicateProduct = Boolean(
-                    item.productId &&
-                    items.some(
-                      (otherItem) =>
-                        otherItem.id !== item.id &&
-                        otherItem.productId === item.productId
-                    )
-                  );
+                        {/* انتخاب کالا */}
+                        <td data-label="کالا">
+
+                          <EntryProductPicker
+                            value={item.productSearch}
+                            products={activeProducts}
+                            onQueryChange={(value) =>
+                              handleProductSearch(item.id, value)
+                            }
+                            onSelect={(selectedProduct) =>
+                              handleProductSelect(
+                                item.id,
+                                selectedProduct
+                              )
+                            }
+                          />
 
 
-                  const baseQuantity = convertToBaseUnit(
-                    item.quantity,
-                    selectedUnit
-                  );
+                          {duplicateProduct && (
 
-
-                  return (
-
-                    <tr key={item.id}>
-
-
-                      {/* شماره ردیف */}
-                      <td data-label="ردیف">
-                        {formatNumber(index + 1)}
-                      </td>
-
-
-                      {/* انتخاب کالا */}
-                      <td data-label="کالا">
-
-                        <EntryProductPicker
-                          value={item.productSearch}
-                          products={activeProducts}
-                          disabled={
-                            loadingOptions ||
-                            !formOptions
-                          }
-                          onQueryChange={(value) =>
-                            handleProductSearch(
-                              item.id,
-                              value
-                            )
-                          }
-                          onSelect={(selectedProduct) =>
-                            handleProductSelect(
-                              item.id,
-                              selectedProduct
-                            )
-                          }
-                        />
-
-
-                        {duplicateProduct && (
-
-                          <small className="entry-item-warning">
-                            این کالا در ردیف دیگری نیز ثبت شده است.
-                            ردیف‌ها جداگانه ذخیره می‌شوند.
-                          </small>
-
-                        )}
-
-
-                        {product && !baseUnit && (
-
-                          <small className="entry-item-error">
-                            واحد پایه این کالا پیدا نشد.
-                          </small>
-
-                        )}
-
-                      </td>
-
-
-                      {/* انتخاب واحد اختصاصی محصول */}
-                      <td data-label="واحد">
-
-                        <select
-                          value={item.productUnitId}
-                          onChange={(event) =>
-                            handleUnitChange(
-                              item.id,
-                              event.target.value
-                            )
-                          }
-                          disabled={
-                            !product ||
-                            product.productUnits.length === 0
-                          }
-                        >
-
-                          {!product && (
-
-                            <option value="">
-                              ابتدا کالا را انتخاب کن
-                            </option>
+                            <small className="entry-item-warning">
+                              این کالا در ردیف دیگری نیز ثبت شده است.
+                              این دو ردیف جداگانه محاسبه می‌شوند.
+                            </small>
 
                           )}
 
+                        </td>
 
-                          {product && product.productUnits.map(
-                            (unit) => (
+
+                        {/* انتخاب واحد اختصاصی محصول */}
+                        <td data-label="واحد">
+
+                          <select
+                            value={item.productUnitId}
+                            onChange={(event) =>
+                              handleUnitChange(
+                                item.id,
+                                event.target.value
+                              )
+                            }
+                            disabled={!product}
+                          >
+
+                            {!product && (
+                              <option value="">
+                                ابتدا کالا را انتخاب کن
+                              </option>
+                            )}
+
+                            {product?.productUnits.map((unit) => (
 
                               <option
                                 key={unit.productUnitId}
@@ -1448,235 +1217,211 @@ function InventoryEntry() {
                               >
 
                                 {unit.name}
-                                {unit.symbol
-                                  ? ` (${unit.symbol})`
-                                  : ''}
+                                {' ('}
+                                {unit.symbol}
+                                {')'}
 
                                 {unit.isBaseUnit
-                                  ? ' - واحد پایه'
+                                  ? ' - واحد اصلی'
                                   : ''}
 
                               </option>
 
-                            )
-                          )}
+                            ))}
 
-                        </select>
-
-
-                        {selectedUnit && !selectedUnit.isBaseUnit && (
-
-                          <small className="entry-unit-hint">
-
-                            هر ۱ {selectedUnit.name}
-
-                            {' = '}
-
-                            {formatNumber(
-                              selectedUnit.conversionNum /
-                              selectedUnit.conversionDen,
-                              6
-                            )}
-
-                            {' '}
-
-                            {product.baseUnitName}
-
-                          </small>
-
-                        )}
-
-                      </td>
+                          </select>
 
 
-                      {/* مقدار ورودی */}
-                      <td data-label="مقدار ورودی">
+                          {selectedUnit && !selectedUnit.isBaseUnit && (
 
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={item.quantity}
-                          onChange={(event) =>
-                            updateItem(item.id, {
-                              quantity: event.target.value,
-                            })
-                          }
-                          disabled={!selectedUnit}
-                          placeholder="مقدار"
-                          className="entry-number-input"
-                          aria-label={`مقدار ردیف ${index + 1}`}
-                        />
+                            <small className="entry-unit-hint">
 
-
-                        {selectedUnit && baseQuantity !== null && (
-
-                          <small className="entry-unit-hint">
-
-                            معادل پایه:
-
-                            {' '}
-
-                            {formatNumber(
-                              baseQuantity,
-                              product.baseQuantityDecimalPlaces
-                            )}
-
-                            {' '}
-
-                            {product.baseUnitSymbol}
-
-                          </small>
-
-                        )}
-
-
-                        {selectedUnit && (
-
-                          <small className="entry-unit-hint">
-
-                            حداکثر اعشار مجاز:
-
-                            {' '}
-
-                            {formatNumber(
-                              selectedUnit.inputDecimalPlaces,
-                              0
-                            )}
-
-                          </small>
-
-                        )}
-
-                      </td>
-
-
-                      {/* بهای واحد */}
-                      <td data-label="بهای واحد">
-
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={item.unitPrice}
-                          onChange={(event) =>
-                            updateItem(item.id, {
-                              unitPrice: event.target.value,
-                            })
-                          }
-                          disabled={!selectedUnit}
-                          placeholder="بهای واحد"
-                          className="entry-number-input"
-                          aria-label={`بهای واحد ردیف ${index + 1}`}
-                        />
-
-
-                        {selectedUnit && (
-
-                          <small className="entry-unit-hint">
-                            به ازای هر {selectedUnit.name}
-                          </small>
-
-                        )}
-
-                      </td>
-
-
-                      {/* انتخاب ارز */}
-                      <td data-label="ارز">
-
-                        <select
-                          value={item.currencyCode}
-                          onChange={(event) =>
-                            handleCurrencyChange(
-                              item.id,
-                              event.target.value
-                            )
-                          }
-                          disabled={!selectedUnit}
-                        >
-
-                          {currencies.map((entry) => (
-
-                            <option
-                              key={entry.code}
-                              value={entry.code}
-                            >
-                              {entry.code} - {entry.name}
-                            </option>
-
-                          ))}
-
-                        </select>
-
-
-                        {item.currencyCode &&
-                          item.currencyCode !== baseCurrencyCode && (
-
-                            <small className="entry-item-currency-hint">
-
-                              نرخ تبدیل به {baseCurrencyCode} در تاریخ سند
-                              باید ثبت شده باشد.
+                              هر ۱ {selectedUnit.name}
+                              {' = '}
+                              {formatNumber(
+                                selectedUnit.conversionNum /
+                                selectedUnit.conversionDen,
+                                6
+                              )}
+                              {' '}
+                              {product.baseUnitName}
 
                             </small>
 
                           )}
 
-                      </td>
+                        </td>
 
 
-                      {/* مبلغ ردیف */}
-                      <td data-label="مبلغ ردیف">
+                        {/* مقدار ورودی */}
+                        <td data-label="مقدار ورودی">
 
-                        <strong className="entry-line-amount">
+                          <input
+                            type="number"
+                            min="0"
+                            step={
+                              selectedUnit
+                                ? String(
+                                  1 / (
+                                    10 ** selectedUnit.inputDecimalPlaces
+                                  )
+                                )
+                                : '1'
+                            }
+                            value={item.quantity}
+                            onChange={(event) =>
+                              updateItem(item.id, {
+                                quantity: event.target.value,
+                              })
+                            }
+                            disabled={!selectedUnit}
+                            placeholder="مقدار"
+                            className="entry-number-input"
+                          />
 
-                          {lineAmount !== null
-                            ? formatNumber(
-                              lineAmount,
-                              currency?.minorUnitDigits ?? 2
-                            )
-                            : '—'}
 
-                        </strong>
+                          {baseQuantity !== null &&
+                            selectedUnit &&
+                            !selectedUnit.isBaseUnit && (
+
+                              <small className="entry-unit-hint">
+
+                                معادل پایه:
+                                {' '}
+                                {formatNumber(
+                                  baseQuantity,
+                                  product.baseQuantityDecimalPlaces
+                                )}
+                                {' '}
+                                {product.baseUnitSymbol}
+
+                              </small>
+
+                            )}
+
+                        </td>
 
 
-                        {currency && (
+                        {/* قیمت واحد و ارز */}
+                        <td data-label="قیمت واحد">
 
-                          <small className="entry-unit-hint">
-                            {currency.code}
-                          </small>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.000001"
+                            value={item.unitPrice}
+                            onChange={(event) =>
+                              updateItem(item.id, {
+                                unitPrice: event.target.value,
+                              })
+                            }
+                            disabled={!selectedUnit}
+                            placeholder="قیمت واحد"
+                            className="entry-number-input"
+                          />
 
-                        )}
 
-                      </td>
+                          <select
+                            value={item.currencyCode}
+                            onChange={(event) =>
+                              updateItem(item.id, {
+                                currencyCode: event.target.value,
+                              })
+                            }
+                            disabled={!selectedUnit}
+                            aria-label="ارز قیمت واحد"
+                          >
+
+                            {currencies.map((currencyOption) => (
+
+                              <option
+                                key={currencyOption.code}
+                                value={currencyOption.code}
+                              >
+
+                                {currencyOption.code}
+                                {' - '}
+                                {currencyOption.name}
+
+                              </option>
+
+                            ))}
+
+                          </select>
 
 
-                      {/* حذف ردیف */}
-                      <td data-label="عملیات">
+                          {selectedUnit && (
 
-                        <button
-                          type="button"
-                          className="entry-remove-item-button"
-                          onClick={() =>
-                            removeItemRow(item.id)
-                          }
-                          title="حذف این ردیف"
-                          aria-label={`حذف ردیف ${index + 1}`}
-                        >
-                          ×
-                        </button>
+                            <small className="entry-unit-hint">
+                              قیمت به ازای هر {selectedUnit.name}
+                            </small>
 
-                      </td>
+                          )}
 
-                    </tr>
+                        </td>
 
-                  );
 
-                })}
+                        {/* مبلغ ردیف */}
+                        <td data-label="مبلغ ردیف">
 
-              </tbody>
+                          <strong className="entry-line-amount">
 
-            </table>
+                            {lineAmount !== null
+                              ? formatCurrency(lineAmount, currency)
+                              : '—'}
 
-          </div>
+                          </strong>
+
+                        </td>
+
+
+                        {/* حذف ردیف */}
+                        <td data-label="عملیات">
+
+                          <button
+                            type="button"
+                            className="entry-remove-item-button"
+                            onClick={() => removeItemRow(item.id)}
+                            title="حذف این ردیف"
+                            aria-label={`حذف ردیف ${index + 1}`}
+                          >
+                            ×
+                          </button>
+
+                        </td>
+
+                      </tr>
+
+                    );
+
+                  })}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+
+            {/* دکمه دوم افزودن کالا در انتهای فهرست */}
+            <div className="entry-add-item-footer">
+
+              <p>
+                برای افزودن ردیف دیگری، از دکمه زیر استفاده کن.
+              </p>
+
+              <button
+                type="button"
+                className="entry-add-item-button"
+                onClick={addItemRow}
+              >
+                <span>＋</span>
+                افزودن کالای دیگر
+              </button>
+
+            </div>
+
+          </>
 
         )}
 
@@ -1690,9 +1435,8 @@ function InventoryEntry() {
 
           <div>
             <h2>خلاصه سند</h2>
-
             <p>
-              تعداد ردیف‌ها و جمع مبالغ به تفکیک ارز
+              تعداد ردیف‌ها و مجموع مبالغ به تفکیک ارز
             </p>
           </div>
 
@@ -1712,33 +1456,41 @@ function InventoryEntry() {
           </div>
 
 
-          {totalsByCurrency.map((entry) => (
+          {totalsByCurrency.length > 0 ? (
 
-            <div
-              className="entry-summary-item"
-              key={entry.currencyCode}
-            >
+            totalsByCurrency.map((total) => (
 
-              <span>
-                جمع مبلغ به {entry.currency?.name || entry.currencyCode}
-              </span>
+              <div
+                className="entry-summary-item"
+                key={total.currencyCode}
+              >
 
-              <strong>
+                <span>
+                  مبلغ کل به {total.currency?.name || total.currencyCode}
+                </span>
 
-                {formatNumber(
-                  entry.total,
-                  entry.currency?.minorUnitDigits ?? 2
-                )}
+                <strong>
+                  {formatCurrency(
+                    total.total,
+                    total.currency
+                  )}
+                </strong>
 
-                {' '}
+              </div>
 
-                {entry.currencyCode}
+            ))
 
-              </strong>
+          ) : (
+
+            <div className="entry-summary-item">
+
+              <span>مبلغ کل سند</span>
+
+              <strong>—</strong>
 
             </div>
 
-          ))}
+          )}
 
         </div>
 
@@ -1747,20 +1499,8 @@ function InventoryEntry() {
 
           <p className="entry-summary-note">
 
-            برای ذخیره سند، کالا، واحد، مقدار، بهای واحد و ارز تمام
-            ردیف‌ها باید معتبر و تکمیل باشند.
-
-          </p>
-
-        )}
-
-
-        {allItemsComplete && totalsByCurrency.length > 1 && (
-
-          <p className="entry-summary-note">
-
-            مبالغ ارزهای مختلف جداگانه نمایش داده شده‌اند و
-            با یکدیگر جمع نمی‌شوند.
+            برای محاسبه مبلغ کل و ذخیره سند، کالا، واحد، مقدار،
+            قیمت و ارز تمام ردیف‌ها باید تکمیل شوند.
 
           </p>
 
@@ -1776,10 +1516,7 @@ function InventoryEntry() {
 
           <div>
             <h2>توضیحات</h2>
-
-            <p>
-              اطلاعات تکمیلی این سند
-            </p>
+            <p>اطلاعات تکمیلی این سند</p>
           </div>
 
         </div>
@@ -1792,12 +1529,10 @@ function InventoryEntry() {
           <textarea
             rows="3"
             value={notes}
-            onChange={(event) => {
-              setNotes(event.target.value);
-              setFeedback(null);
-            }}
+            onChange={(event) =>
+              setNotes(event.target.value)
+            }
             placeholder="توضیحات اختیاری درباره این سند..."
-            maxLength={2000}
           />
 
         </label>
@@ -1816,12 +1551,13 @@ function InventoryEntry() {
 
 
           <button
-            type="submit"
+            type="button"
             className="entry-draft-button"
+            onClick={handleSaveDraft}
             disabled={!canSaveDraft}
           >
 
-            {savingDraft
+            {isSaving
               ? 'در حال ذخیره...'
               : 'ذخیره پیش‌نویس'}
 
@@ -1831,10 +1567,15 @@ function InventoryEntry() {
 
       </section>
 
-    </form>
+
+      {/* اعلان شناور پایین چپ صفحه */}
+      <EntryToast toast={toast} />
+
+    </div>
 
   );
 
 }
+
 
 export default InventoryEntry;
