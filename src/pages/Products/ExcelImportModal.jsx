@@ -415,6 +415,7 @@ function ExcelImportModal({
 
   // ثبت محصولات معتبر در پایگاه داده
   async function handleImport() {
+
     // بررسی وجود نتیجه اعتبارسنجی و جلوگیری از ثبت چندباره
     if (
       !validationResult ||
@@ -425,18 +426,25 @@ function ExcelImportModal({
       return;
     }
 
+
     // دریافت فقط محصولات معتبر
     const validProducts = validationResult.validProducts;
+
+    // نگهداری محصولات ثبت‌شده برای اطلاع‌رسانی به صفحه اصلی
+    let productsToNotify = null;
 
     // پاک‌کردن خطای قبلی
     setImportError('');
 
     setIsImporting(true);
 
+
     try {
+
       // دریافت API ثبت گروهی محصولات از Preload
       const createBulk =
         window.hesabyar?.products?.createBulk;
+
 
       if (typeof createBulk !== 'function') {
         throw new Error(
@@ -444,8 +452,10 @@ function ExcelImportModal({
         );
       }
 
+
       // ارسال محصولات معتبر به Main Process
       const createdProducts = await createBulk(validProducts);
+
 
       // بررسی پاسخ سرویس
       if (!Array.isArray(createdProducts)) {
@@ -461,38 +471,60 @@ function ExcelImportModal({
         )
       );
 
+
       const unidentifiedRowCount = validationResult.rows.filter(
         (row) => !groupedRows.has(row.excelRow)
       ).length;
 
+
       // ثبت گزارش عملیات موفق
       const report = {
+
         createdCount: createdProducts.length,
+
         skippedCount: validationResult.invalidProductCount,
+
         unidentifiedRowCount,
+
         totalCount: validationResult.totalProducts,
+
         products: createdProducts,
+
       };
 
+
       setImportReport(report);
+
 
       // انتقال به صفحه گزارش نهایی
       setCurrentStep('completed');
 
+
+      // آماده‌سازی اطلاع‌رسانی پس از موفقیت کامل عملیات
+      productsToNotify = createdProducts;
+
+
     } catch (error) {
-      // نمایش خطای احتمالی؛ تراکنش ناموفق در بک‌اند بازگردانده می‌شود
+
+      // نمایش خطای احتمالی
       setImportError(
         error.message ||
         'ثبت گروهی محصولات ناموفق بود.'
       );
 
     } finally {
+
       // پایان وضعیت ثبت
       setIsImporting(false);
+
     }
 
-    // اطلاع‌رسانی به صفحه اصلی درباره محصولات ثبت‌شده
-    onImported(createdProducts);
+
+    // اطلاع‌رسانی فقط در صورت موفقیت عملیات
+    if (productsToNotify !== null) {
+      onImported(productsToNotify);
+    }
+
   }
 
   // فقط کالاهایی که تمام اعتبارسنجی‌های آن‌ها موفق بوده است

@@ -481,7 +481,7 @@ function EntryTypePicker({ value, onChange }) {
 
     const lastIndex = INVENTORY_ENTRY_TYPE_OPTIONS.length - 1;
 
-    let nextIndex = index;
+    let nextIndex;
 
 
     switch (event.key) {
@@ -533,9 +533,15 @@ function EntryTypePicker({ value, onChange }) {
         return;
 
 
-      default:
+      case ' ':
+      case 'Enter':
 
-        // Space و Enter به‌صورت پیش‌فرض دکمه را فعال می‌کنند.
+        // اجازه می‌دهیم رفتار پیش‌فرض دکمه HTML اجرا شود.
+        // با Space یا Enter، رویداد onClick دکمه اجرا خواهد شد.
+        return;
+
+
+      default:
         return;
 
     }
@@ -685,7 +691,14 @@ function InventoryEntry() {
   // اطلاعات واقعی محصولات، واحدها و ارزها
   const [formOptions, setFormOptions] = useState(null);
 
+  // بارگذاری اولیه اطلاعات فرم
   const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+
+  // بررسی مجوز نوع سند بدون نمایش مجدد صفحه بارگذاری
+  const [isCheckingEntryType, setIsCheckingEntryType] = useState(false);
+
+  // مشخص می‌کند اطلاعات اولیه فرم قبلاً دریافت شده‌اند یا خیر
+  const hasLoadedFormOptionsRef = useRef(false);
 
   const [loadError, setLoadError] = useState('');
 
@@ -724,17 +737,26 @@ function InventoryEntry() {
 
   }, [documentDate]);
 
-  // دریافت اطلاعات واقعی فرم از Electron
+  // دریافت اطلاعات اولیه فرم و بررسی مجوز نوع سند
   useEffect(() => {
 
     let isCurrent = true;
 
+    // تشخیص اینکه آیا این نخستین بارگذاری فرم است
+    const isInitialLoad = !hasLoadedFormOptionsRef.current;
+
+    if (isInitialLoad) {
+      setIsLoadingOptions(true);
+    } else {
+      // در تغییر نوع سند، فقط مجوز بررسی می‌شود.
+      // فرم و اطلاعات فعلی آن باقی می‌مانند.
+      setIsCheckingEntryType(true);
+    }
+
+    setLoadError('');
+
 
     async function loadFormOptions() {
-
-      setIsLoadingOptions(true);
-
-      setLoadError('');
 
       try {
 
@@ -749,9 +771,11 @@ function InventoryEntry() {
         }
 
 
+        // دریافت پاسخ متناسب با نوع سند برای بررسی مجوز
         const result = await getEntryFormOptions(entryType);
 
 
+        // بررسی اعتبار پاسخ سرویس
         if (
           !result ||
           !Array.isArray(result.products) ||
@@ -764,23 +788,38 @@ function InventoryEntry() {
         }
 
 
-        if (isCurrent) {
+        // اطلاعات محصولات و ارزها فقط یک بار ذخیره می‌شوند.
+        // در تغییر نوع سند، فقط پاسخ مجوز بررسی می‌شود.
+        if (
+          isCurrent &&
+          !hasLoadedFormOptionsRef.current
+        ) {
+
           setFormOptions(result);
+
+          hasLoadedFormOptionsRef.current = true;
+
         }
 
       } catch (error) {
 
         if (isCurrent) {
+
           setLoadError(
             error.message ||
             'دریافت اطلاعات فرم ورود کالا ناموفق بود.'
           );
+
         }
 
       } finally {
 
         if (isCurrent) {
+
           setIsLoadingOptions(false);
+
+          setIsCheckingEntryType(false);
+
         }
 
       }
@@ -791,7 +830,7 @@ function InventoryEntry() {
     loadFormOptions();
 
 
-    // جلوگیری از تغییر وضعیت پس از خروج کامپوننت
+    // جلوگیری از تغییر وضعیت توسط درخواست‌های قدیمی
     return () => {
       isCurrent = false;
     };
@@ -1213,6 +1252,8 @@ function InventoryEntry() {
 
     !isLoadingOptions &&
 
+    !isCheckingEntryType &&
+
     !loadError &&
 
     !isSaving &&
@@ -1404,20 +1445,6 @@ function InventoryEntry() {
   return (
 
     <div className="inventory-entry">
-
-      {/* نمایش وضعیت بررسی نوع ورود بدون حذف فرم */}
-      {isLoadingOptions && formOptions && (
-
-        <div
-          className="entry-options-state"
-          role="status"
-          aria-live="polite"
-        >
-          در حال بررسی مجوز این نوع ورود...
-        </div>
-
-      )}
-
 
       {/* نمایش خطا بدون حذف اطلاعات فعلی فرم */}
       {loadError && formOptions && (
