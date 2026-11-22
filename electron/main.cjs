@@ -66,6 +66,11 @@ const {
   setProductActive,
 } = require('./services/productService.cjs');
 
+// سرویس مدیریت موجودی انبار
+const {
+  getInventoryEntryFormOptions,
+} = require('./services/inventoryService.cjs');
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -923,6 +928,24 @@ function registerIpcHandlers() {
         productId,
         isActive
       );
+    }
+  );
+
+  // دریافت اطلاعات لازم برای فرم ورود کالا
+  ipcMain.handle(
+    'inventory:entry:form-options',
+    (event, documentType) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      // دریافت اطلاعات فرم از پایگاه داده
+      return getInventoryEntryFormOptions(
+        database,
+        actor,
+        documentType
+      );
+
     }
   );
 

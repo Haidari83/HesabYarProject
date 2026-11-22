@@ -269,4 +269,16 @@ contextBridge.exposeInMainWorld('hesabyar', {
       ),
 
   },
+
+  // API مدیریت موجودی انبار
+  inventory: {
+
+    // دریافت محصولات، واحدها و ارزهای موردنیاز فرم ورود کالا
+    getEntryFormOptions: (documentType) =>
+      ipcRenderer.invoke(
+        'inventory:entry:form-options',
+        documentType
+      ),
+
+  },
 });
