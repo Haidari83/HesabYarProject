@@ -379,6 +379,33 @@ function ExcelImportModal({
     }
   }
 
+  // ارتباط شماره ردیف‌های Excel با کد محصولات ثبت‌شده
+  const importedProductCodeByRow = new Map();
+
+  if (importReport && validationResult) {
+    // استخراج گروه‌هایی که اعتبارسنجی آن‌ها موفق بوده است
+    const validGroups = validationResult.groups.filter(
+      (group) => group.status === 'valid'
+    );
+
+    // محصولات ثبت‌شده به همان ترتیب گروه‌های معتبر بازمی‌گردند
+    validGroups.forEach((group, index) => {
+      const createdProduct = importReport.products[index];
+
+      if (!createdProduct?.code) {
+        return;
+      }
+
+      // اختصاص کد محصول به تمام ردیف‌های متعلق به آن
+      group.rowNumbers.forEach((rowNumber) => {
+        importedProductCodeByRow.set(
+          rowNumber,
+          createdProduct.code
+        );
+      });
+    });
+  }
+
   return (
     <div
       className="excel-import-backdrop"
@@ -407,8 +434,9 @@ function ExcelImportModal({
             </h2>
 
             <p>
-              فایل محصولات را انتخاب کن تا اطلاعات آن خوانده و
-              پیش‌نمایش داده شود.
+              {importReport
+                ? `گزارش نهایی فایل «${fileName}»`
+                : 'فایل محصولات را انتخاب کن تا اطلاعات آن خوانده و پیش‌نمایش داده شود.'}
             </p>
           </div>
 
@@ -427,442 +455,533 @@ function ExcelImportModal({
         {/* محتوای پنجره */}
         <div className="excel-import-body">
 
-          {/* راهنمای ساختار فایل */}
-          <section className="excel-import-guide">
-            <h3>ساختار فایل Excel</h3>
+          {/* محتوای انتخاب و بررسی فایل فقط پیش از ثبت موفق نمایش داده می‌شود */}
+          {!importReport && (
+            <>
+              {/* راهنمای ساختار فایل */}
+              <section className="excel-import-guide">
+                <h3>ساختار فایل Excel</h3>
 
-            <p>
-              ردیف اول فایل باید عنوان ستون‌ها را داشته باشد.
-              نام ستون‌ها می‌تواند یکی از عنوان‌های زیر باشد:
-            </p>
+                <p>
+                  ردیف اول فایل باید عنوان ستون‌ها را داشته باشد.
+                  نام ستون‌ها می‌تواند یکی از عنوان‌های زیر باشد:
+                </p>
 
-            <div className="excel-import-columns">
-              {EXCEL_COLUMNS.map((column) => (
-                <span key={column.key}>
-                  {column.label}
-                  {column.required && ' *'}
-                </span>
-              ))}
-            </div>
+                <div className="excel-import-columns">
+                  {EXCEL_COLUMNS.map((column) => (
+                    <span key={column.key}>
+                      {column.label}
+                      {column.required && ' *'}
+                    </span>
+                  ))}
+                </div>
 
-            <ul>
-              <li>
-                ستون‌های نام محصول، دسته‌بندی و واحد پایه الزامی هستند.
-              </li>
+                <ul>
+                  <li>
+                    ستون‌های نام محصول، دسته‌بندی و واحد پایه الزامی هستند.
+                  </li>
 
-              <li>
-                برای ثبت چند واحد فرعی، اطلاعات اصلی محصول را
-                در ردیف‌های مربوط تکرار کن.
-              </li>
+                  <li>
+                    برای ثبت چند واحد فرعی، اطلاعات اصلی محصول را
+                    در ردیف‌های مربوط تکرار کن.
+                  </li>
 
-              <li>
-                برای واحد استاندارد، صورت و مخرج تبدیل را خالی بگذار.
-              </li>
+                  <li>
+                    برای واحد استاندارد، صورت و مخرج تبدیل را خالی بگذار.
+                  </li>
 
-              <li>
-                برای واحد بسته‌بندی، صورت و مخرج تبدیل را وارد کن.
-              </li>
+                  <li>
+                    برای واحد بسته‌بندی، صورت و مخرج تبدیل را وارد کن.
+                  </li>
 
-              <li>
-                قیمت خرید و فروش در این فایل وارد نمی‌شود.
-              </li>
-            </ul>
+                  <li>
+                    قیمت خرید و فروش در این فایل وارد نمی‌شود.
+                  </li>
+                </ul>
 
-            <p className="excel-import-sheet-note">
-              در این مرحله، اطلاعات فقط از برگه اول فایل خوانده می‌شود.
-            </p>
-          </section>
+                <p className="excel-import-sheet-note">
+                  در این مرحله، اطلاعات فقط از برگه اول فایل خوانده می‌شود.
+                </p>
+              </section>
 
 
-          {/* انتخاب فایل */}
-          <section className="excel-import-file-section">
-            <input
-              id={inputId}
-              className="excel-import-file-input"
-              type="file"
-              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              onChange={handleFileChange}
-              disabled={isReading}
-            />
+              {/* انتخاب فایل */}
+              <section className="excel-import-file-section">
+                <input
+                  id={inputId}
+                  className="excel-import-file-input"
+                  type="file"
+                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  onChange={handleFileChange}
+                  disabled={isReading}
+                />
 
-            <label
-              htmlFor={inputId}
-              className="excel-import-file-button"
-            >
-              {isReading
-                ? 'در حال خواندن فایل...'
-                : 'انتخاب فایل Excel'}
-            </label>
+                <label
+                  htmlFor={inputId}
+                  className="excel-import-file-button"
+                >
+                  {isReading
+                    ? 'در حال خواندن فایل...'
+                    : 'انتخاب فایل Excel'}
+                </label>
 
-            {fileName && (
-              <div className="excel-import-file-info">
-                <strong>{fileName}</strong>
+                {fileName && (
+                  <div className="excel-import-file-info">
+                    <strong>{fileName}</strong>
 
-                {fileSize && (
-                  <small>{fileSize}</small>
+                    {fileSize && (
+                      <small>{fileSize}</small>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
-          </section>
+              </section>
 
 
-          {/* وضعیت خواندن فایل */}
-          {isReading && (
-            <div className="excel-import-reading">
-              در حال خواندن اطلاعات فایل Excel...
-            </div>
+              {/* وضعیت خواندن فایل */}
+              {isReading && (
+                <div className="excel-import-reading">
+                  در حال خواندن اطلاعات فایل Excel...
+                </div>
+              )}
+
+
+              {/* نمایش خطا */}
+              {readError && (
+                <div
+                  className="excel-import-error"
+                  role="alert"
+                >
+                  <strong>خواندن فایل ناموفق بود.</strong>
+                  <p>{readError}</p>
+                </div>
+              )}
+
+
+              {/* پیش‌نمایش اطلاعات */}
+              {totalRows > 0 && (
+                <section className="excel-import-preview">
+
+                  <header className="excel-import-preview-header">
+                    <div>
+                      <h3>پیش‌نمایش اطلاعات</h3>
+
+                      <p>
+                        {totalRows.toLocaleString('fa-IR')}
+                        {' '}
+                        ردیف اطلاعاتی خوانده شد.
+                      </p>
+                    </div>
+
+                    <span className="excel-import-preview-count">
+                      {previewRows.length.toLocaleString('fa-IR')}
+                      {' '}
+                      ردیف
+                    </span>
+                  </header>
+
+                  {/* خلاصه نتیجه اعتبارسنجی */}
+                  {validationResult && (
+                    <>
+                      <div className="excel-import-summary">
+
+                        <div className="excel-import-summary-card">
+                          <span>کل محصولات شناسایی‌شده</span>
+
+                          <strong>
+                            {validationResult.totalProducts.toLocaleString('fa-IR')}
+                          </strong>
+                        </div>
+
+                        <div className="excel-import-summary-card valid">
+                          <span>محصولات معتبر</span>
+
+                          <strong>
+                            {validationResult.validProductCount.toLocaleString('fa-IR')}
+                          </strong>
+                        </div>
+
+                        <div className="excel-import-summary-card invalid">
+                          <span>محصولات نیازمند اصلاح</span>
+
+                          <strong>
+                            {validationResult.invalidProductCount.toLocaleString('fa-IR')}
+                          </strong>
+                        </div>
+
+                        <div className="excel-import-summary-card">
+                          <span>ردیف‌های دارای خطا</span>
+
+                          <strong>
+                            {validationResult.invalidRowCount.toLocaleString('fa-IR')}
+                          </strong>
+                        </div>
+
+                      </div>
+
+
+                      {/* نتیجه گروه‌بندی و اعتبارسنجی محصولات */}
+                      <section className="excel-import-product-results">
+
+                        <header>
+                          <h3>نتیجه بررسی محصولات</h3>
+
+                          <p>
+                            ردیف‌های مربوط به یک محصول در یک گروه قرار گرفته‌اند.
+                          </p>
+                        </header>
+
+
+                        {validationResult.groups.length === 0 ? (
+                          <div className="excel-import-no-groups">
+                            محصولی با نام معتبر برای بررسی پیدا نشد.
+                            خطاهای ردیف‌ها را در جدول زیر بررسی کن.
+                          </div>
+                        ) : (
+                          <div className="excel-import-table-wrapper">
+                            <table className="excel-import-table">
+
+                              <thead>
+                                <tr>
+                                  <th>نام محصول</th>
+                                  <th>دسته‌بندی</th>
+                                  <th>واحد پایه</th>
+                                  <th>تعداد واحدهای فرعی</th>
+                                  <th>ردیف‌های فایل</th>
+                                  <th>وضعیت</th>
+                                  <th>نتیجه بررسی</th>
+                                </tr>
+                              </thead>
+
+                              <tbody>
+                                {validationResult.groups.map((group) => (
+                                  <tr key={group.key}>
+
+                                    <td>{group.name}</td>
+
+                                    <td>{group.categoryName || '—'}</td>
+
+                                    <td>{group.baseUnitName || '—'}</td>
+
+                                    <td>
+                                      {group.unitOptions.length.toLocaleString('fa-IR')}
+                                    </td>
+
+                                    <td>
+                                      {group.rowNumbers
+                                        .map((number) =>
+                                          number.toLocaleString('fa-IR')
+                                        )
+                                        .join('، ')}
+                                    </td>
+
+                                    <td>
+                                      <span
+                                        className={
+                                          group.status === 'valid'
+                                            ? 'excel-import-status-valid'
+                                            : 'excel-import-status-invalid'
+                                        }
+                                      >
+                                        {group.status === 'valid'
+                                          ? 'معتبر'
+                                          : 'نیازمند اصلاح'}
+                                      </span>
+                                    </td>
+
+                                    <td>
+                                      {group.errors.length > 0 ? (
+                                        <ul className="excel-import-error-list">
+                                          {group.errors.map((error, index) => (
+                                            <li key={index}>{error}</li>
+                                          ))}
+                                        </ul>
+                                      ) : (
+                                        <span className="excel-import-no-error">
+                                          اطلاعات قابل قبول است.
+                                        </span>
+                                      )}
+                                    </td>
+
+                                  </tr>
+                                ))}
+                              </tbody>
+
+                            </table>
+                          </div>
+                        )}
+
+                      </section>
+                    </>
+                  )}
+
+
+                  <div className="excel-import-table-wrapper">
+                    <table className="excel-import-table">
+
+                      <thead>
+                        <tr>
+                          <th>ردیف فایل</th>
+                          <th>نام محصول</th>
+                          <th>دسته‌بندی</th>
+                          <th>واحد پایه</th>
+                          <th>واحد فرعی</th>
+                          <th>صورت تبدیل</th>
+                          <th>مخرج تبدیل</th>
+                          <th>وضعیت</th>
+                          <th>خطاها</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {previewRows.map((row) => (
+                          <tr key={row.excelRow}>
+
+                            <td>
+                              {row.excelRow.toLocaleString('fa-IR')}
+                            </td>
+
+                            <td>{row.name || '—'}</td>
+
+                            <td>{row.category || '—'}</td>
+
+                            <td>{row.baseUnit || '—'}</td>
+
+                            <td>{row.subUnit || '—'}</td>
+
+                            <td>{row.numerator || '—'}</td>
+
+                            <td>{row.denominator || '—'}</td>
+
+                            <td>
+                              <span
+                                className={
+                                  row.status === 'valid'
+                                    ? 'excel-import-status-valid'
+                                    : 'excel-import-status-invalid'
+                                }
+                              >
+                                {row.status === 'valid'
+                                  ? 'معتبر'
+                                  : 'نیازمند اصلاح'}
+                              </span>
+                            </td>
+
+                            <td>
+                              {row.errors.length > 0
+                                ? row.errors.join('؛ ')
+                                : '—'}
+                            </td>
+
+                          </tr>
+                        ))}
+                      </tbody>
+
+                    </table>
+                  </div>
+
+
+                  {totalRows > previewRows.length && (
+                    <p className="excel-import-preview-note">
+                      فقط ۵۰ ردیف نخست نمایش داده شده است؛
+                      تعداد کل ردیف‌ها {totalRows.toLocaleString('fa-AF')} است.
+                    </p>
+                  )}
+
+                </section>
+              )}
+
+            </>
           )}
 
-
-          {/* نمایش خطا */}
-          {readError && (
+          {/* خطای ثبت گروهی؛ فقط در صفحه قبل از ثبت نمایش داده می‌شود */}
+          {!importReport && importError && (
             <div
               className="excel-import-error"
               role="alert"
             >
-              <strong>خواندن فایل ناموفق بود.</strong>
-              <p>{readError}</p>
+              <strong>ثبت محصولات ناموفق بود.</strong>
+
+              <p>{importError}</p>
+
+              <p>
+                در صورت بروز خطا در تراکنش، هیچ‌یک از محصولات این
+                درخواست ثبت نشده‌اند.
+              </p>
             </div>
           )}
 
+          {/* صفحه مستقل گزارش پس از ثبت موفق */}
+          {importReport && (
+            <section className="excel-import-final-view">
 
-          {/* پیش‌نمایش اطلاعات */}
-          {totalRows > 0 && (
-            <section className="excel-import-preview">
-
-              <header className="excel-import-preview-header">
-                <div>
-                  <h3>پیش‌نمایش اطلاعات</h3>
+              {/* عنوان گزارش */}
+              <div className="excel-import-report">
+                <header>
+                  <h3>گزارش نهایی ورود محصولات</h3>
 
                   <p>
-                    {totalRows.toLocaleString('fa-IR')}
-                    {' '}
-                    ردیف اطلاعاتی خوانده شد.
+                    عملیات ثبت گروهی به پایان رسید.
                   </p>
-                </div>
+                </header>
 
-                <span className="excel-import-preview-count">
-                  {previewRows.length.toLocaleString('fa-IR')}
-                  {' '}
-                  ردیف
-                </span>
-              </header>
-
-              {/* خلاصه نتیجه اعتبارسنجی */}
-              {validationResult && (
-                <>
-                  <div className="excel-import-summary">
-
-                    <div className="excel-import-summary-card">
-                      <span>کل محصولات شناسایی‌شده</span>
-
-                      <strong>
-                        {validationResult.totalProducts.toLocaleString('fa-IR')}
-                      </strong>
-                    </div>
-
-                    <div className="excel-import-summary-card valid">
-                      <span>محصولات معتبر</span>
-
-                      <strong>
-                        {validationResult.validProductCount.toLocaleString('fa-IR')}
-                      </strong>
-                    </div>
-
-                    <div className="excel-import-summary-card invalid">
-                      <span>محصولات نیازمند اصلاح</span>
-
-                      <strong>
-                        {validationResult.invalidProductCount.toLocaleString('fa-IR')}
-                      </strong>
-                    </div>
-
-                    <div className="excel-import-summary-card">
-                      <span>ردیف‌های دارای خطا</span>
-
-                      <strong>
-                        {validationResult.invalidRowCount.toLocaleString('fa-IR')}
-                      </strong>
-                    </div>
-
+                {/* اطلاعات فایل انتخاب‌شده */}
+                <div className="excel-import-result-file">
+                  <div>
+                    <span>فایل انتخاب‌شده</span>
+                    <strong>{fileName}</strong>
                   </div>
 
+                  <div>
+                    <span>حجم فایل</span>
+                    <strong>{fileSize}</strong>
+                  </div>
 
-                  {/* نتیجه گروه‌بندی و اعتبارسنجی محصولات */}
-                  <section className="excel-import-product-results">
+                  <div>
+                    <span>تعداد ردیف‌های فایل</span>
+                    <strong>
+                      {validationResult.rows.length.toLocaleString('fa-IR')}
+                    </strong>
+                  </div>
+                </div>
 
-                    <header>
-                      <h3>نتیجه بررسی محصولات</h3>
+                {/* آمار نهایی */}
+                <div className="excel-import-summary excel-import-summary-report">
 
-                      <p>
-                        ردیف‌های مربوط به یک محصول در یک گروه قرار گرفته‌اند.
-                      </p>
-                    </header>
+                  <div className="excel-import-summary-card valid">
+                    <span>محصولات ثبت‌شده</span>
 
+                    <strong>
+                      {importReport.createdCount.toLocaleString('fa-IR')}
+                    </strong>
+                  </div>
 
-                    {validationResult.groups.length === 0 ? (
-                      <div className="excel-import-no-groups">
-                        محصولی با نام معتبر برای بررسی پیدا نشد.
-                        خطاهای ردیف‌ها را در جدول زیر بررسی کن.
-                      </div>
-                    ) : (
-                      <div className="excel-import-table-wrapper">
-                        <table className="excel-import-table">
+                  <div className="excel-import-summary-card invalid">
+                    <span>محصولات ثبت‌نشده به علت خطای اعتبارسنجی</span>
 
-                          <thead>
-                            <tr>
-                              <th>نام محصول</th>
-                              <th>دسته‌بندی</th>
-                              <th>واحد پایه</th>
-                              <th>تعداد واحدهای فرعی</th>
-                              <th>ردیف‌های فایل</th>
-                              <th>وضعیت</th>
-                              <th>نتیجه بررسی</th>
-                            </tr>
-                          </thead>
+                    <strong>
+                      {importReport.skippedCount.toLocaleString('fa-IR')}
+                    </strong>
+                  </div>
 
-                          <tbody>
-                            {validationResult.groups.map((group) => (
-                              <tr key={group.key}>
+                  <div className="excel-import-summary-card">
+                    <span>کل محصولات شناسایی‌شده</span>
 
-                                <td>{group.name}</td>
+                    <strong>
+                      {importReport.totalCount.toLocaleString('fa-IR')}
+                    </strong>
+                  </div>
 
-                                <td>{group.categoryName || '—'}</td>
-
-                                <td>{group.baseUnitName || '—'}</td>
-
-                                <td>
-                                  {group.unitOptions.length.toLocaleString('fa-IR')}
-                                </td>
-
-                                <td>
-                                  {group.rowNumbers
-                                    .map((number) =>
-                                      number.toLocaleString('fa-IR')
-                                    )
-                                    .join('، ')}
-                                </td>
-
-                                <td>
-                                  <span
-                                    className={
-                                      group.status === 'valid'
-                                        ? 'excel-import-status-valid'
-                                        : 'excel-import-status-invalid'
-                                    }
-                                  >
-                                    {group.status === 'valid'
-                                      ? 'معتبر'
-                                      : 'نیازمند اصلاح'}
-                                  </span>
-                                </td>
-
-                                <td>
-                                  {group.errors.length > 0 ? (
-                                    <ul className="excel-import-error-list">
-                                      {group.errors.map((error, index) => (
-                                        <li key={index}>{error}</li>
-                                      ))}
-                                    </ul>
-                                  ) : (
-                                    <span className="excel-import-no-error">
-                                      اطلاعات قابل قبول است.
-                                    </span>
-                                  )}
-                                </td>
-
-                              </tr>
-                            ))}
-                          </tbody>
-
-                        </table>
-                      </div>
-                    )}
-
-                  </section>
-                </>
-              )}
-
-
-              <div className="excel-import-table-wrapper">
-                <table className="excel-import-table">
-
-                  <thead>
-                    <tr>
-                      <th>ردیف فایل</th>
-                      <th>نام محصول</th>
-                      <th>دسته‌بندی</th>
-                      <th>واحد پایه</th>
-                      <th>واحد فرعی</th>
-                      <th>صورت تبدیل</th>
-                      <th>مخرج تبدیل</th>
-                      <th>وضعیت</th>
-                      <th>خطاها</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {previewRows.map((row) => (
-                      <tr key={row.excelRow}>
-
-                        <td>
-                          {row.excelRow.toLocaleString('fa-IR')}
-                        </td>
-
-                        <td>{row.name || '—'}</td>
-
-                        <td>{row.category || '—'}</td>
-
-                        <td>{row.baseUnit || '—'}</td>
-
-                        <td>{row.subUnit || '—'}</td>
-
-                        <td>{row.numerator || '—'}</td>
-
-                        <td>{row.denominator || '—'}</td>
-
-                        <td>
-                          <span
-                            className={
-                              row.status === 'valid'
-                                ? 'excel-import-status-valid'
-                                : 'excel-import-status-invalid'
-                            }
-                          >
-                            {row.status === 'valid'
-                              ? 'معتبر'
-                              : 'نیازمند اصلاح'}
-                          </span>
-                        </td>
-
-                        <td>
-                          {row.errors.length > 0
-                            ? row.errors.join('؛ ')
-                            : '—'}
-                        </td>
-
-                      </tr>
-                    ))}
-                  </tbody>
-
-                </table>
+                </div>
               </div>
 
+              {/* تمام محتوای انتخاب‌شده از فایل Excel */}
+              <section className="excel-import-selected-content">
 
-              {totalRows > previewRows.length && (
-                <p className="excel-import-preview-note">
-                  فقط ۵۰ ردیف نخست نمایش داده شده است؛
-                  تعداد کل ردیف‌ها {totalRows.toLocaleString('fa-IR')} است.
-                </p>
-              )}
+                <header>
+                  <div>
+                    <h3>محتوای فایل انتخاب‌شده</h3>
+
+                    <p>
+                      تمام ردیف‌های فایل، همراه با نتیجه ثبت آن‌ها نمایش داده می‌شوند.
+                    </p>
+                  </div>
+
+                  <span className="excel-import-preview-count">
+                    {validationResult.rows.length.toLocaleString('fa-IR')}
+                    {' '}
+                    ردیف
+                  </span>
+                </header>
+
+                <div className="excel-import-table-wrapper excel-import-final-table-wrapper">
+
+                  <table className="excel-import-table excel-import-final-table">
+
+                    <thead>
+                      <tr>
+                        <th>ردیف فایل</th>
+                        <th>کد محصول</th>
+                        <th>نام محصول</th>
+                        <th>دسته‌بندی</th>
+                        <th>واحد پایه</th>
+                        <th>واحد فرعی</th>
+                        <th>صورت تبدیل</th>
+                        <th>مخرج تبدیل</th>
+                        <th>وضعیت</th>
+                        <th>خطاها</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {validationResult.rows.map((row) => {
+                        // کد محصول ثبت‌شده برای این ردیف
+                        const productCode =
+                          importedProductCodeByRow.get(row.excelRow) || '';
+
+                        // تعیین وضعیت نهایی
+                        const statusLabel =
+                          row.status !== 'valid'
+                            ? 'نیازمند اصلاح'
+                            : productCode
+                              ? 'ثبت‌شده'
+                              : 'ثبت‌نشده';
+
+                        // تعیین ظاهر وضعیت
+                        const statusClass =
+                          row.status !== 'valid'
+                            ? 'excel-import-status-invalid'
+                            : productCode
+                              ? 'excel-import-status-valid'
+                              : 'excel-import-status-pending';
+
+                        return (
+                          <tr key={row.excelRow}>
+
+                            <td>
+                              {row.excelRow.toLocaleString('fa-IR')}
+                            </td>
+
+                            <td>{productCode || '—'}</td>
+
+                            <td>{row.name || '—'}</td>
+
+                            <td>{row.category || '—'}</td>
+
+                            <td>{row.baseUnit || '—'}</td>
+
+                            <td>{row.subUnit || '—'}</td>
+
+                            <td>{row.numerator || '—'}</td>
+
+                            <td>{row.denominator || '—'}</td>
+
+                            <td>
+                              <span className={statusClass}>
+                                {statusLabel}
+                              </span>
+                            </td>
+
+                            <td>
+                              {row.errors.length > 0
+                                ? row.errors.join('؛ ')
+                                : '—'}
+                            </td>
+
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+
+                  </table>
+
+                </div>
+
+              </section>
 
             </section>
           )}
 
         </div>
-
-        {/* خطای ثبت گروهی */}
-        {importError && (
-          <div
-            className="excel-import-error"
-            role="alert"
-          >
-            <strong>ثبت محصولات ناموفق بود.</strong>
-            <p>{importError}</p>
-            <p>
-              در صورت بروز خطا در تراکنش، هیچ‌یک از محصولات این
-              درخواست ثبت نشده‌اند.
-            </p>
-          </div>
-        )}
-
-
-        {/* گزارش نهایی واردسازی */}
-        {importReport && (
-          <section className="excel-import-report">
-
-            <header>
-              <h3>گزارش نهایی ورود محصولات</h3>
-
-              <p>
-                عملیات ثبت گروهی به پایان رسید.
-              </p>
-            </header>
-
-
-            {/* خلاصه نتیجه */}
-            <div className="excel-import-summary">
-
-              <div className="excel-import-summary-card valid">
-                <span>محصولات ثبت‌شده</span>
-
-                <strong>
-                  {importReport.createdCount.toLocaleString('fa-IR')}
-                </strong>
-              </div>
-
-              <div className="excel-import-summary-card invalid">
-                <span>محصولات ثبت‌نشده به علت خطای اعتبارسنجی</span>
-
-                <strong>
-                  {importReport.skippedCount.toLocaleString('fa-IR')}
-                </strong>
-              </div>
-
-              <div className="excel-import-summary-card">
-                <span>کل محصولات شناسایی‌شده</span>
-
-                <strong>
-                  {importReport.totalCount.toLocaleString('fa-IR')}
-                </strong>
-              </div>
-
-            </div>
-
-
-            {/* فهرست محصولات ثبت‌شده */}
-            {importReport.products.length > 0 && (
-              <div className="excel-import-table-wrapper">
-                <table className="excel-import-table">
-
-                  <thead>
-                    <tr>
-                      <th>کد محصول</th>
-                      <th>نام محصول</th>
-                      <th>دسته‌بندی</th>
-                      <th>واحد پایه</th>
-                      <th>وضعیت</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {importReport.products.map((product) => (
-                      <tr key={product.id}>
-
-                        <td>{product.code}</td>
-
-                        <td>{product.name}</td>
-
-                        <td>{product.categoryName || '—'}</td>
-
-                        <td>{product.baseUnitName || '—'}</td>
-
-                        <td>
-                          <span className="excel-import-status-valid">
-                            ثبت‌شده
-                          </span>
-                        </td>
-
-                      </tr>
-                    ))}
-                  </tbody>
-
-                </table>
-              </div>
-            )}
-
-          </section>
-        )}
 
         {/* پایین پنجره */}
         <footer className="excel-import-footer">
