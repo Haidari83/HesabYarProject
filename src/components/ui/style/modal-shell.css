@@ -1,0 +1,466 @@
+/* =====================================================
+   پوسته عمومی مودال‌ها در حساب‌یار
+
+   این فایل فقط ساختار و ظاهر مشترک مودال‌ها را تعریف می‌کند.
+   ابعاد، نوع اسکرول و نمایش موبایلی با کلاس‌های تکمیلی
+   قابل تنظیم هستند.
+===================================================== */
+
+
+/* =====================================================
+   ۱. لایه پس‌زمینه مودال (Backdrop)
+===================================================== */
+
+.ui-modal-backdrop {
+  position: fixed;
+  inset: 0;
+
+  z-index: var(--z-modal, 1000);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* اگر محتوای مودال از فضای قابل مشاهده بیشتر شد */
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  padding: var(--spacing-5, 20px);
+
+  background-color: rgb(15 23 42 / 48%);
+
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+
+  /* جلوگیری از انتقال ناخواسته اسکرول به صفحه پشت مودال */
+  overscroll-behavior: contain;
+}
+
+
+/* مودال‌هایی که باید بالاتر از مودال‌های معمولی باشند */
+.ui-modal-backdrop--priority {
+  z-index: var(--z-modal-priority, 1350);
+}
+
+
+/* =====================================================
+   ۲. پوسته اصلی مودال
+===================================================== */
+
+.ui-modal {
+  /* مقادیر پیش‌فرض قابل تغییر برای هر نمونه */
+  --ui-modal-max-width: 620px;
+  --ui-modal-max-height: calc(100vh - 40px);
+
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  max-width: var(--ui-modal-max-width);
+  max-height: var(--ui-modal-max-height);
+
+  min-width: 0;
+  min-height: 0;
+
+  overflow: hidden;
+
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-card, 12px);
+
+  background-color: var(--color-surface, #ffffff);
+  color: var(--color-text, #1f2937);
+
+  box-shadow:
+    var(--shadow-overlay, 0 20px 60px rgb(15 23 42 / 20%));
+}
+
+
+/* =====================================================
+   ۳. اندازه‌های استاندارد مودال
+===================================================== */
+
+/* پنجره کوچک؛ مناسب تأیید عملیات */
+.ui-modal--small {
+  --ui-modal-max-width: 400px;
+}
+
+/* پنجره متوسط؛ مناسب فرم‌های کوتاه */
+.ui-modal--medium {
+  --ui-modal-max-width: 620px;
+}
+
+/* پنجره بزرگ؛ مناسب فرم‌های مفصل */
+.ui-modal--large {
+  --ui-modal-max-width: 900px;
+}
+
+/* پنجره بسیار بزرگ؛ مناسب ورود اطلاعات و پیش‌نمایش */
+.ui-modal--extra-large {
+  --ui-modal-max-width: 1100px;
+}
+
+/* پنجره عریض؛ مناسب ثبت گروهی */
+.ui-modal--wide {
+  --ui-modal-max-width: 1400px;
+}
+
+
+/* =====================================================
+   ۴. تنظیم ارتفاع مودال
+===================================================== */
+
+/*
+  این کلاس برای مودال‌هایی مانند ورود Excel است
+  که به ارتفاع مشخص و ناحیه محتوای قابل پیمایش نیاز دارند.
+*/
+
+.ui-modal--fixed-height {
+  height: min(820px, calc(100vh - 40px));
+}
+
+
+/* =====================================================
+   ۵. نوع اسکرول مودال
+===================================================== */
+
+/*
+  حالت اول:
+  اسکرول روی کل پنجره انجام می‌شود.
+
+  مناسب مودال‌های ساده‌ای که سربرگ و پایین ثابت ندارند.
+*/
+
+.ui-modal--self-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+
+/* =====================================================
+   ۶. سربرگ مودال
+===================================================== */
+
+.ui-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: var(--spacing-4, 16px);
+
+  /* سربرگ هنگام اسکرول بدنه کوچک نمی‌شود */
+  flex: 0 0 auto;
+
+  padding:
+    var(--spacing-5, 20px) var(--spacing-6, 24px);
+
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+
+/* محفظه عنوان و توضیحات */
+.ui-modal__heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+
+/* عنوان اصلی */
+.ui-modal__title {
+  margin: 0;
+
+  color: var(--color-primary, #172554);
+
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-bold, 700);
+  line-height: var(--line-height-normal, 1.7);
+
+  overflow-wrap: anywhere;
+}
+
+
+/* توضیحات زیر عنوان */
+.ui-modal__description {
+  margin: var(--spacing-2, 8px) 0 0;
+
+  color:
+    var(--color-text-muted, var(--color-text-secondary, #6b7280));
+
+  font-size:
+    var(--font-size-xs-compact, var(--font-size-xs, 0.75rem));
+
+  line-height: var(--line-height-relaxed, 1.9);
+}
+
+
+/* متن کوچک بالای عنوان؛ در صورت نیاز */
+.ui-modal__eyebrow {
+  display: block;
+
+  margin-bottom: var(--spacing-1, 4px);
+
+  color: var(--color-accent, #0f766e);
+
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+
+/* =====================================================
+   ۷. دکمه بستن مودال
+===================================================== */
+
+.ui-modal__close {
+  display: grid;
+  place-items: center;
+
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+
+  padding: 0;
+
+  border: 1px solid var(--color-border-subtle, var(--color-border, #e5e7eb));
+
+  border-radius: var(--radius-sm, 6px);
+
+  background-color:
+    var(--color-surface-subtle, #f1f5f9);
+
+  color: var(--color-text-secondary, #6b7280);
+
+  font-family: var(--font-family, Tahoma, sans-serif);
+  font-size: var(--font-size-xl, 1.25rem);
+  line-height: 1;
+
+  transition:
+    background-color var(--transition-fast, 150ms ease),
+    border-color var(--transition-fast, 150ms ease),
+    color var(--transition-fast, 150ms ease);
+}
+
+
+/* حالت قرار گرفتن نشانگر روی دکمه */
+.ui-modal__close:hover:not(:disabled) {
+  border-color: var(--color-border-strong, #cbd5e1);
+
+  background-color:
+    var(--color-surface-hover, #f8fafc);
+
+  color: var(--color-text, #1f2937);
+}
+
+
+/* حالت غیرفعال */
+.ui-modal__close:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
+/* =====================================================
+   ۸. فرم داخلی مودال
+===================================================== */
+
+/*
+  وقتی فرم بین سربرگ و پایین مودال قرار دارد،
+  این کلاس باعث می‌شود فرم فضای باقی‌مانده را بگیرد
+  و بتواند فرزند قابل پیمایش داشته باشد.
+*/
+
+.ui-modal__form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 0;
+
+  overflow: hidden;
+}
+
+
+/* =====================================================
+   ۹. بدنه مودال
+===================================================== */
+
+/*
+  بدنه به‌تنهایی اسکرول اجباری ندارد.
+  نوع اسکرول آن را با modifier مشخص می‌کنیم.
+*/
+
+.ui-modal__body {
+  flex: 1 1 auto;
+
+  min-width: 0;
+  min-height: 0;
+}
+
+
+/* اسکرول داخلی بدنه؛ سربرگ و پایین مودال ثابت می‌مانند */
+.ui-modal__body--scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  overscroll-behavior: contain;
+}
+
+
+/* فاصله داخلی استاندارد بدنه */
+.ui-modal__body--padded {
+  padding:
+    var(--spacing-5, 20px) var(--spacing-6, 24px);
+}
+
+
+/* =====================================================
+   ۱۰. پایین مودال
+===================================================== */
+
+.ui-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  flex-wrap: wrap;
+  gap: var(--spacing-2, 8px);
+
+  /* پایین پنجره هنگام اسکرول ثابت می‌ماند */
+  flex: 0 0 auto;
+
+  padding:
+    var(--spacing-4, 16px) var(--spacing-6, 24px);
+
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+
+/* در بعضی فرم‌ها دکمه‌ها باید تمام عرض باشند */
+.ui-modal__footer--full-width>* {
+  flex: 1 1 auto;
+}
+
+
+/* =====================================================
+   ۱۱. انیمیشن اختیاری ورود مودال
+===================================================== */
+
+.ui-modal--animated {
+  animation: ui-modal-enter 180ms ease-out;
+}
+
+
+@keyframes ui-modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* =====================================================
+   ۱۲. واکنش‌گرایی نمایشگرهای کوچک
+===================================================== */
+
+@media (max-width: 650px) {
+
+  .ui-modal-backdrop {
+    /* مودال از بالای صفحه قابل دسترسی باقی می‌ماند */
+    align-items: flex-start;
+
+    padding: var(--spacing-2, 8px);
+  }
+
+
+  .ui-modal {
+    --ui-modal-max-height: calc(100vh - 16px);
+
+    margin-block: auto;
+  }
+
+
+  .ui-modal--fixed-height {
+    height: calc(100vh - 16px);
+  }
+
+
+  .ui-modal__header {
+    padding: var(--spacing-4, 16px);
+  }
+
+
+  .ui-modal__body--padded {
+    padding: var(--spacing-4, 16px);
+  }
+
+
+  .ui-modal__footer {
+    padding: var(--spacing-3, 12px);
+  }
+
+
+  /* چینش عمودی دکمه‌ها در موبایل */
+  .ui-modal__footer--stack-mobile {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  .ui-modal__footer--stack-mobile>* {
+    width: 100%;
+  }
+}
+
+
+/* =====================================================
+   ۱۳. حالت پنجره از پایین صفحه (Bottom Sheet)
+===================================================== */
+
+/*
+  این حالت به صورت پیش‌فرض فعال نیست.
+  فقط وقتی کلاس mobile-sheet به backdrop داده شود،
+  در نمایشگر کوچک به پنجره پایین‌صفحه‌ای تبدیل می‌شود.
+*/
+
+@media (max-width: 600px) {
+
+  .ui-modal-backdrop--mobile-sheet {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+
+  .ui-modal-backdrop--mobile-sheet>.ui-modal {
+    width: 100%;
+    max-width: none;
+
+    max-height: 92vh;
+
+    margin: 0;
+
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+
+    border-radius:
+      var(--radius-xl, 18px) var(--radius-xl, 18px) 0 0;
+  }
+}
+
+
+/* =====================================================
+   ۱۴. رعایت تنظیمات کاهش حرکت سیستم
+===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .ui-modal--animated {
+    animation: none;
+  }
+}

@@ -1,34 +1,116 @@
 :root {
 
-  /************ رنگ ها **********/
+  /* =================================
+     ۱. رنگ‌های اصلی برند
+  ================================= */
 
-  /* رنگ‌های اصلی */
   --color-primary: #172554;
   --color-primary-hover: #1e3a8a;
   --color-accent: #0f766e;
 
-  /* رنگ‌های پس‌زمینه */
+
+  /* =================================
+     ۲. رنگ‌های پس‌زمینه و سطوح
+  ================================= */
+
   --color-background: #f4f6fa;
   --color-surface: #ffffff;
 
-  /* رنگ‌های متن */
+  /* سطوح ملایم برای کارت‌ها و بخش‌های فرعی */
+  --color-surface-muted: #f8fafc;
+  --color-surface-subtle: #f1f5f9;
+  --color-surface-hover: #f8fafc;
+
+
+  /* =================================
+     ۳. رنگ‌های متن
+  ================================= */
+
   --color-text: #1f2937;
   --color-text-secondary: #6b7280;
+  --color-text-muted: #64748b;
   --color-text-disabled: #9ca3af;
+  --color-text-inverse: #ffffff;
 
-  /* رنگ خطوط */
+
+  /* =================================
+     ۴. رنگ خطوط و حاشیه‌ها
+  ================================= */
+
   --color-border: #e5e7eb;
+  --color-border-subtle: #e8edf3;
+  --color-border-strong: #cbd5e1;
 
-  /* رنگ وضعیت‌ها */
+
+  /* =================================
+     ۵. رنگ‌های معنایی وضعیت‌ها
+  ================================= */
+
+  /* موفقیت */
   --color-success: #15803d;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
-  --color-info: #2563eb;
+  --color-success-text: #047857;
+  --color-success-bg: #ecfdf5;
+  --color-success-border: #a7f3d0;
 
-  /************ تایپوگرافی **********/
+  /* هشدار */
+  --color-warning: #d97706;
+  --color-warning-text: #c2410c;
+  --color-warning-bg: #fff7ed;
+  --color-warning-border: #fcd34d;
+
+  /* خطا و عملیات خطرناک */
+  --color-danger: #dc2626;
+  --color-danger-text: #b91c1c;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fecaca;
+
+  /* اطلاع‌رسانی */
+  --color-info: #2563eb;
+  --color-info-text: #1d4ed8;
+  --color-info-bg: #eff6ff;
+  --color-info-border: #bfdbfe;
+
+
+  /* =================================
+     ۶. رنگ‌های ملایم و خنثی
+  ================================= */
+
+  /* رنگ ملایم برند اصلی */
+  --color-primary-soft-bg: #eef2ff;
+  --color-primary-soft-text: #4338ca;
+
+  /* رنگ ملایم برند تأکیدی */
+  --color-accent-soft-bg: #f0fdfa;
+  --color-accent-soft-text: #0f766e;
+
+  /* رنگ ملایم خنثی */
+  --color-neutral-bg: #f1f5f9;
+  --color-neutral-text: #475569;
+  --color-neutral-border: #e2e8f0;
+
+
+  /* =================================
+     ۷. رنگ اختصاصی بخش انبار
+  ================================= */
+
+  /* حفظ رنگ آبی استفاده‌شده در فرم و اسناد انبار */
+  --color-inventory-accent: #2684c7;
+  --color-inventory-accent-hover: #176da9;
+  --color-inventory-accent-soft-bg: rgba(38, 132, 199, 0.1);
+
+
+  /* =================================
+     ۸. خانواده و اندازه فونت
+  ================================= */
 
   --font-family: "Vazirmatn", Tahoma, Arial, sans-serif;
 
+  /* اندازه‌های بسیار کوچک */
+  --font-size-3xs: 0.5625rem;
+  --font-size-2xs: 0.625rem;
+  --font-size-xs-compact: 0.6875rem;
+
+  /* مقیاس اصلی فعلی برنامه */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
@@ -37,7 +119,31 @@
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 1.875rem;
 
-  /************ فاصله ها **********/
+
+  /* =================================
+     ۹. ضخامت فونت
+  ================================= */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+
+  /* =================================
+     ۱۰. ارتفاع خطوط متن
+  ================================= */
+
+  --line-height-tight: 1.5;
+  --line-height-normal: 1.7;
+  --line-height-relaxed: 1.9;
+
+
+  /* =================================
+     ۱۱. فاصله‌ها
+  ================================= */
+
+  --spacing-0: 0;
 
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
@@ -45,22 +151,58 @@
   --spacing-4: 1rem;
   --spacing-5: 1.25rem;
   --spacing-6: 1.5rem;
+  --spacing-7: 1.75rem;
   --spacing-8: 2rem;
+  --spacing-9: 2.25rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
 
-  /************ گردی گوشه ها **********/
 
+  /* =================================
+     ۱۲. گردی گوشه‌ها
+  ================================= */
+
+  --radius-xs: 4px;
   --radius-sm: 6px;
+  --radius-control: 8px;
   --radius-md: 10px;
+  --radius-card: 12px;
   --radius-lg: 14px;
   --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
 
-  /************ سایه ها **********/
+
+  /* =================================
+     ۱۳. سایه‌ها
+  ================================= */
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
 
-  /************ ترانسشن **********/
+  /* سایه معمول کارت‌ها */
+  --shadow-card: 0 2px 8px rgb(15 23 42 / 3%);
+
+  /* سایه پنجره‌های بزرگ */
+  --shadow-overlay: 0 20px 60px rgb(15 23 42 / 20%);
+
+
+  /* =================================
+     ۱۴. زمان‌بندی انیمیشن‌ها
+  ================================= */
 
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
+
+
+  /* =================================
+     ۱۵. ترتیب قرارگیری لایه‌ها
+  ================================= */
+
+  --z-header: 20;
+  --z-popover: 30;
+  --z-datepicker: 100;
+  --z-modal: 1000;
+  --z-modal-priority: 1350;
+
 }

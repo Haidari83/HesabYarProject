@@ -1,0 +1,219 @@
+/* =================================
+   ۱. ساختار عمومی فیلد
+================================= */
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+
+  width: 100%;
+  min-width: 0;
+}
+
+
+/* =================================
+   ۲. برچسب فیلد
+================================= */
+
+.ui-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+
+  color: var(--color-text);
+  font-size: var(--font-size-xs-compact);
+  font-weight: var(--font-weight-semibold);
+
+  line-height: var(--line-height-normal);
+}
+
+/* علامت ضروری بودن فیلد */
+
+.ui-field__required {
+  color: var(--color-danger);
+}
+
+
+/* =================================
+   ۳. کنترل‌های عمومی فرم
+================================= */
+
+.ui-field__control {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 41px;
+
+  padding: 0 var(--spacing-3);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+
+  outline: none;
+
+  background-color: var(--color-surface);
+  color: var(--color-text);
+
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs-compact);
+  line-height: var(--line-height-normal);
+
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+
+/* =================================
+   ۴. حالت فوکوس
+================================= */
+
+.ui-field__control:focus,
+.ui-field__control:focus-visible {
+  border-color: var(--color-accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+/* حالت قرار گرفتن نشانگر روی فیلد */
+
+.ui-field__control:hover:not(:disabled):not(:focus) {
+  border-color: var(--color-border-strong);
+}
+
+
+/* =================================
+   ۵. متن راهنما و Placeholder
+================================= */
+
+.ui-field__control::placeholder {
+  color: var(--color-text-disabled);
+  opacity: 1;
+}
+
+.ui-field__hint {
+  display: block;
+
+  color: var(--color-text-muted);
+  font-size: var(--font-size-2xs);
+
+  line-height: var(--line-height-relaxed);
+}
+
+
+/* =================================
+   ۶. فیلد چندخطی
+================================= */
+
+.ui-field__control--textarea {
+  min-height: 90px;
+
+  padding: var(--spacing-3);
+
+  resize: vertical;
+  line-height: var(--line-height-relaxed);
+}
+
+
+/* =================================
+   ۷. فهرست انتخابی
+================================= */
+
+select.ui-field__control {
+  cursor: pointer;
+}
+
+
+/* =================================
+   ۸. ورودی‌های عددی و لاتین
+================================= */
+
+.ui-field__control--ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+.ui-field__control--numeric {
+  direction: ltr;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* =================================
+   ۹. حالت غیرفعال
+================================= */
+
+.ui-field__control:disabled {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-disabled);
+
+  cursor: not-allowed;
+}
+
+
+/* =================================
+   ۱۰. حالت فقط خواندنی
+================================= */
+
+.ui-field__control:read-only {
+  background-color: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+
+
+/* =================================
+   ۱۱. حالت خطای اعتبارسنجی
+================================= */
+
+.ui-field--invalid .ui-field__control,
+.ui-field__control[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.ui-field--invalid .ui-field__control:focus,
+.ui-field__control[aria-invalid="true"]:focus {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgb(220 38 38 / 9%);
+}
+
+
+/* پیام خطای فیلد */
+
+.ui-field__error {
+  display: block;
+
+  color: var(--color-danger-text);
+  font-size: var(--font-size-2xs);
+
+  line-height: var(--line-height-relaxed);
+}
+
+
+/* =================================
+   ۱۲. اندازه‌های متفاوت فیلد
+================================= */
+
+/* اندازه کوچک */
+
+.ui-field--small .ui-field__control {
+  min-height: 36px;
+  padding-inline: var(--spacing-2);
+
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-2xs);
+}
+
+/* اندازه بزرگ */
+
+.ui-field--large .ui-field__control {
+  min-height: 46px;
+  padding-inline: var(--spacing-4);
+
+  font-size: var(--font-size-sm);
+}
