@@ -1,10 +1,13 @@
 import { useBusinessData } from '../../context/BusinessDataContext';
 import { canAccessPage } from '../../routes/pageRegistry';
+import { formatNumber } from '../../utils/numberFormat';
+
 import './inventory-overview.css';
 
-// قالب‌بندی اعداد با ارقام فارسی
-const formatNumber = (value) =>
-  new Intl.NumberFormat('fa-IR').format(value);
+// تنظیم قالب اعداد در نمای کلی انبار
+const INVENTORY_OVERVIEW_NUMBER_OPTIONS = {
+  maximumFractionDigits: 3,
+};
 
 // اطلاعات نمایشی عملیات امروز
 const todayOperations = [
@@ -185,7 +188,10 @@ function InventoryOverview({ onNavigate, currentUser }) {
             </div>
 
             <strong className="inventory-metric-value">
-              {formatNumber(metric.value)}
+              {formatNumber(
+                metric.value,
+                INVENTORY_OVERVIEW_NUMBER_OPTIONS
+              )}
               <span>کالا</span>
             </strong>
 
@@ -214,7 +220,12 @@ function InventoryOverview({ onNavigate, currentUser }) {
               </span>
 
               <div>
-                <strong>{formatNumber(operation.count)}</strong>
+                <strong>
+                  {formatNumber(
+                    operation.count,
+                    INVENTORY_OVERVIEW_NUMBER_OPTIONS
+                  )}
+                </strong>
                 <span>{operation.title}</span>
               </div>
             </div>
@@ -275,7 +286,8 @@ function InventoryOverview({ onNavigate, currentUser }) {
           </div>
           <span className="inventory-alert-count">
             {formatNumber(
-              lowStockProducts.length + outOfStockProducts.length
+              lowStockProducts.length + outOfStockProducts.length,
+              INVENTORY_OVERVIEW_NUMBER_OPTIONS
             )} مورد
           </span>
         </div>
@@ -307,12 +319,18 @@ function InventoryOverview({ onNavigate, currentUser }) {
                   <div className="inventory-alert-info">
                     <strong>{product.name}</strong>
                     <span>
-                      حداقل موجودی: {formatNumber(product.minStock)}{' '}
+                      حداقل موجودی: {formatNumber(
+                        product.minStock,
+                        INVENTORY_OVERVIEW_NUMBER_OPTIONS
+                      )}{' '}
                       {getUnitName(product.unitId)}
                     </span>
                   </div>
                   <span className="inventory-alert-status warning">
-                    {formatNumber(product.stock)}{' '}
+                    {formatNumber(
+                      product.stock,
+                      INVENTORY_OVERVIEW_NUMBER_OPTIONS
+                    )}{' '}
                     {getUnitName(product.unitId)}
                   </span>
                 </div>

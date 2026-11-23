@@ -9,17 +9,25 @@ import './inventory-entry.css';
 
 // کتابخانه انتخاب تاریخ
 import DatePickerModule from 'react-multi-date-picker';
-import DateObject from 'react-date-object';
 
 // تقویم شمسی و میلادی
 import persianCalendar from 'react-date-object/calendars/persian';
-import gregorianCalendar from 'react-date-object/calendars/gregorian';
-
-// زبان میلادی برای خروجی استاندارد پایگاه داده
-import gregorianEnglish from 'react-date-object/locales/gregorian_en';
 
 // زبان افغانستان برای نمایش تقویم شمسی
 import persianAfghanistan from '../../locales/persianAfghanistan';
+
+import { formatNumber } from '../../utils/numberFormat';
+
+import {
+  normalizePersianText as normalizeSearch,
+  toPersianDigits,
+} from '../../utils/persianText';
+
+import {
+  getTodayGregorianDate as getLocalDate,
+  toPersianDate as getPersianDateValue,
+  toGregorianDate as convertToGregorianDate,
+} from '../../utils/dateUtils';
 
 // استخراج کامپوننت واقعی از خروجی کتابخانه تقویم
 // پشتیبانی از حالت خروجی مستقیم و حالت خروجی دارای default
@@ -27,6 +35,12 @@ const DatePicker =
   DatePickerModule?.default?.default ??
   DatePickerModule?.default ??
   DatePickerModule;
+
+// تنظیم مشترک قالب اعداد صفحه ورود کالا
+const INVENTORY_NUMBER_OPTIONS = {
+  locale: 'fa-AF',
+  maximumFractionDigits: 2,
+};
 
 // دکمه‌های عملیاتی داخل پنجره تقویم
 function InventoryDatePickerActions({
@@ -60,82 +74,6 @@ function InventoryDatePickerActions({
   );
 }
 
-// دریافت تاریخ امروز بر اساس ساعت محلی سیستم
-// دریافت تاریخ روز بر اساس ساعت رسمی افغانستان
-// خروجی همچنان میلادی است تا با SQLite سازگار باشد.
-function getLocalDate() {
-
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kabul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date());
-
-  const values = Object.fromEntries(
-    parts.map((part) => [
-      part.type,
-      part.value,
-    ])
-  );
-
-  return `${values.year}-${values.month}-${values.day}`;
-
-}
-
-// تبدیل تاریخ میلادی ذخیره‌شده به تاریخ قابل نمایش شمسی
-function getPersianDateValue(gregorianDate) {
-
-  if (!gregorianDate) {
-    return null;
-  }
-
-  return new DateObject({
-    date: gregorianDate,
-    format: 'YYYY-MM-DD',
-  }).convert(
-    persianCalendar,
-    persianAfghanistan
-  );
-
-}
-
-
-// تبدیل تاریخ انتخاب‌شده شمسی به تاریخ میلادی استاندارد
-function convertToGregorianDate(selectedDate) {
-
-  if (!selectedDate) {
-    return '';
-  }
-
-  return new DateObject(selectedDate)
-    .convert(
-      gregorianCalendar,
-      gregorianEnglish
-    )
-    .format('YYYY-MM-DD');
-
-}
-// قالب‌بندی اعداد با ارقام فارسی
-function formatNumber(value, maximumFractionDigits = 2) {
-
-  if (value === null || value === undefined || value === '') {
-    return '—';
-  }
-
-  const number = Number(value);
-
-  if (!Number.isFinite(number)) {
-    return '—';
-  }
-
-  return new Intl.NumberFormat('fa-AF', {
-    maximumFractionDigits,
-  }).format(number);
-
-}
-
-
 // قالب‌بندی مبلغ همراه با نماد ارز
 function formatCurrency(value, currency) {
 
@@ -147,39 +85,15 @@ function formatCurrency(value, currency) {
 
   const formattedValue = formatNumber(
     value,
-    digits
+    {
+      ...INVENTORY_NUMBER_OPTIONS,
+      maximumFractionDigits: digits,
+    }
   );
 
   return `${formattedValue} ${currency?.symbol || currency?.code || ''}`;
 
 }
-
-
-// یکسان‌سازی متن برای جست‌وجوی فارسی
-function normalizeSearch(value) {
-
-  return String(value || '')
-    .normalize('NFKC')
-    .replace(/[يى]/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-
-}
-
-// تبدیل ارقام انگلیسی به ارقام فارسی
-function toPersianDigits(value) {
-
-  return String(value).replace(
-    /\d/g,
-    (digit) => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]
-  );
-
-}
-
 
 // استخراج پیام واقعی از خطاهای Electron
 function getInventoryErrorMessage(error) {
@@ -1757,7 +1671,10 @@ function InventoryEntry() {
           <div className="entry-items-header-actions">
 
             <span className="entry-item-count">
-              {formatNumber(items.length)} ردیف
+              {formatNumber(
+                items.length,
+                INVENTORY_NUMBER_OPTIONS
+              )} ردیف
             </span>
 
 
@@ -1862,7 +1779,10 @@ function InventoryEntry() {
 
                         {/* شماره ردیف */}
                         <td data-label="ردیف">
-                          {formatNumber(index + 1)}
+                          {formatNumber(
+                            index + 1,
+                            INVENTORY_NUMBER_OPTIONS
+                          )}
                         </td>
 
 
@@ -1948,7 +1868,10 @@ function InventoryEntry() {
                               {formatNumber(
                                 selectedUnit.conversionNum /
                                 selectedUnit.conversionDen,
-                                6
+                                {
+                                  ...INVENTORY_NUMBER_OPTIONS,
+                                  maximumFractionDigits: 6,
+                                }
                               )}
                               {' '}
                               {product.baseUnitName}
@@ -1997,7 +1920,11 @@ function InventoryEntry() {
                                 {' '}
                                 {formatNumber(
                                   baseQuantity,
-                                  product.baseQuantityDecimalPlaces
+                                  {
+                                    ...INVENTORY_NUMBER_OPTIONS,
+                                    maximumFractionDigits:
+                                      product.baseQuantityDecimalPlaces ?? 2,
+                                  }
                                 )}
                                 {' '}
                                 {product.baseUnitSymbol}
@@ -2157,7 +2084,10 @@ function InventoryEntry() {
             <span>تعداد ردیف کالا</span>
 
             <strong>
-              {formatNumber(items.length)}
+              {formatNumber(
+                items.length,
+                INVENTORY_NUMBER_OPTIONS
+              )}
             </strong>
 
           </div>

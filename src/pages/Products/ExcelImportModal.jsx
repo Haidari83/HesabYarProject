@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-
 import { readSheet } from 'read-excel-file/browser';
+import { validateExcelProductRows } from './excel-import-validation';
+import { normalizePersianText } from '../../utils/persianText';
+import { formatNumber } from '../../utils/numberFormat';
 
 import './excel-import-modal.css';
-import { validateExcelProductRows } from './excel-import-validation';
 
 
 // تعریف ستون‌های مورد انتظار فایل Excel
@@ -45,20 +46,17 @@ const EXCEL_COLUMNS = [
     aliases: ['مخرج تبدیل', 'مخرج ضریب تبدیل'],
   },
 ];
+// تنظیم عمومی نمایش اعداد در صفحه واردسازی Excel
+const EXCEL_NUMBER_OPTIONS = {
+  locale: 'fa-IR',
+  maximumFractionDigits: 0,
+};
 
-
-// یکسان‌سازی عنوان ستون‌ها برای تطبیق فارسی
-function normalizeHeader(value) {
-  return String(value ?? '')
-    .normalize('NFKC')
-    .replace(/[يى]/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
-
+// تنظیم نمایش اعداد با قالب افغانستان
+const EXCEL_AFGHANISTAN_NUMBER_OPTIONS = {
+  ...EXCEL_NUMBER_OPTIONS,
+  locale: 'fa-AF',
+};
 
 // تبدیل مقدار سلول به متن قابل نمایش
 function getCellText(value) {
@@ -292,12 +290,17 @@ function ExcelImportModal({
       const missingColumns = [];
 
       EXCEL_COLUMNS.forEach((column) => {
-        const aliases = column.aliases.map(normalizeHeader);
-
+        const aliases = column.aliases.map((alias) =>
+          normalizePersianText(alias, {
+            removeDiacritics: false,
+          })
+        );
         const matchedIndexes = headerRow
           .map((cell, index) => ({
             index,
-            header: normalizeHeader(cell),
+            header: normalizePersianText(cell, {
+              removeDiacritics: false,
+            }),
           }))
           .filter((item) =>
             aliases.includes(item.header)
@@ -749,7 +752,7 @@ function ExcelImportModal({
                 </div>
 
                 <span className="excel-import-preview-count">
-                  {reviewItems.length.toLocaleString('fa-IR')}
+                  {formatNumber(reviewItems.length, EXCEL_NUMBER_OPTIONS)}
                   {' '}
                   مورد
                 </span>
@@ -762,28 +765,28 @@ function ExcelImportModal({
                 <div className="excel-import-summary-card">
                   <span>کل محصولات شناسایی‌شده</span>
                   <strong>
-                    {validationResult.totalProducts.toLocaleString('fa-IR')}
+                    {formatNumber(validationResult.totalProducts, EXCEL_NUMBER_OPTIONS)}
                   </strong>
                 </div>
 
                 <div className="excel-import-summary-card valid">
                   <span>موارد مورد تأیید</span>
                   <strong>
-                    {validationResult.validProductCount.toLocaleString('fa-IR')}
+                    {formatNumber(validationResult.validProductCount, EXCEL_NUMBER_OPTIONS)}
                   </strong>
                 </div>
 
                 <div className="excel-import-summary-card invalid">
                   <span>موارد ردشده</span>
                   <strong>
-                    {validationResult.invalidProductCount.toLocaleString('fa-IR')}
+                    {formatNumber(validationResult.invalidProductCount, EXCEL_NUMBER_OPTIONS)}
                   </strong>
                 </div>
 
                 <div className="excel-import-summary-card">
                   <span>ردیف‌های فاقد نام محصول</span>
                   <strong>
-                    {ungroupedRows.length.toLocaleString('fa-Af')}
+                    {formatNumber(ungroupedRows.length, EXCEL_AFGHANISTAN_NUMBER_OPTIONS)}
                   </strong>
                 </div>
 
@@ -822,7 +825,7 @@ function ExcelImportModal({
                         <td>
                           {item.rowNumbers
                             .map((number) =>
-                              number.toLocaleString('fa-IR')
+                              formatNumber(number, EXCEL_NUMBER_OPTIONS)
                             )
                             .join('، ')}
                         </td>
@@ -888,7 +891,10 @@ function ExcelImportModal({
                 </div>
 
                 <span className="excel-import-preview-count">
-                  {approvedGroups.length.toLocaleString('fa-IR')}
+                  {formatNumber(
+                    approvedGroups.length,
+                    EXCEL_NUMBER_OPTIONS
+                  )}
                   {' '}
                   محصول
                 </span>
@@ -954,7 +960,7 @@ function ExcelImportModal({
                             <td>
                               {group.rowNumbers
                                 .map((number) =>
-                                  number.toLocaleString('fa-IR')
+                                  formatNumber(number, EXCEL_NUMBER_OPTIONS)
                                 )
                                 .join('، ')}
                             </td>
@@ -1005,28 +1011,28 @@ function ExcelImportModal({
                 <div className="excel-import-summary-card valid">
                   <span>محصولات ثبت‌شده</span>
                   <strong>
-                    {importReport.createdCount.toLocaleString('fa-IR')}
+                    {formatNumber(importReport.createdCount, EXCEL_NUMBER_OPTIONS)}
                   </strong>
                 </div>
 
                 <div className="excel-import-summary-card invalid">
                   <span>محصولات ردشده</span>
                   <strong>
-                    {importReport.skippedCount.toLocaleString('fa-IR')}
+                    {formatNumber(importReport.skippedCount, EXCEL_NUMBER_OPTIONS)}
                   </strong>
                 </div>
 
                 <div className="excel-import-summary-card">
                   <span>کل محصولات</span>
                   <strong>
-                    {importReport.totalCount.toLocaleString('fa-IR')}
+                    {formatNumber(importReport.totalCount, EXCEL_NUMBER_OPTIONS)}
                   </strong>
                 </div>
 
                 <div className="excel-import-summary-card">
                   <span>ردیف‌های فاقد نام محصول</span>
                   <strong>
-                    {importReport.unidentifiedRowCount.toLocaleString('fa-IR')}
+                    {formatNumber(importReport.unidentifiedRowCount, EXCEL_NUMBER_OPTIONS)}
                   </strong>
                 </div>
 
@@ -1076,7 +1082,10 @@ function ExcelImportModal({
             {currentStep === 'upload'
               ? 'فایل XLSX را انتخاب کن.'
               : currentStep === 'validation'
-                ? `${approvedGroups.length.toLocaleString('fa-IR')} محصول مورد تأیید است.`
+                ? `${formatNumber(
+                  approvedGroups.length,
+                  EXCEL_NUMBER_OPTIONS
+                )} محصول مورد تأیید است.`
                 : currentStep === 'approved'
                   ? 'موارد تأییدشده را بررسی و سپس ثبت نهایی کن.'
                   : 'گزارش نهایی ثبت محصولات آماده است.'}
@@ -1136,7 +1145,10 @@ function ExcelImportModal({
                 >
                   {isImporting
                     ? 'در حال ثبت محصولات...'
-                    : `تأیید و ثبت ${approvedGroups.length.toLocaleString('fa-IR')} محصول`}
+                    : `تأیید و ثبت ${formatNumber(
+                      approvedGroups.length,
+                      EXCEL_NUMBER_OPTIONS
+                    )} محصول`}
                 </button>
               </>
             )}

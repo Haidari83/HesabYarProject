@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { formatNumber } from '../../utils/numberFormat';
+import { normalizePersianText as normalizeName } from '../../utils/persianText';
+import { createRows } from '../../utils/listHelpers';
 
 import './unit-list.css';
 
@@ -48,27 +51,13 @@ function createEmptyBulkRow() {
 
 // ساخت چند ردیف خالی
 function createEmptyBulkRows(count = 5) {
-  return Array.from({ length: count }, () => createEmptyBulkRow());
-}
 
-// یکسان‌سازی متن برای تشخیص نام و نماد تکراری
-function normalizeName(value) {
-  return String(value || '')
-    .normalize('NFKC')
-    .replace(/[يى]/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
+  return createRows(
+    count,
+    createEmptyBulkRow
+  );
 
-// نمایش اعداد با قالب فارسی
-function formatNumber(value) {
-  return new Intl.NumberFormat('fa-IR').format(value);
 }
-
 // دریافت عنوان بُعد
 function getDimensionLabel(dimensionCode) {
   return (

@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 
 import DatePickerModule from 'react-multi-date-picker';
-import DateObject from 'react-date-object';
-
 import persianCalendar from 'react-date-object/calendars/persian';
-import gregorianCalendar from 'react-date-object/calendars/gregorian';
-
-import gregorianEnglish from 'react-date-object/locales/gregorian_en';
-
 import persianAfghanistan from '../../locales/persianAfghanistan';
+import { formatNumber } from '../../utils/numberFormat';
+
+import {
+  getTodayGregorianDate as getLocalDate,
+  toPersianDate as getPersianDateValue,
+  toGregorianDate as convertToGregorianDate,
+  formatPersianDate,
+} from '../../utils/dateUtils';
 
 import './inventory-documents.css';
 
@@ -45,6 +47,13 @@ const DOCUMENT_STATUSES = [
   { value: 'posted', label: 'ثبت نهایی‌شده' },
   { value: 'cancelled', label: 'لغوشده' },
 ];
+// تنظیم قالب اعداد صفحه اسناد انبار
+const DOCUMENT_NUMBER_OPTIONS = {
+  locale: 'fa-AF',
+  maximumFractionDigits: 2,
+  emptyValue: 0,
+  invalidValue: 0,
+};
 
 
 // نام فارسی انواع سند
@@ -79,86 +88,6 @@ function getStatusClass(status) {
   };
 
   return statusClasses[status] || 'unknown';
-
-}
-
-
-// تبدیل تاریخ میلادی به تاریخ شمسی
-function getPersianDateValue(gregorianDate) {
-
-  if (!gregorianDate) {
-    return null;
-  }
-
-  return new DateObject({
-    date: gregorianDate,
-    format: 'YYYY-MM-DD',
-  }).convert(
-    persianCalendar,
-    persianAfghanistan
-  );
-
-}
-
-
-// تبدیل تاریخ شمسی به تاریخ میلادی استاندارد
-function convertToGregorianDate(selectedDate) {
-
-  if (!selectedDate) {
-    return '';
-  }
-
-  return new DateObject(selectedDate)
-    .convert(
-      gregorianCalendar,
-      gregorianEnglish
-    )
-    .format('YYYY-MM-DD');
-
-}
-
-
-// نمایش تاریخ سند به شکل شمسی
-function formatDocumentDate(date) {
-
-  if (!date) {
-    return '—';
-  }
-
-  return getPersianDateValue(date)
-    .format('DD MMMM YYYY');
-
-}
-
-
-// قالب‌بندی عدد با ارقام فارسی
-function formatNumber(value) {
-
-  return new Intl.NumberFormat('fa-AF').format(
-    Number(value) || 0
-  );
-
-}
-
-
-// دریافت تاریخ امروز بر اساس ساعت رسمی افغانستان
-function getLocalDate() {
-
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kabul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date());
-
-  const values = Object.fromEntries(
-    parts.map((part) => [
-      part.type,
-      part.value,
-    ])
-  );
-
-  return `${values.year}-${values.month}-${values.day}`;
 
 }
 
@@ -875,7 +804,10 @@ function InventoryDocuments() {
           <span>تعداد کل اسناد</span>
 
           <strong>
-            {formatNumber(totalCount)}
+            {formatNumber(
+              totalCount,
+              DOCUMENT_NUMBER_OPTIONS
+            )}
           </strong>
         </div>
 
@@ -883,7 +815,10 @@ function InventoryDocuments() {
           <span>اسناد این صفحه</span>
 
           <strong>
-            {formatNumber(documents.length)}
+            {formatNumber(
+              documents.length,
+              DOCUMENT_NUMBER_OPTIONS
+            )}
           </strong>
         </div>
 
@@ -1091,9 +1026,7 @@ function InventoryDocuments() {
 
 
                       <td>
-                        {formatDocumentDate(
-                          document.documentDate
-                        )}
+                        {formatPersianDate(document.documentDate)}
                       </td>
 
 
@@ -1110,7 +1043,10 @@ function InventoryDocuments() {
 
 
                       <td>
-                        {formatNumber(document.itemCount)}
+                        {formatNumber(
+                          document.itemCount,
+                          DOCUMENT_NUMBER_OPTIONS
+                        )}
                       </td>
 
 
@@ -1173,9 +1109,15 @@ function InventoryDocuments() {
 
 
                 <span>
-                  صفحه {formatNumber(currentPage)}
+                  صفحه {formatNumber(
+                    currentPage,
+                    DOCUMENT_NUMBER_OPTIONS
+                  )}
                   {' '}
-                  از {formatNumber(totalPages)}
+                  از {formatNumber(
+                    totalPages,
+                    DOCUMENT_NUMBER_OPTIONS
+                  )}
                 </span>
 
 

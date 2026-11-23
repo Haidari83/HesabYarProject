@@ -1,25 +1,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useBusinessData } from '../../context/BusinessDataContext';
+
+import { formatNumber } from '../../utils/numberFormat';
+import { normalizePersianText as normalizeName, } from '../../utils/persianText';
+import { createRows } from '../../utils/listHelpers';
+
 import './category-list.css';
 
-// یکسان‌سازی نام‌ها برای شناسایی موارد تکراری
-function normalizeName(value) {
-  return String(value || '')
-    .normalize('NFKC')
-    .replace(/[يى]/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
-
-// قالب نمایش اعداد
-function formatNumber(value) {
-  return new Intl.NumberFormat('fa-IR').format(value);
-}
 
 
 // ساخت ردیف خالی برای ثبت گروهی
@@ -33,7 +21,10 @@ function createEmptyRow() {
 
 // ساخت چند ردیف خالی
 function createEmptyRows(count = 5) {
-  return Array.from({ length: count }, createEmptyRow);
+  return createRows(
+    count,
+    createEmptyRow
+  );
 }
 
 function CategoryList({ currentUser }) {

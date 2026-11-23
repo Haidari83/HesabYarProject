@@ -1,46 +1,11 @@
-// یکسان‌سازی متن برای تطبیق نام دسته‌بندی و واحد
-function normalizeLookupText(value) {
-  return String(value ?? '')
-    .normalize('NFKC')
-    .replace(/[يى]/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
-
-
-// یکسان‌سازی نام محصول مطابق منطق بک‌اند
-function normalizeProductName(value) {
-  return String(value ?? '')
-    .normalize('NFKC')
-    .replace(/[يى]/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
-
-
-// تبدیل ارقام فارسی و عربی به انگلیسی
-function normalizeDigits(value) {
-  return String(value ?? '')
-    .replace(/[۰-۹]/g, (digit) =>
-      String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit))
-    )
-    .replace(/[٠-٩]/g, (digit) =>
-      String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit))
-    );
-}
-
+import {
+  normalizePersianText,
+  toEnglishDigits,
+} from '../../utils/persianText';
 
 // تبدیل مقدار به عدد صحیح مثبت
 function parsePositiveInteger(value) {
-  const text = normalizeDigits(value)
+  const text = toEnglishDigits(value)
     .replace(/[,\u066C]/g, '')
     .trim();
 
@@ -66,7 +31,7 @@ function createLookup(items, getAliases) {
     const aliases = getAliases(item);
 
     for (const alias of aliases) {
-      const key = normalizeLookupText(alias);
+      const key = normalizePersianText(alias);
 
       if (!key) continue;
 
@@ -95,7 +60,7 @@ function createLookup(items, getAliases) {
 
 // یافتن دسته‌بندی یا واحد در فهرست معتبر
 function resolveLookup(lookup, value, label, errors) {
-  const key = normalizeLookupText(value);
+  const key = normalizePersianText(value);
 
   if (!key) {
     return null;
@@ -158,7 +123,7 @@ export function validateExcelProductRows({
   // محصولات غیرفعال نیز برای جلوگیری از تکرار در نظر گرفته می‌شوند.
   const existingProductNames = new Set(
     products.map((product) =>
-      normalizeProductName(
+      normalizePersianText(
         product.normalizedName || product.name
       )
     )
@@ -252,7 +217,7 @@ export function validateExcelProductRows({
 
 
     // ایجاد یا دریافت گروه محصول
-    const productKey = normalizeProductName(name);
+    const productKey = normalizePersianText(name);
 
     let group = null;
 

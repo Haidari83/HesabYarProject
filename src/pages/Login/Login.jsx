@@ -1,5 +1,5 @@
-
 import { useState } from 'react';
+import { toEnglishDigits } from '../../utils/persianText';
 
 import './login.css';
 
@@ -451,7 +451,7 @@ function Login({ onLogin }) {
 
               ) : (
 
-                /* ورود با PIN پنج‌رقمی */
+                /* ورود با PIN چهار تا هشت‌رقمی */
                 <div className="login-field">
 
                   <label htmlFor="pin">
@@ -472,22 +472,13 @@ function Login({ onLogin }) {
                       value={pin}
                       onChange={(e) => {
 
-                        const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
-                        const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
-
-                        const normalizedPin = e.target.value
-                          .replace(/[۰-۹]/g, digit =>
-                            String(persianDigits.indexOf(digit))
-                          )
-                          .replace(/[٠-٩]/g, digit =>
-                            String(arabicDigits.indexOf(digit))
-                          )
+                        const normalizedPin = toEnglishDigits(e.target.value)
                           .replace(/[^0-9]/g, '')
                           .slice(0, 8);
 
                         setPin(normalizedPin);
-                        setFeedback('');
 
+                        setFeedback('');
                       }}
                       autoComplete="off"
                       dir="ltr"

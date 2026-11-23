@@ -2,38 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 
 import ProductFormModal from './ProductFormModal';
 import ExcelImportModal from './ExcelImportModal';
+import { normalizePersianText as normalizeSearch, } from '../../utils/persianText';
+
+import { formatNumber } from '../../utils/numberFormat';
 
 import './product-list.css';
-
-// نمایش اعداد با ارقام فارسی
-function formatNumber(value, maximumFractionDigits = 2) {
-  if (value === null || value === undefined || value === '') {
-    return '—';
-  }
-
-  const number = Number(value);
-
-  if (!Number.isFinite(number)) {
-    return '—';
-  }
-
-  return new Intl.NumberFormat('fa-IR', {
-    maximumFractionDigits,
-  }).format(number);
-}
-
-// یکسان‌سازی متن برای جست‌وجوی فارسی
-function normalizeSearch(value) {
-  return String(value || '')
-    .normalize('NFKC')
-    .replace(/[يى]/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
 
 // نمایش قیمت‌های ثبت‌شده برای یک نوع قیمت و واحد
 function ProductPriceSummary({
@@ -69,7 +42,9 @@ function ProductPriceSummary({
             </span>
 
             <strong>
-              {formatNumber(price.unitPrice, 6)}
+              {formatNumber(price.unitPrice, {
+                maximumFractionDigits: 2,
+              })}
             </strong>
 
             {currency?.symbol && (

@@ -1,6 +1,12 @@
 
 import { useEffect, useRef, useState } from 'react';
+import {
+  formatDateInTimeZone,
+  getTodayGregorianDate,
+} from '../../utils/dateUtils';
+
 import AccountSecurityModal from '../account/AccountSecurityModal';
+
 import './topbar.css';
 
 /* =========================
@@ -156,27 +162,29 @@ function TopBar({
   // برای تشخیص کلیک خارج از پنل‌ها
   const actionsRef = useRef(null);
 
-  // دریافت تاریخ روز با قالب فارسی
+  // دریافت تاریخ روز
   const now = new Date();
+
+
+  // نمایش تاریخ افغانستان
+  const formattedDate = formatDateInTimeZone(
+    now,
+    {
+      locale: 'fa-AF',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }
+  );
+
+
+  // تاریخ میلادی استاندارد برای تگ time
+  const dateTime = getTodayGregorianDate(now);
 
   // وضعیت باز بودن پنجره مدیریت امنیت
   const [isSecurityModalOpen, setIsSecurityModalOpen] =
     useState(false);
-
-  const formattedDate = new Intl.DateTimeFormat('fa-AF', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(now);
-
-  // تبدیل تاریخ به قالب استاندارد برای تگ time
-  const dateTime = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0')
-  ].join('-');
-
 
   /* =========================
      مدیریت پنل‌های نوار بالایی

@@ -1,35 +1,11 @@
 
 import { useMemo, useState } from 'react';
 import { useBusinessData } from '../../context/BusinessDataContext';
+
+import { formatNumber } from '../../utils/numberFormat';
+import { normalizePersianText as normalizeName } from '../../utils/persianText';
+
 import './inventory-stock-list.css';
-
-// قالب‌بندی اعداد با ارقام فارسی
-function formatNumber(value, maximumFractionDigits = 2) {
-  if (value === null || value === undefined || value === '') {
-    return '—';
-  }
-
-  const number = Number(value);
-
-  if (!Number.isFinite(number)) return '—';
-
-  return new Intl.NumberFormat('fa-IR', {
-    maximumFractionDigits,
-  }).format(number);
-}
-
-// یکسان‌سازی متن برای جست‌وجوی دقیق‌تر فارسی
-function normalizeText(value) {
-  return String(value || '')
-    .normalize('NFKC')
-    .replace(/[يى]/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
-    .replace(/[\u200c\u200d]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
 
 // تشخیص وضعیت موجودی کالا
 function getStockStatus(product) {
@@ -103,13 +79,13 @@ function InventoryStockList() {
 
   // اعمال جست‌وجو، فیلتر و مرتب‌سازی
   const filteredProducts = useMemo(() => {
-    const searchValue = normalizeText(search);
+    const searchValue = normalizeName(search);
 
     const result = products.filter((product) => {
       const matchesSearch =
         !searchValue ||
-        normalizeText(product.name).includes(searchValue) ||
-        normalizeText(product.code).includes(searchValue);
+        normalizeName(product.name).includes(searchValue) ||
+        normalizeName(product.code).includes(searchValue);
 
       const matchesCategory =
         categoryFilter === 'all' ||
@@ -237,17 +213,15 @@ function InventoryStockList() {
         <td>{unit?.symbol || unit?.name || '—'}</td>
 
         <td className="stock-number">
-          {formatNumber(
-            product.stock,
-            unit?.decimalPlaces ?? 2
-          )}
+          {formatNumber(product.stock, {
+            maximumFractionDigits: unit?.decimalPlaces ?? 2,
+          })}
         </td>
 
         <td className="stock-number">
-          {formatNumber(
-            product.minStock,
-            unit?.decimalPlaces ?? 2
-          )}
+          {formatNumber(product.minStock, {
+            maximumFractionDigits: unit?.decimalPlaces ?? 2,
+          })}
         </td>
 
         <td className="stock-number">
@@ -499,20 +473,20 @@ function InventoryStockList() {
                 <div>
                   <span>موجودی فعلی</span>
                   <strong>
-                    {formatNumber(
-                      product.stock,
-                      unit?.decimalPlaces ?? 2
-                    )}
+                    {formatNumber(selectedProduct.stock, {
+                      maximumFractionDigits:
+                        getUnit(selectedProduct.unitId)?.decimalPlaces ?? 2,
+                    })}
                   </strong>
                 </div>
 
                 <div>
                   <span>حداقل موجودی</span>
                   <strong>
-                    {formatNumber(
-                      product.minStock,
-                      unit?.decimalPlaces ?? 2
-                    )}
+                    {formatNumber(selectedProduct.minStock, {
+                      maximumFractionDigits:
+                        getUnit(selectedProduct.unitId)?.decimalPlaces ?? 2,
+                    })}
                   </strong>
                 </div>
 
