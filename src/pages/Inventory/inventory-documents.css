@@ -462,6 +462,221 @@
   cursor: not-allowed;
 }
 
+/* دکمه‌های عملیاتی داخل تقویم */
+
+.documents-date-picker-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 10px 9px;
+
+  border-top: 1px solid #e5e7eb;
+
+  direction: rtl;
+}
+
+
+/* استایل مشترک دکمه‌های تقویم */
+
+.documents-date-picker-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+
+  padding: 8px 12px;
+
+  border: 1px solid transparent;
+  border-radius: 7px;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+
+/* دکمه رفتن به امروز */
+
+.documents-date-picker-today {
+  background: #eff6ff;
+  border-color: #dbeafe !important;
+  color: #1d4ed8;
+}
+
+.documents-date-picker-today:hover {
+  background: #dbeafe;
+}
+
+
+/* دکمه تأیید */
+
+.documents-date-picker-confirm {
+  background: var(--documents-primary);
+  color: #fff;
+}
+
+.documents-date-picker-confirm:hover {
+  background: #176da9;
+}
+
+
+/* نمایش مناسب هنگام استفاده از صفحه‌کلید */
+
+.documents-date-picker-actions button:focus-visible {
+  outline: 2px solid var(--documents-primary);
+  outline-offset: 2px;
+}
+
+/* انتخاب‌گرهای سفارشی فیلتر اسناد */
+
+.documents-filter-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+
+/* دکمه اصلی انتخاب‌گر */
+
+.documents-filter-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+
+  padding: 0 10px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+
+  background: #fff;
+
+  color: var(--documents-text);
+
+  font-family: inherit;
+  font-size: 12px;
+
+  text-align: right;
+
+  cursor: pointer;
+}
+
+
+.documents-filter-select-trigger:hover {
+  border-color: #94a3b8;
+}
+
+
+.documents-filter-select-trigger:focus-visible {
+  outline: none;
+
+  border-color: var(--documents-primary);
+
+  box-shadow: 0 0 0 3px rgba(38, 132, 199, 0.1);
+}
+
+
+/* علامت باز و بسته‌شدن */
+
+.documents-filter-select-arrow {
+  color: var(--documents-muted);
+  font-size: 15px;
+}
+
+
+/* فهرست گزینه‌ها */
+
+.documents-filter-select-options {
+  position: absolute;
+
+  top: calc(100% + 5px);
+  right: 0;
+
+  z-index: 100;
+
+  width: 100%;
+  max-height: 230px;
+
+  overflow-y: auto;
+
+  padding: 5px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  background: #fff;
+
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+
+/* هر گزینه */
+
+.documents-filter-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  width: 100%;
+  min-height: 36px;
+
+  padding: 8px 10px;
+
+  border: 0;
+  border-radius: 5px;
+
+  background: transparent;
+
+  color: #475569;
+
+  font-family: inherit;
+  font-size: 12px;
+
+  text-align: right;
+
+  cursor: pointer;
+}
+
+
+.documents-filter-select-option:hover,
+.documents-filter-select-option:focus-visible {
+  outline: none;
+
+  background: #eff6ff;
+
+  color: #1d4ed8;
+}
+
+
+.documents-filter-select-option[aria-selected="true"] {
+  background: #eff6ff;
+
+  color: #1d4ed8;
+
+  font-weight: 600;
+}
 
 /* واکنش‌گرایی */
 

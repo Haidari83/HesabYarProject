@@ -536,10 +536,15 @@ function EntryTypePicker({ value, onChange }) {
       case ' ':
       case 'Enter':
 
-        // اجازه می‌دهیم رفتار پیش‌فرض دکمه HTML اجرا شود.
-        // با Space یا Enter، رویداد onClick دکمه اجرا خواهد شد.
-        return;
+        // انتخاب مستقیم گزینه فعال با Space یا Enter
+        event.preventDefault();
 
+        handleSelectOption(
+          INVENTORY_ENTRY_TYPE_OPTIONS[index],
+          index
+        );
+
+        return;
 
       default:
         return;

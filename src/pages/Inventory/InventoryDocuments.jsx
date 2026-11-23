@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import DatePickerModule from 'react-multi-date-picker';
 import DateObject from 'react-date-object';
@@ -140,6 +140,485 @@ function formatNumber(value) {
 
 }
 
+
+// دریافت تاریخ امروز بر اساس ساعت رسمی افغانستان
+function getLocalDate() {
+
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kabul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(
+    parts.map((part) => [
+      part.type,
+      part.value,
+    ])
+  );
+
+  return `${values.year}-${values.month}-${values.day}`;
+
+}
+
+
+// دکمه‌های عملیاتی داخل تقویم
+function DocumentDatePickerActions({
+  DatePicker,
+  onSelectToday,
+}) {
+
+  return (
+
+    <div className="documents-date-picker-actions">
+
+      <button
+        type="button"
+        className="documents-date-picker-today"
+        onClick={onSelectToday}
+      >
+        رفتن به امروز
+      </button>
+
+
+      <button
+        type="button"
+        className="documents-date-picker-confirm"
+        onClick={() => {
+          DatePicker?.closeCalendar?.();
+        }}
+      >
+        تأیید
+      </button>
+
+    </div>
+
+  );
+
+}
+
+// انتخاب‌گر سفارشی با پشتیبانی از صفحه‌کلید
+function DocumentFilterSelect({
+  value,
+  options,
+  ariaLabel,
+  onChange,
+}) {
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const containerRef = useRef(null);
+
+  const triggerRef = useRef(null);
+
+  const optionRefs = useRef([]);
+
+
+  // پیدا کردن گزینه انتخاب‌شده فعلی
+  const selectedIndex = Math.max(
+    0,
+    options.findIndex((option) => option.value === value)
+  );
+
+
+  // انتقال فوکوس به گزینه فعال پس از بازشدن فهرست
+  useEffect(() => {
+
+    if (isOpen) {
+      optionRefs.current[activeIndex]?.focus();
+    }
+
+  }, [isOpen, activeIndex]);
+
+
+  // بستن فهرست با کلیک بیرون از آن
+  useEffect(() => {
+
+    if (!isOpen) {
+      return undefined;
+    }
+
+
+    function handleOutsideClick(event) {
+
+      if (!containerRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+
+    }
+
+
+    document.addEventListener(
+      'mousedown',
+      handleOutsideClick
+    );
+
+
+    return () => {
+
+      document.removeEventListener(
+        'mousedown',
+        handleOutsideClick
+      );
+
+    };
+
+  }, [isOpen]);
+
+
+  // بازکردن فهرست از گزینه انتخاب‌شده فعلی
+  function openPicker() {
+
+    setActiveIndex(selectedIndex);
+
+    setIsOpen(true);
+
+  }
+
+
+  // انتخاب گزینه
+  function handleSelectOption(option, index) {
+
+    onChange(option.value);
+
+    setActiveIndex(index);
+
+    setIsOpen(false);
+
+    // بازگشت فوکوس به دکمه اصلی
+    triggerRef.current?.focus();
+
+  }
+
+
+  // مدیریت کلیدهای صفحه‌کلید
+  function handleOptionKeyDown(event, index) {
+
+    const lastIndex = options.length - 1;
+
+    let nextIndex;
+
+
+    switch (event.key) {
+
+      case 'ArrowDown':
+
+        event.preventDefault();
+
+        nextIndex = index === lastIndex
+          ? 0
+          : index + 1;
+
+        break;
+
+
+      case 'ArrowUp':
+
+        event.preventDefault();
+
+        nextIndex = index === 0
+          ? lastIndex
+          : index - 1;
+
+        break;
+
+
+      case 'Home':
+
+        event.preventDefault();
+
+        nextIndex = 0;
+
+        break;
+
+
+      case 'End':
+
+        event.preventDefault();
+
+        nextIndex = lastIndex;
+
+        break;
+
+
+      case 'Escape':
+
+        event.preventDefault();
+
+        setIsOpen(false);
+
+        triggerRef.current?.focus();
+
+        return;
+
+
+      case ' ':
+      case 'Enter':
+
+        // Space و Enter گزینه دارای فوکوس را انتخاب می‌کنند.
+        event.preventDefault();
+
+        handleSelectOption(
+          options[index],
+          index
+        );
+
+        return;
+
+
+      default:
+
+        return;
+
+    }
+
+
+    setActiveIndex(nextIndex);
+
+  }
+
+
+  return (
+
+    <div
+      className="documents-filter-select"
+      ref={containerRef}
+      onBlur={(event) => {
+
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setIsOpen(false);
+        }
+
+      }}
+    >
+
+      {/* دکمه اصلی انتخاب‌گر */}
+      <button
+        type="button"
+        ref={triggerRef}
+        className="documents-filter-select-trigger"
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => {
+
+          if (isOpen) {
+            setIsOpen(false);
+          } else {
+            openPicker();
+          }
+
+        }}
+        onKeyDown={(event) => {
+
+          if (
+            event.key === 'ArrowDown' ||
+            event.key === 'ArrowUp'
+          ) {
+
+            event.preventDefault();
+
+            openPicker();
+
+          }
+
+          if (event.key === 'Escape') {
+            setIsOpen(false);
+          }
+
+        }}
+      >
+
+        <span>
+          {options[selectedIndex]?.label}
+        </span>
+
+        <span
+          className="documents-filter-select-arrow"
+          aria-hidden="true"
+        >
+          {isOpen ? '⌃' : '⌄'}
+        </span>
+
+      </button>
+
+
+      {/* فهرست گزینه‌ها */}
+      {isOpen && (
+
+        <div
+          className="documents-filter-select-options"
+          role="listbox"
+          aria-label={ariaLabel}
+        >
+
+          {options.map((option, index) => (
+
+            <button
+              key={option.value}
+              type="button"
+              role="option"
+              ref={(element) => {
+                optionRefs.current[index] = element;
+              }}
+              className="documents-filter-select-option"
+              aria-selected={value === option.value}
+              onClick={() =>
+                handleSelectOption(option, index)
+              }
+              onKeyDown={(event) =>
+                handleOptionKeyDown(event, index)
+              }
+            >
+
+              <span>{option.label}</span>
+
+              {value === option.value && (
+                <span aria-hidden="true">✓</span>
+              )}
+
+            </button>
+
+          ))}
+
+        </div>
+
+      )}
+
+    </div>
+
+  );
+
+}
+
+// انتخاب‌گر تاریخ برای فیلتر اسناد
+function DocumentDateFilter({
+  label,
+  value,
+  placeholder,
+  onChange,
+}) {
+
+  // تاریخ امروز بر اساس ساعت رسمی افغانستان
+  const [todayDate, setTodayDate] = useState(getLocalDate);
+
+
+  // انتخاب یک تاریخ
+  function handleDateChange(selectedDate) {
+
+    // در صورت پاک‌شدن تاریخ
+    if (!selectedDate) {
+
+      onChange('');
+
+      return;
+
+    }
+
+
+    // تبدیل تاریخ شمسی به میلادی
+    const selectedGregorianDate =
+      convertToGregorianDate(selectedDate);
+
+
+    // تاریخ امروز افغانستان
+    const today = getLocalDate();
+
+
+    // جلوگیری از انتخاب تاریخ آینده
+    if (selectedGregorianDate > today) {
+      return;
+    }
+
+
+    // ذخیره مستقیم تاریخ در فیلتر والد
+    onChange(selectedGregorianDate);
+
+  }
+
+
+  // انتخاب تاریخ امروز
+  function handleSelectToday() {
+
+    const today = getLocalDate();
+
+    setTodayDate(today);
+
+    onChange(today);
+
+  }
+
+
+  // هنگام بازشدن تقویم، تاریخ امروز به‌روزرسانی می‌شود.
+  function handleOpen() {
+
+    setTodayDate(getLocalDate());
+
+  }
+
+
+  return (
+
+    <label className="documents-field">
+
+      <span>{label}</span>
+
+
+      <DatePicker
+
+        // مقدار اصلی فیلتر مستقیماً به تقویم داده می‌شود.
+        value={getPersianDateValue(value)}
+
+        // محدودیت انتخاب تاریخ آینده
+        maxDate={getPersianDateValue(todayDate)}
+
+        // ثبت تاریخ انتخاب‌شده
+        onChange={handleDateChange}
+
+        // به‌روزرسانی تاریخ امروز هنگام بازشدن
+        onOpen={handleOpen}
+
+        // دکمه‌های داخل تقویم
+        plugins={[
+
+          <DocumentDatePickerActions
+            key="documents-date-picker-actions"
+            position="bottom"
+            onSelectToday={handleSelectToday}
+          />,
+
+        ]}
+
+        calendar={persianCalendar}
+
+        locale={persianAfghanistan}
+
+        format="DD MMMM YYYY"
+
+        calendarPosition="bottom-right"
+
+        weekStartDayIndex={0}
+
+        editable={false}
+
+        clearable
+
+        inputClass="documents-date-input"
+
+        containerClassName="documents-date-container"
+
+        placeholder={placeholder}
+
+      />
+
+    </label>
+
+  );
+
+}
 
 function InventoryDocuments() {
 
@@ -453,127 +932,58 @@ function InventoryDocuments() {
 
 
           {/* نوع سند */}
-          <label className="documents-field">
+          <div className="documents-field">
 
             <span>نوع سند</span>
 
-            <select
+            <DocumentFilterSelect
               value={draftFilters.documentType}
-              onChange={(event) =>
-                updateDraftFilter(
-                  'documentType',
-                  event.target.value
-                )
+              options={DOCUMENT_TYPES}
+              ariaLabel="نوع سند"
+              onChange={(value) =>
+                updateDraftFilter('documentType', value)
               }
-            >
+            />
 
-              {DOCUMENT_TYPES.map((item) => (
+          </div>
 
-                <option
-                  key={item.value}
-                  value={item.value}
-                >
-                  {item.label}
-                </option>
-
-              ))}
-
-            </select>
-
-          </label>
-
-
-          {/* وضعیت */}
-          <label className="documents-field">
+          {/* وضعیت سند */}
+          <div className="documents-field">
 
             <span>وضعیت سند</span>
 
-            <select
+            <DocumentFilterSelect
               value={draftFilters.status}
-              onChange={(event) =>
-                updateDraftFilter(
-                  'status',
-                  event.target.value
-                )
+              options={DOCUMENT_STATUSES}
+              ariaLabel="وضعیت سند"
+              onChange={(value) =>
+                updateDraftFilter('status', value)
               }
-            >
+            />
 
-              {DOCUMENT_STATUSES.map((item) => (
-
-                <option
-                  key={item.value}
-                  value={item.value}
-                >
-                  {item.label}
-                </option>
-
-              ))}
-
-            </select>
-
-          </label>
+          </div>
 
 
           {/* تاریخ شروع */}
-          <label className="documents-field">
-
-            <span>از تاریخ</span>
-
-            <DatePicker
-              value={getPersianDateValue(
-                draftFilters.fromDate
-              )}
-              onChange={(date) =>
-                updateDraftFilter(
-                  'fromDate',
-                  date
-                    ? convertToGregorianDate(date)
-                    : ''
-                )
-              }
-              calendar={persianCalendar}
-              locale={persianAfghanistan}
-              format="DD MMMM YYYY"
-              calendarPosition="bottom-right"
-              editable={false}
-              clearable
-              inputClass="documents-date-input"
-              containerClassName="documents-date-container"
-              placeholder="تاریخ شروع"
-            />
-
-          </label>
+          <DocumentDateFilter
+            label="از تاریخ"
+            value={draftFilters.fromDate}
+            placeholder="تاریخ شروع"
+            onChange={(date) =>
+              updateDraftFilter('fromDate', date)
+            }
+          />
 
 
           {/* تاریخ پایان */}
-          <label className="documents-field">
-
-            <span>تا تاریخ</span>
-
-            <DatePicker
-              value={getPersianDateValue(
-                draftFilters.toDate
-              )}
-              onChange={(date) =>
-                updateDraftFilter(
-                  'toDate',
-                  date
-                    ? convertToGregorianDate(date)
-                    : ''
-                )
-              }
-              calendar={persianCalendar}
-              locale={persianAfghanistan}
-              format="DD MMMM YYYY"
-              calendarPosition="bottom-right"
-              editable={false}
-              clearable
-              inputClass="documents-date-input"
-              containerClassName="documents-date-container"
-              placeholder="تاریخ پایان"
-            />
-
-          </label>
+          <DocumentDateFilter
+            label="تا تاریخ"
+            value={draftFilters.toDate}
+            placeholder="تاریخ پایان"
+            onChange={(date) =>
+              updateDraftFilter('toDate', date)
+            }
+          />
 
 
           {/* دکمه‌های عملیات فیلتر */}
