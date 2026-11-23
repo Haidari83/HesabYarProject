@@ -70,6 +70,7 @@ const {
 const {
   getInventoryEntryFormOptions,
   createInventoryEntryDraft,
+  getInventoryDocuments,
 } = require('./services/inventoryService.cjs');
 
 const fs = require('node:fs');
@@ -963,6 +964,25 @@ function registerIpcHandlers() {
         database,
         actor,
         input
+      );
+
+    }
+  );
+
+  // دریافت فهرست اسناد انبار
+  ipcMain.handle(
+    'inventory:documents:list',
+    (event, filters) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+
+      // دریافت فهرست اسناد با کنترل مجوز
+      return getInventoryDocuments(
+        database,
+        actor,
+        filters
       );
 
     }

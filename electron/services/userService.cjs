@@ -86,6 +86,10 @@ const PERMISSION_GROUPS = [
         label: 'مشاهده نمای کلی انبار',
       },
       {
+        key: 'inventory.documents.view',
+        label: 'مشاهده فهرست اسناد انبار',
+      },
+      {
         key: 'inventory.stock_list.view',
         label: 'مشاهده فهرست موجودی',
       },

@@ -287,5 +287,12 @@ contextBridge.exposeInMainWorld('hesabyar', {
         input
       ),
 
+    // دریافت فهرست اسناد انبار
+    listDocuments: (filters) =>
+      ipcRenderer.invoke(
+        'inventory:documents:list',
+        filters
+      ),
+
   },
 });

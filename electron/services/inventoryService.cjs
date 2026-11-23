@@ -1351,8 +1351,401 @@ function createInventoryEntryDraft(
 
 }
 
+// دریافت فهرست اسناد انبار با فیلتر و صفحه‌بندی
+function getInventoryDocuments(
+  database,
+  actor,
+  filters = {}
+) {
+
+  // بررسی مجوز مشاهده اسناد انبار
+  assertPermission(
+    database,
+    actor,
+    'inventory.documents.view'
+  );
+
+
+  // اعتبارسنجی فیلترهای دریافتی
+  if (
+    !filters ||
+    typeof filters !== 'object' ||
+    Array.isArray(filters)
+  ) {
+    throw new Error('فیلترهای فهرست اسناد معتبر نیستند.');
+  }
+
+
+  // وضعیت‌های مجاز اسناد
+  const allowedStatuses = [
+    'draft',
+    'posted',
+    'cancelled',
+  ];
+
+  const status = filters.status ?? 'all';
+
+
+  if (
+    status !== 'all' &&
+    !allowedStatuses.includes(status)
+  ) {
+    throw new Error('وضعیت انتخاب‌شده معتبر نیست.');
+  }
+
+
+  // انواع مجاز اسناد انبار
+  const allowedDocumentTypes = [
+    'purchase',
+    'sales_return',
+    'opening',
+    'other',
+    'sale',
+    'purchase_return',
+    'adjustment_in',
+    'adjustment_out',
+  ];
+
+  const documentType = filters.documentType ?? 'all';
+
+
+  if (
+    documentType !== 'all' &&
+    !allowedDocumentTypes.includes(documentType)
+  ) {
+    throw new Error('نوع سند انتخاب‌شده معتبر نیست.');
+  }
+
+
+  // عبارت جست‌وجو
+  const search =
+    typeof filters.search === 'string'
+      ? filters.search.trim()
+      : '';
+
+
+  if (search.length > 100) {
+    throw new Error(
+      'عبارت جست‌وجو نمی‌تواند بیشتر از ۱۰۰ نویسه باشد.'
+    );
+  }
+
+
+  // تاریخ شروع بازه
+  const fromDate = filters.fromDate
+    ? validateInventoryDate(filters.fromDate)
+    : null;
+
+
+  // تاریخ پایان بازه
+  const toDate = filters.toDate
+    ? validateInventoryDate(filters.toDate)
+    : null;
+
+
+  // اطمینان از معتبر بودن ترتیب تاریخ‌ها
+  if (
+    fromDate &&
+    toDate &&
+    fromDate > toDate
+  ) {
+    throw new Error(
+      'تاریخ شروع نمی‌تواند بعد از تاریخ پایان باشد.'
+    );
+  }
+
+
+  // تعداد اسناد در هر صفحه
+  const limit = filters.limit ?? 50;
+
+
+  if (
+    !Number.isInteger(limit) ||
+    limit < 1 ||
+    limit > 100
+  ) {
+    throw new Error(
+      'تعداد اسناد درخواستی معتبر نیست.'
+    );
+  }
+
+
+  // شماره موقعیت شروع نتایج
+  const offset = filters.offset ?? 0;
+
+
+  if (
+    !Number.isSafeInteger(offset) ||
+    offset < 0
+  ) {
+    throw new Error(
+      'موقعیت صفحه‌بندی معتبر نیست.'
+    );
+  }
+
+
+  // ساخت شرط‌های جست‌وجو و فیلتر
+  const conditions = [];
+
+  const parameters = [];
+
+
+  // فیلتر وضعیت
+  if (status !== 'all') {
+
+    conditions.push('d.status = ?');
+
+    parameters.push(status);
+
+  }
+
+
+  // فیلتر نوع سند
+  if (documentType !== 'all') {
+
+    conditions.push('d.document_type = ?');
+
+    parameters.push(documentType);
+
+  }
+
+
+  // فیلتر تاریخ شروع
+  if (fromDate) {
+
+    conditions.push('d.document_date >= ?');
+
+    parameters.push(fromDate);
+
+  }
+
+
+  // فیلتر تاریخ پایان
+  if (toDate) {
+
+    conditions.push('d.document_date <= ?');
+
+    parameters.push(toDate);
+
+  }
+
+
+  // جست‌وجو در شماره سند، طرف حساب و شماره فاکتور
+  if (search) {
+
+    conditions.push(`
+      (
+        d.document_number LIKE ?
+        OR COALESCE(d.source_party_name, '') LIKE ?
+        OR COALESCE(d.source_invoice_number, '') LIKE ?
+      )
+    `);
+
+    const searchPattern = `%${search}%`;
+
+    parameters.push(
+      searchPattern,
+      searchPattern,
+      searchPattern
+    );
+
+  }
+
+
+  // ساخت بخش WHERE
+  const whereClause = conditions.length > 0
+    ? `WHERE ${conditions.join(' AND ')}`
+    : '';
+
+
+  // دریافت تعداد کل اسناد مطابق فیلترها
+  const countResult = database.prepare(`
+    SELECT
+      COUNT(*) AS total_count
+
+    FROM inventory_documents AS d
+
+    ${whereClause}
+
+  `).get(...parameters);
+
+
+  // دریافت اطلاعات اسناد
+  const rows = database.prepare(`
+    SELECT
+
+      d.id,
+
+      d.document_number,
+
+      d.document_type,
+
+      d.document_date,
+
+      d.status,
+
+      d.source_party_type,
+
+      d.source_party_name,
+
+      d.source_invoice_number,
+
+      d.reason,
+
+      d.notes,
+
+      d.created_at,
+
+      d.updated_at,
+
+      d.posted_at,
+
+      d.cancelled_at,
+
+
+      creator.id AS created_by_user_id,
+
+      creator.username AS created_by_username,
+
+      creator.display_name AS created_by_display_name,
+
+
+      updater.display_name AS updated_by_display_name,
+
+
+      poster.display_name AS posted_by_display_name,
+
+
+      canceller.display_name AS cancelled_by_display_name,
+
+
+      (
+        SELECT COUNT(*)
+
+        FROM inventory_document_items AS item
+
+        WHERE item.document_id = d.id
+
+      ) AS item_count
+
+
+    FROM inventory_documents AS d
+
+
+    LEFT JOIN users AS creator
+      ON creator.id = d.created_by_user_id
+
+
+    LEFT JOIN users AS updater
+      ON updater.id = d.updated_by_user_id
+
+
+    LEFT JOIN users AS poster
+      ON poster.id = d.posted_by_user_id
+
+
+    LEFT JOIN users AS canceller
+      ON canceller.id = d.cancelled_by_user_id
+
+
+    ${whereClause}
+
+
+    ORDER BY
+
+      d.document_date DESC,
+
+      d.created_at DESC,
+
+      d.document_number DESC
+
+
+    LIMIT ?
+
+    OFFSET ?
+
+  `).all(
+    ...parameters,
+    limit,
+    offset
+  );
+
+
+  // تبدیل نتیجه SQLite به ساختار مناسب رابط کاربری
+  const documents = rows.map((row) => ({
+
+    id: row.id,
+
+    documentNumber: row.document_number,
+
+    documentType: row.document_type,
+
+    documentDate: row.document_date,
+
+    status: row.status,
+
+
+    sourcePartyType: row.source_party_type,
+
+    sourcePartyName: row.source_party_name,
+
+    sourceInvoiceNumber: row.source_invoice_number,
+
+    reason: row.reason,
+
+    notes: row.notes,
+
+
+    itemCount: Number(row.item_count),
+
+
+    createdAt: row.created_at,
+
+    updatedAt: row.updated_at,
+
+    postedAt: row.posted_at,
+
+    cancelledAt: row.cancelled_at,
+
+
+    createdBy: {
+
+      id: row.created_by_user_id,
+
+      username: row.created_by_username,
+
+      displayName: row.created_by_display_name,
+
+    },
+
+
+    updatedByDisplayName: row.updated_by_display_name,
+
+    postedByDisplayName: row.posted_by_display_name,
+
+    cancelledByDisplayName: row.cancelled_by_display_name,
+
+  }));
+
+
+  // نتیجه نهایی همراه با اطلاعات صفحه‌بندی
+  return {
+
+    documents,
+
+    totalCount: Number(countResult.total_count),
+
+    limit,
+
+    offset,
+
+  };
+
+}
+
 // توابع قابل استفاده در سایر بخش‌های Electron
 module.exports = {
   getInventoryEntryFormOptions,
   createInventoryEntryDraft,
+  getInventoryDocuments,
 };
