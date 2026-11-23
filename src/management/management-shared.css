@@ -1,0 +1,46 @@
+/* =================================
+   قاب مشترک جدول‌های مدیریتی
+================================= */
+
+.management-table-card {
+  min-width: 0;
+  overflow: hidden;
+
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+
+/* =================================
+   سربرگ مشترک جدول‌های مدیریتی
+================================= */
+
+.management-table-card__header {
+  padding: 19px 20px;
+
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+
+/* عنوان سربرگ */
+
+.management-table-card__header h2 {
+  margin: 0;
+
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+
+/* توضیحات سربرگ */
+
+.management-table-card__header p {
+  margin: 6px 0 0;
+
+  color: var(--color-text-muted);
+  font-size: 11px;
+}

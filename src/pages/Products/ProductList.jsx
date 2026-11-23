@@ -635,9 +635,9 @@ function ProductList({ currentUser }) {
           </section>
 
           {/* جدول محصولات */}
-          <section className="product-table-card">
+          <section className="management-table-card">
 
-            <header className="product-table-header">
+            <header className="product-table-header management-table-card__header">
               <div>
                 <h2>فهرست محصولات</h2>
 

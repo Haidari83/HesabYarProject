@@ -970,9 +970,9 @@ function UnitList({ currentUser }) {
           </section>
 
           {/* جدول واحدها */}
-          <section className="unit-table-card">
+          <section className="management-table-card">
 
-            <header className="unit-table-header">
+            <header className="unit-table-header management-table-card__header">
               <div>
                 <h2>فهرست واحدهای اندازه‌گیری</h2>
                 <p>

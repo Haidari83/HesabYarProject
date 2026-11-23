@@ -1,5 +1,4 @@
-/* ساختار اصلی صفحه دسته‌بندی‌ها */
-.category-page {
+ساختار اصلی صفحه دسته‌بندی‌ها .category-page {
   --category-primary: #172554;
   --category-accent: #0f766e;
   --category-text: #1f2937;
@@ -232,34 +231,6 @@
 
 .category-add-bulk:hover {
   background-color: #263b70;
-}
-
-/* کارت جدول */
-.category-table-card {
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid var(--category-border);
-  border-radius: 12px;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
-}
-
-.category-table-header {
-  padding: 19px 20px;
-  border-bottom: 1px solid var(--category-border);
-}
-
-.category-table-header h2 {
-  margin: 0;
-  color: var(--category-primary);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.category-table-header p {
-  margin: 6px 0 0;
-  color: var(--category-muted);
-  font-size: 11px;
 }
 
 .category-table-wrapper {

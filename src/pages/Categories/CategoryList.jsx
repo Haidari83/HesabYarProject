@@ -1070,9 +1070,9 @@ function CategoryList({ currentUser }) {
       </section>
 
       {/* جدول دسته‌بندی‌ها */}
-      <section className="category-table-card">
+      <section className="management-table-card">
 
-        <header className="category-table-header">
+        <header className="management-table-card__header">
           <div>
             <h2>فهرست دسته‌بندی‌ها</h2>
             <p>
