@@ -56,6 +56,12 @@ export const navigationItems = [
         description: 'ثبت و مدیریت ورود کالا به انبار.',
         requiredPermission: 'inventory.entry.create',
       },
+      {
+        id: 'inventory-documents',
+        label: 'فهرست اسناد انبار',
+        description: 'مشاهده و پیگیری اسناد ثبت‌شده انبار.',
+        requiredPermission: 'inventory.documents.view',
+      },
     ]
   },
 
