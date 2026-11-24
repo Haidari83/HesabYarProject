@@ -7,6 +7,7 @@ import { normalizePersianText as normalizeName, } from '../../utils/persianText'
 import { createRows } from '../../utils/listHelpers';
 
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import './category-list.css';
 
@@ -918,17 +919,17 @@ function CategoryList({ currentUser }) {
         </Alert>
 
 
-        <button
+        <Button
           type="button"
-          className="category-add-single"
+          variant="secondary"
+          size="small"
           onClick={() => {
+            // افزایش شمارنده باعث تلاش مجدد برای دریافت اطلاعات می‌شود.
             setLoadAttempt((previous) => previous + 1);
           }}
         >
-
           تلاش مجدد برای دریافت اطلاعات
-
-        </button>
+        </Button>
 
       </div>
 
@@ -1026,28 +1027,23 @@ function CategoryList({ currentUser }) {
 
           <div className="category-add-actions">
 
-            <button
+            <Button
               type="button"
-              className="category-add-single"
+              variant="secondary"
               onClick={openSingleForm}
             >
-
               <span>+</span>
               افزودن تکی
+            </Button>
 
-            </button>
-
-
-            <button
+            <Button
               type="button"
-              className="category-add-bulk"
+              variant="primary"
               onClick={openBulkForm}
             >
-
               <span>+</span>
               افزودن گروهی
-
-            </button>
+            </Button>
 
           </div>
 
@@ -1121,38 +1117,32 @@ function CategoryList({ currentUser }) {
 
                         <div className="category-actions">
 
-                          <button
+                          <Button
                             type="button"
-                            className="category-edit-action"
+                            variant="secondary"
+                            size="small"
                             onClick={() => openEditForm(category)}
                             disabled={isSaving}
                           >
                             ویرایش
-                          </button>
+                          </Button>
 
-
-                          <button
+                          <Button
                             type="button"
-                            className={
-                              category.isActive
-                                ? 'category-deactivate-action'
-                                : 'category-activate-action'
-                            }
+                            // دسته فعال با هشدار و دسته غیرفعال با موفقیت نمایش داده می‌شود.
+                            variant={category.isActive ? 'warning' : 'success'}
+                            size="small"
                             onClick={() => requestStatusChange(category)}
                             disabled={isSaving}
                           >
-                            {category.isActive
-                              ? 'غیرفعال‌سازی'
-                              : 'فعال‌سازی'}
-                          </button>
+                            {category.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
+                          </Button>
 
-
-                          <button
+                          <Button
                             type="button"
-                            className="category-delete-action"
-                            disabled={
-                              count > 0 || isSaving
-                            }
+                            variant="danger"
+                            size="small"
+                            disabled={count > 0 || isSaving}
                             onClick={() => requestDelete(category)}
                             title={
                               count > 0
@@ -1161,7 +1151,7 @@ function CategoryList({ currentUser }) {
                             }
                           >
                             حذف
-                          </button>
+                          </Button>
 
                         </div>
 
@@ -1238,14 +1228,17 @@ function CategoryList({ currentUser }) {
                 </p>
               </div>
 
-              <button
+              <Button
                 type="button"
-                className="category-modal-close"
+                variant="ghost"
+                size="small"
+                iconOnly
                 onClick={closeForm}
                 aria-label="بستن پنجره"
               >
                 ×
-              </button>
+              </Button>
+
             </header>
 
             {/* حالت ثبت تکی */}
@@ -1295,27 +1288,26 @@ function CategoryList({ currentUser }) {
                 )}
 
                 <footer className="category-modal-actions">
-                  <button
+                  <Button
                     type="button"
-                    className="category-cancel-button"
+                    variant="secondary"
                     onClick={closeForm}
                     disabled={isSaving}
                   >
                     انصراف
-                  </button>
+                  </Button>
 
-
-                  <button
+                  <Button
                     type="submit"
-                    className="category-submit-button"
-                    disabled={isSaving}
+                    variant="primary"
+                    loading={isSaving}
                   >
                     {isSaving
                       ? 'در حال ذخیره...'
                       : editingId
                         ? 'ذخیره تغییرات'
                         : 'ثبت دسته‌بندی'}
-                  </button>
+                  </Button>
 
                 </footer>
 
@@ -1402,15 +1394,18 @@ function CategoryList({ currentUser }) {
                           </td>
 
                           <td>
-                            <button
+                            <Button
                               type="button"
+                              variant="danger"
+                              size="small"
+                              iconOnly
                               className="category-row-remove"
                               onClick={() => removeBulkRow(row.rowId)}
                               title="حذف ردیف"
                               aria-label={`حذف ردیف ${index + 1}`}
                             >
                               ×
-                            </button>
+                            </Button>
                           </td>
 
                         </tr>
@@ -1423,19 +1418,23 @@ function CategoryList({ currentUser }) {
 
                 <div className="category-bulk-add-row">
                   <div>
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="small"
                       onClick={() => addBulkRows(1)}
                     >
                       + یک ردیف
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="small"
                       onClick={() => addBulkRows(5)}
                     >
                       + پنج ردیف
-                    </button>
+                    </Button>
                   </div>
 
                   <span>
@@ -1454,24 +1453,21 @@ function CategoryList({ currentUser }) {
                 )}
 
                 <footer className="category-modal-actions">
-                  <button
+                  <Button
                     type="button"
-                    className="category-cancel-button"
+                    variant="secondary"
                     onClick={closeForm}
                   >
                     انصراف
-                  </button>
+                  </Button>
 
-
-                  <button
+                  <Button
                     type="submit"
-                    className="category-submit-button"
-                    disabled={isSaving}
+                    variant="primary"
+                    loading={isSaving}
                   >
-                    {isSaving
-                      ? 'در حال ثبت...'
-                      : 'ثبت همه دسته‌بندی‌ها'}
-                  </button>
+                    {isSaving ? 'در حال ثبت...' : 'ثبت همه دسته‌بندی‌ها'}
+                  </Button>
 
                 </footer>
 
@@ -1523,32 +1519,32 @@ function CategoryList({ currentUser }) {
               )}
 
             <div className="category-confirm-actions">
-              <button
+              <Button
                 type="button"
-                className="category-cancel-button"
+                variant="secondary"
                 onClick={() => setConfirmAction(null)}
                 disabled={isSaving}
               >
                 انصراف
-              </button>
+              </Button>
 
-
-              <button
+              <Button
                 type="button"
-                className={
+                // حذف با رنگ خطر و سایر تأییدها با رنگ اصلی نمایش داده می‌شوند.
+                variant={
                   confirmAction.type === 'delete'
-                    ? 'category-delete-confirm'
-                    : 'category-submit-button'
+                    ? 'danger'
+                    : 'primary'
                 }
                 onClick={handleConfirmAction}
-                disabled={isSaving}
+                loading={isSaving}
               >
                 {isSaving
                   ? 'در حال اجرا...'
                   : confirmAction.type === 'delete'
                     ? 'حذف دسته‌بندی'
                     : 'تأیید'}
-              </button>
+              </Button>
 
             </div>
 

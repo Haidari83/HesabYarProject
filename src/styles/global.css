@@ -115,15 +115,3 @@ svg {
   max-width: 600px;
   line-height: var(--line-height-relaxed, 1.9);
 }
-
-.auth-startup-message button {
-  padding: 10px 18px;
-
-  border: 0;
-  border-radius: var(--radius-control, 8px);
-
-  background: var(--color-primary);
-  color: #fff;
-
-  font: inherit;
-}

@@ -5,6 +5,7 @@ import ExcelImportModal from './ExcelImportModal';
 import { normalizePersianText as normalizeSearch, } from '../../utils/persianText';
 
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import { formatNumber } from '../../utils/numberFormat';
 
@@ -453,13 +454,17 @@ function ProductList({ currentUser }) {
 
           <p>{loadError}</p>
 
-          <button
+          <Button
             type="button"
-            className="product-retry-button"
-            onClick={() => setLoadAttempt((value) => value + 1)}
+            variant="secondary"
+            size="small"
+            onClick={() => {
+              // درخواست مجدد برای بارگذاری فهرست کالاها
+              setLoadAttempt((value) => value + 1);
+            }}
           >
             تلاش مجدد
-          </button>
+          </Button>
         </div>
       )}
 
@@ -603,30 +608,32 @@ function ProductList({ currentUser }) {
               <>
 
                 {/* دکمه ورود محصولات از Excel */}
-                <button
+                <Button
                   type="button"
-                  className="product-import-button"
+                  variant="secondary"
+                  startIcon="⇧"
                   onClick={() => {
+                    // پاک‌کردن پیام قبلی و بازکردن پنجره ورود گروهی
                     setCreateSuccessMessage('');
                     setIsExcelImportOpen(true);
                   }}
                 >
-                  <span>⇧</span>
                   ورود از Excel
-                </button>
+                </Button>
 
                 {/* دکمه ثبت دستی محصول */}
-                <button
+                <Button
                   type="button"
-                  className="product-add-button"
+                  variant="primary"
+                  startIcon="+"
                   onClick={() => {
+                    // پاک‌کردن پیام موفقیت قبلی و بازکردن فرم ثبت کالا
                     setCreateSuccessMessage('');
                     setIsCreateFormOpen(true);
                   }}
                 >
-                  <span>+</span>
                   ثبت کالای جدید
-                </button>
+                </Button>
 
               </>
             )}
@@ -748,33 +755,30 @@ function ProductList({ currentUser }) {
 
                           {/* دکمه ویرایش برای محصولات فعال */}
                           {canUpdateProducts && product.isActive && (
-                            <button
+                            <Button
                               type="button"
-                              className="product-edit-action"
+                              variant="secondary"
+                              size="small"
                               onClick={() => {
+                                // پیام قبلی پاک می‌شود و کالای انتخاب‌شده وارد فرم ویرایش می‌شود.
                                 setCreateSuccessMessage('');
                                 setProductToEdit(product);
                               }}
                             >
                               ویرایش
-                            </button>
+                            </Button>
                           )}
 
                           {/* دکمه فعال‌سازی یا غیرفعال‌سازی */}
                           {canDeactivateProducts && (
-                            <button
+                            <Button
                               type="button"
-                              className={
-                                product.isActive
-                                  ? 'product-deactivate-action'
-                                  : 'product-activate-action'
-                              }
+                              variant={product.isActive ? 'warning' : 'success'}
+                              size="small"
                               onClick={() => openProductStatusDialog(product)}
                             >
-                              {product.isActive
-                                ? 'غیرفعال‌کردن'
-                                : 'فعال‌کردن'}
-                            </button>
+                              {product.isActive ? 'غیرفعال‌کردن' : 'فعال‌کردن'}
+                            </Button>
                           )}
 
                           {/* پیام برای کاربری که مجوز عملیات ندارد */}
@@ -903,23 +907,24 @@ function ProductList({ currentUser }) {
             {/* دکمه‌های عملیات */}
             <div className="product-status-actions">
 
-              <button
+              <Button
                 type="button"
-                className="product-form-cancel"
+                variant="secondary"
                 disabled={isChangingStatus}
                 onClick={() => setProductToChangeStatus(null)}
               >
                 انصراف
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
-                className={
+                variant={
                   productToChangeStatus.isActive
-                    ? 'product-confirm-deactivate'
-                    : 'product-confirm-activate'
+                    ? 'warning'
+                    : 'success'
                 }
                 disabled={isChangingStatus}
+                loading={isChangingStatus}
                 onClick={handleConfirmProductStatusChange}
               >
                 {isChangingStatus
@@ -927,7 +932,7 @@ function ProductList({ currentUser }) {
                   : productToChangeStatus.isActive
                     ? 'بله، غیرفعال کن'
                     : 'بله، فعال کن'}
-              </button>
+              </Button>
 
             </div>
           </section>

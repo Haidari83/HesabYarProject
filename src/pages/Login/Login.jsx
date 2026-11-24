@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { toEnglishDigits } from '../../utils/persianText';
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import './login.css';
 
@@ -425,11 +426,16 @@ function Login({ onLogin }) {
                       dir="ltr"
                       disabled={isSubmitting}
                     />
-
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="small"
+                      iconOnly
                       className="password-toggle"
-                      onClick={() => setShowPassword(prev => !prev)}
+                      onClick={() => {
+                        // تغییر وضعیت نمایش یا مخفی بودن گذرواژه
+                        setShowPassword((previous) => !previous);
+                      }}
                       aria-label={
                         showPassword
                           ? 'مخفی کردن گذرواژه'
@@ -441,10 +447,8 @@ function Login({ onLogin }) {
                           : 'نمایش گذرواژه'
                       }
                     >
-                      {showPassword
-                        ? <EyeOffIcon />
-                        : <EyeIcon />}
-                    </button>
+                      {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    </Button>
 
                   </div>
 
@@ -489,10 +493,16 @@ function Login({ onLogin }) {
                       disabled={isSubmitting}
                     />
 
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="small"
+                      iconOnly
                       className="password-toggle"
-                      onClick={() => setShowPassword(prev => !prev)}
+                      onClick={() => {
+                        // تغییر وضعیت نمایش یا مخفی بودن PIN
+                        setShowPassword((previous) => !previous);
+                      }}
                       aria-label={
                         showPassword
                           ? 'مخفی کردن PIN'
@@ -504,10 +514,8 @@ function Login({ onLogin }) {
                           : 'نمایش PIN'
                       }
                     >
-                      {showPassword
-                        ? <EyeOffIcon />
-                        : <EyeIcon />}
-                    </button>
+                      {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    </Button>
 
                   </div>
 
@@ -528,15 +536,18 @@ function Login({ onLogin }) {
 
 
               {/* دکمه ورود */}
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                size="large"
+                fullWidth
                 className="login-submit"
-                disabled={isSubmitting}
+                loading={isSubmitting}
               >
                 {isSubmitting
                   ? 'در حال بررسی اطلاعات...'
                   : 'ورود به حساب‌یار'}
-              </button>
+              </Button>
 
             </form>
 

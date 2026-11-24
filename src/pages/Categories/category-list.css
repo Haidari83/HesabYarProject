@@ -160,41 +160,9 @@
   flex: 0 0 auto;
 }
 
-.category-add-actions button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 42px;
-  padding: 0 13px;
-  border: none;
-  border-radius: 8px;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.category-add-actions button span {
+/* اندازه نماد + در دکمه‌های افزودن */
+.category-add-actions>.ui-button>span {
   font-size: 18px;
-}
-
-.category-add-single {
-  background-color: #eef2ff;
-  color: #3730a3;
-}
-
-.category-add-single:hover {
-  background-color: #e0e7ff;
-}
-
-.category-add-bulk {
-  background-color: var(--category-primary);
-  color: #fff;
-}
-
-.category-add-bulk:hover {
-  background-color: #263b70;
 }
 
 .category-table {
@@ -271,49 +239,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.category-actions button {
-  min-height: 29px;
-  padding: 0 9px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font: inherit;
-  font-size: 10px;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.category-edit-action {
-  border-color: #cbd5e1 !important;
-  background-color: #fff;
-  color: #334155;
-}
-
-.category-edit-action:hover {
-  background-color: #f1f5f9;
-}
-
-.category-deactivate-action {
-  background-color: #fff7ed;
-  color: #c2410c;
-}
-
-.category-activate-action {
-  background-color: #ecfdf5;
-  color: #047857;
-}
-
-.category-delete-action {
-  background-color: #fff1f2;
-  color: #be123c;
-}
-
-.category-delete-action:disabled {
-  border-color: #e2e8f0;
-  background-color: #f8fafc;
-  color: #94a3b8;
-  cursor: not-allowed;
 }
 
 /* پنجره مشترک */
@@ -550,23 +475,10 @@
   line-height: 1.8;
 }
 
-/* حذف ردیف */
+/* فقط موقعیت دکمه حذف ردیف را مدیریت می‌کنیم؛
+   ظاهر آن از Button مرکزی می‌آید. */
 .category-row-remove {
-  display: grid;
-  width: 30px;
-  height: 30px;
   margin: auto;
-  place-items: center;
-  border: none;
-  border-radius: 6px;
-  background-color: #fff1f2;
-  color: #be123c;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.category-row-remove:hover {
-  background-color: #ffe4e6;
 }
 
 /* افزودن ردیف */
@@ -583,22 +495,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.category-bulk-add-row button {
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  background-color: #fff;
-  color: #475569;
-  font: inherit;
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.category-bulk-add-row button:hover {
-  background-color: #f8fafc;
 }
 
 .category-bulk-add-row>span {
@@ -636,34 +532,6 @@
   font: inherit;
   font-size: 11px;
   cursor: pointer;
-}
-
-.category-cancel-button {
-  border: 1px solid var(--category-border);
-  background-color: #fff;
-  color: var(--category-muted);
-}
-
-.category-cancel-button:hover {
-  background-color: #f8fafc;
-}
-
-.category-submit-button {
-  background-color: var(--category-primary);
-  color: #fff;
-}
-
-.category-submit-button:hover {
-  background-color: #263b70;
-}
-
-.category-delete-confirm {
-  background-color: #be123c;
-  color: #fff;
-}
-
-.category-delete-confirm:hover {
-  background-color: #9f1239;
 }
 
 /* پنجره تأیید عملیات */
@@ -755,7 +623,8 @@
     flex-basis: 100%;
   }
 
-  .category-add-actions button {
+  /* دکمه‌های مرکزی در نوار افزودن، عرض مساوی می‌گیرند. */
+  .category-add-actions>.ui-button {
     flex: 1;
   }
 

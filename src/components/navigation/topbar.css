@@ -28,27 +28,9 @@
   gap: 14px;
 }
 
-/* دکمه‌های آیکونی */
+/* جایگاه و اندازه دکمه‌های آیکونی نوار بالا */
 .topbar__icon-button {
-  width: 40px;
-  height: 40px;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9px;
-  border: 0;
-  border-radius: var(--radius-md);
-  background-color: transparent;
-  color: var(--color-text-secondary);
-  transition:
-    background-color var(--transition-fast),
-    color var(--transition-fast);
-}
-
-.topbar__icon-button:hover {
-  background-color: #f1f5f9;
-  color: var(--color-primary);
 }
 
 .topbar__icon-button svg {
@@ -374,65 +356,6 @@
   cursor: not-allowed;
 }
 
-/* دکمه خروج از حساب کاربری */
-
-.topbar__logout-button {
-  display: block;
-  width: 100%;
-  min-height: 38px;
-  margin-top: 14px;
-  padding: 8px 12px;
-  border: 1px solid #fecaca;
-  border-radius: 7px;
-  background: #fef2f2;
-  color: #b91c1c;
-  font-family: var(--font-family);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    border-color var(--transition-fast);
-}
-
-
-/* دکمه مدیریت حساب و امنیت */
-
-.topbar__security-button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 14px;
-  padding: 10px 11px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: #f8fafc;
-  color: var(--color-primary);
-  font-family: var(--font-family);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    border-color var(--transition-fast);
-}
-
-.topbar__security-button:hover {
-  border-color: #cbd5e1;
-  background: #f1f5f9;
-}
-
-
-.topbar__logout-button:hover {
-  border-color: #fca5a5;
-  background: #fee2e2;
-}
-
-.topbar__logout-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 /* حفظ فاصله پیام خطای خروج از سایر گزینه‌های منو */
 .topbar__logout-error {
   margin-top: 10px;
@@ -490,8 +413,10 @@
     gap: 0;
   }
 
-  .topbar__icon-button {
+  /* کاهش اندازه دکمه‌های آیکونی نوار بالا در موبایل */
+  .topbar__icon-button.ui-button--icon {
     width: 36px;
+    min-width: 36px;
     height: 36px;
   }
 

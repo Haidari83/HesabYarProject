@@ -86,37 +86,16 @@
 }
 
 
-/* دکمه بستن */
+/* =============================================
+   اندازه اختصاصی دکمه بستن پنجره امنیت
+   ظاهر اصلی از Button مرکزی دریافت می‌شود.
+============================================= */
 
-.account-security-close {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-family: var(--font-family);
-  font-size: 26px;
-  cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    color var(--transition-fast);
+.account-security-close.ui-button--icon {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
 }
-
-.account-security-close:hover {
-  background: #f1f5f9;
-  color: var(--color-danger);
-}
-
-.account-security-close:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 
 /* =========================
    بدنه پنجره
@@ -224,39 +203,6 @@
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast);
-}
-
-/* انتخاب یا تغییر تصویر */
-
-.account-security-image-button {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-}
-
-.account-security-image-button:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-}
-
-/* ذخیره تصویر جدید */
-
-.account-security-image-save {
-  border: 1px solid var(--color-primary);
-  background: var(--color-primary);
-  color: #ffffff;
-}
-
-.account-security-image-save:hover {
-  filter: brightness(0.94);
-}
-
-/* وضعیت غیرفعال دکمه‌ها */
-
-.account-security-image-button:disabled,
-.account-security-image-save:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* توضیحات فرمت و حجم مجاز */
@@ -491,57 +437,14 @@
   margin-top: 8px;
 }
 
-.account-security-submit-button,
-.account-security-secondary-button {
+/* =============================================
+   تنظیم اندازه دکمه‌های پایانی فرم امنیت
+   ظاهر و رنگ از Button مرکزی دریافت می‌شود.
+============================================= */
+
+.account-security-form-actions>.ui-button {
   min-width: 116px;
   min-height: 42px;
-  padding: 9px 16px;
-  border-radius: var(--radius-md);
-  font-family: var(--font-family);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    border-color var(--transition-fast);
-}
-
-.account-security-submit-button {
-  border: 1px solid var(--color-primary);
-  background: var(--color-primary);
-  color: #ffffff;
-}
-
-.account-security-submit-button:hover {
-  border-color: var(--color-primary-hover);
-  background: var(--color-primary-hover);
-}
-
-.account-security-submit-button.danger {
-  border-color: #b91c1c;
-  background: #b91c1c;
-}
-
-.account-security-submit-button.danger:hover {
-  border-color: #991b1b;
-  background: #991b1b;
-}
-
-.account-security-secondary-button {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-}
-
-.account-security-secondary-button:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-}
-
-.account-security-submit-button:disabled,
-.account-security-secondary-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* =========================

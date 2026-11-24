@@ -152,33 +152,6 @@
   border-color: var(--product-accent);
 }
 
-.product-add-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  height: 42px;
-  flex: 0 0 auto;
-  padding: 0 16px;
-  border: none;
-  border-radius: 8px;
-  background-color: var(--product-primary);
-  color: #fff;
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.product-add-button:hover {
-  background-color: #263b70;
-}
-
-.product-add-button span {
-  font-size: 19px;
-  line-height: 1;
-}
-
 .product-table-header {
   display: flex;
   align-items: center;
@@ -651,28 +624,6 @@
   margin: 12px 22px 0;
 }
 
-.product-add-row-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.product-add-row-buttons button {
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  background-color: #fff;
-  color: #475569;
-  font: inherit;
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.product-add-row-buttons button:hover {
-  background-color: #f8fafc;
-}
-
 .product-bulk-add-row>span {
   color: var(--product-muted);
   font-size: 10px;
@@ -701,83 +652,11 @@
   background-color: #fff;
 }
 
-.product-cancel-button,
-.product-submit-button {
-  min-width: 110px;
-  height: 39px;
-  padding: 0 15px;
-  border-radius: 8px;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.product-cancel-button {
-  border: 1px solid var(--product-border);
-  background-color: #fff;
-  color: var(--product-muted);
-}
-
-.product-cancel-button:hover {
-  background-color: #f8fafc;
-}
-
-.product-submit-button {
-  border: none;
-  background-color: var(--product-primary);
-  color: #fff;
-}
-
-.product-submit-button:hover {
-  background-color: #263b70;
-}
-
-
 /* دکمه‌های عملیات در فهرست کالاها */
 .product-table-actions {
   display: flex;
   align-items: center;
   gap: 7px;
-}
-
-.product-table-actions button {
-  min-height: 29px;
-  padding: 0 9px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font: inherit;
-  font-size: 10px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.product-edit-action {
-  border-color: #cbd5e1 !important;
-  background-color: #fff;
-  color: #334155;
-}
-
-.product-edit-action:hover {
-  background-color: #f1f5f9;
-}
-
-.product-deactivate-action {
-  background-color: #fff7ed;
-  color: #c2410c;
-}
-
-.product-deactivate-action:hover {
-  background-color: #ffedd5;
-}
-
-.product-activate-action {
-  background-color: #ecfdf5;
-  color: #047857;
-}
-
-.product-activate-action:hover {
-  background-color: #d1fae5;
 }
 
 /* پنجره ویرایش کالا */
@@ -944,36 +823,6 @@
   margin-top: 22px;
 }
 
-.product-confirm-deactivate,
-.product-confirm-activate {
-  min-width: 120px;
-  height: 39px;
-  padding: 0 12px;
-  border: none;
-  border-radius: 7px;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.product-confirm-deactivate {
-  background-color: #c2410c;
-  color: #fff;
-}
-
-.product-confirm-deactivate:hover {
-  background-color: #9a3412;
-}
-
-.product-confirm-activate {
-  background-color: #047857;
-  color: #fff;
-}
-
-.product-confirm-activate:hover {
-  background-color: #065f46;
-}
-
 /* نمایش موجودی فعلی کالا */
 .product-stock-value {
   display: inline-flex;
@@ -1031,17 +880,6 @@
 .product-state-error {
   border-color: #fecaca;
   background-color: #fffafa;
-}
-
-.product-retry-button {
-  min-height: 37px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 7px;
-  background-color: var(--product-primary);
-  color: #fff;
-  font: inherit;
-  font-size: 11px;
 }
 
 .product-permission-note {
@@ -1149,36 +987,6 @@
   font-size: 10px;
 }
 
-/* دکمه ورود گروهی محصولات از Excel */
-.product-import-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  height: 42px;
-  flex: 0 0 auto;
-  padding: 0 15px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background-color: #fff;
-  color: #334155;
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.product-import-button:hover {
-  border-color: #94a3b8;
-  background-color: #f8fafc;
-}
-
-.product-import-button span {
-  font-size: 17px;
-  line-height: 1;
-}
 
 /* سازگاری کارت‌های آماری با نمایشگر کوچک */
 @media (max-width: 1050px) {

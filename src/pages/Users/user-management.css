@@ -247,47 +247,6 @@
   color: #b91c1c;
 }
 
-.user-error button {
-  height: 35px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 7px;
-  background-color: #263b70;
-  color: #fff;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-
-/* دکمه ایجاد کاربر */
-.user-create-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  height: 40px;
-  flex: 0 0 auto;
-  padding: 0 15px;
-  border: none;
-  border-radius: 8px;
-  background-color: #263b70;
-  color: #fff;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.user-create-button:hover {
-  background-color: #1e315f;
-}
-
-.user-create-button>span {
-  font-size: 19px;
-  line-height: 1;
-}
-
 /* پنجره اصلی */
 .user-create-modal {
   display: flex;
@@ -324,24 +283,6 @@
   color: #64748b;
   font-size: 11px;
   line-height: 1.8;
-}
-
-.user-modal-close {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: none;
-  border-radius: 7px;
-  background-color: #f1f5f9;
-  color: #64748b;
-  font-size: 23px;
-  cursor: pointer;
-}
-
-.user-modal-close:hover {
-  background-color: #e2e8f0;
 }
 
 /* فرم */
@@ -580,44 +521,6 @@
   background-color: #fff;
 }
 
-.user-cancel-button,
-.user-submit-button {
-  min-width: 110px;
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 7px;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.user-cancel-button {
-  border: 1px solid #e2e8f0;
-  background-color: #fff;
-  color: #64748b;
-}
-
-.user-cancel-button:hover {
-  background-color: #f8fafc;
-}
-
-.user-submit-button {
-  border: none;
-  background-color: #263b70;
-  color: #fff;
-}
-
-.user-submit-button:hover {
-  background-color: #1e315f;
-}
-
-.user-submit-button:disabled,
-.user-cancel-button:disabled,
-.user-modal-close:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 /* ستون عملیات جدول کاربران */
 .user-table {
   min-width: 1050px;
@@ -629,56 +532,6 @@
   gap: 7px;
 }
 
-.user-row-actions button {
-  height: 30px;
-  padding: 0 9px;
-  border-radius: 6px;
-  font: inherit;
-  font-size: 10px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-/* دکمه ویرایش */
-.user-edit-button {
-  border: 1px solid #cbd5e1;
-  background-color: #fff;
-  color: #475569;
-}
-
-.user-edit-button:hover {
-  border-color: #94a3b8;
-  background-color: #f8fafc;
-}
-
-/* دکمه غیرفعال‌سازی */
-.user-toggle-button.deactivate {
-  border: 1px solid #fecaca;
-  background-color: #fef2f2;
-  color: #b91c1c;
-}
-
-.user-toggle-button.deactivate:hover {
-  background-color: #fee2e2;
-}
-
-/* دکمه فعال‌سازی */
-.user-toggle-button.activate {
-  border: 1px solid #a7f3d0;
-  background-color: #ecfdf5;
-  color: #047857;
-}
-
-.user-toggle-button.activate:hover {
-  background-color: #d1fae5;
-}
-
-/* وضعیت غیرفعال دکمه‌های عملیات */
-.user-row-actions button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 /* نمایش متفاوت نام کاربری در حالت فقط خواندنی */
 .user-form-field>input:read-only {
@@ -725,7 +578,8 @@
     flex-wrap: wrap;
   }
 
-  .user-create-button {
+  /* دکمه ایجاد کاربر در موبایل تمام فضای موجود را می‌گیرد. */
+  .user-toolbar>.ui-button {
     flex: 1;
   }
 }

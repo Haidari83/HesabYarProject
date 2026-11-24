@@ -4,6 +4,7 @@ import { useBusinessData } from '../../context/BusinessDataContext';
 
 import { formatNumber } from '../../utils/numberFormat';
 import { normalizePersianText as normalizeName } from '../../utils/persianText';
+import Button from '../../components/ui/Button';
 
 // import Alert from '../../components/ui/Alert';
 
@@ -245,13 +246,15 @@ function InventoryStockList() {
         </td>
 
         <td>
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="small"
             className="stock-detail-button"
             onClick={() => setSelectedProduct(product)}
           >
             جزئیات
-          </button>
+          </Button>
         </td>
       </tr>
     );
@@ -278,17 +281,20 @@ function InventoryStockList() {
           />
 
           {search && (
-            <button
+            <Button
               type="button"
-              className="stock-search-clear"
+              variant="ghost"
+              size="small"
+              iconOnly
               onClick={() => {
+                // پاک‌کردن عبارت جست‌وجو و بازگشت به صفحه اول
                 setSearch('');
                 setCurrentPage(1);
               }}
               aria-label="پاک‌کردن جست‌وجو"
             >
               ×
-            </button>
+            </Button>
           )}
         </div>
 
@@ -346,26 +352,35 @@ function InventoryStockList() {
             </select>
           </label>
 
-          <button
+          <Button
             type="button"
-            className="stock-sort-direction"
+            variant="ghost"
+            size="small"
+            iconOnly
             onClick={toggleSortDirection}
             title={
               sortDirection === 'asc'
                 ? 'مرتب‌سازی نزولی'
                 : 'مرتب‌سازی صعودی'
             }
+            aria-label={
+              sortDirection === 'asc'
+                ? 'تغییر مرتب‌سازی به حالت نزولی'
+                : 'تغییر مرتب‌سازی به حالت صعودی'
+            }
           >
             {sortDirection === 'asc' ? '↑' : '↓'}
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="small"
             className="stock-reset-button"
             onClick={resetFilters}
           >
             پاک‌کردن فیلترها
-          </button>
+          </Button>
 
         </div>
 
@@ -435,9 +450,14 @@ function InventoryStockList() {
             <strong>کالایی پیدا نشد</strong>
             <p>عبارت جست‌وجو یا فیلترهای انتخاب‌شده را بررسی کن.</p>
 
-            <button type="button" onClick={resetFilters}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="small"
+              onClick={resetFilters}
+            >
               پاک‌کردن فیلترها
-            </button>
+            </Button>
           </div>
         )}
       </section>
@@ -475,9 +495,9 @@ function InventoryStockList() {
                 <div>
                   <span>موجودی فعلی</span>
                   <strong>
-                    {formatNumber(selectedProduct.stock, {
-                      maximumFractionDigits:
-                        getUnit(selectedProduct.unitId)?.decimalPlaces ?? 2,
+                    {formatNumber(product.stock, {
+                      // تعداد رقم اعشار مطابق واحد همین کالا تعیین می‌شود.
+                      maximumFractionDigits: unit?.decimalPlaces ?? 2,
                     })}
                   </strong>
                 </div>
@@ -485,9 +505,9 @@ function InventoryStockList() {
                 <div>
                   <span>حداقل موجودی</span>
                   <strong>
-                    {formatNumber(selectedProduct.minStock, {
-                      maximumFractionDigits:
-                        getUnit(selectedProduct.unitId)?.decimalPlaces ?? 2,
+                    {formatNumber(product.minStock, {
+                      // تعداد رقم اعشار مطابق واحد همین کالا تعیین می‌شود.
+                      maximumFractionDigits: unit?.decimalPlaces ?? 2,
                     })}
                   </strong>
                 </div>
@@ -505,13 +525,15 @@ function InventoryStockList() {
                 </div>
               </div>
 
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="small"
                 className="stock-detail-button"
                 onClick={() => setSelectedProduct(product)}
               >
                 مشاهده جزئیات
-              </button>
+              </Button>
             </article>
           );
         })}
@@ -520,9 +542,14 @@ function InventoryStockList() {
           <div className="stock-empty-state">
             <strong>کالایی پیدا نشد</strong>
             <p>عبارت جست‌وجو یا فیلترها را بررسی کن.</p>
-            <button type="button" onClick={resetFilters}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="small"
+              onClick={resetFilters}
+            >
               پاک‌کردن فیلترها
-            </button>
+            </Button>
           </div>
         )}
       </section>
@@ -530,13 +557,15 @@ function InventoryStockList() {
       {/* صفحه‌بندی */}
       {filteredProducts.length > pageSize && (
         <div className="stock-pagination">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="small"
             disabled={safeCurrentPage === 1}
             onClick={() => setCurrentPage((page) => page - 1)}
           >
             قبلی
-          </button>
+          </Button>
 
           <span>
             صفحه {formatNumber(safeCurrentPage)}
@@ -544,13 +573,15 @@ function InventoryStockList() {
             از {formatNumber(totalPages)}
           </span>
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="small"
             disabled={safeCurrentPage === totalPages}
             onClick={() => setCurrentPage((page) => page + 1)}
           >
             بعدی
-          </button>
+          </Button>
         </div>
       )}
 
@@ -576,13 +607,16 @@ function InventoryStockList() {
                 <p>اطلاعات ثبت‌شده این کالا در حساب‌یار</p>
               </div>
 
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="small"
+                iconOnly
                 onClick={() => setSelectedProduct(null)}
                 aria-label="بستن"
               >
                 ×
-              </button>
+              </Button>
             </header>
 
             <div className="stock-detail-modal-content">
@@ -636,12 +670,14 @@ function InventoryStockList() {
             </div>
 
             <footer className="stock-detail-modal-footer">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="small"
                 onClick={() => setSelectedProduct(null)}
               >
                 بستن
-              </button>
+              </Button>
             </footer>
           </section>
         </div>

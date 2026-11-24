@@ -6,6 +6,7 @@ import {
 } from '../../utils/dateUtils';
 
 import Alert from '../ui/Alert';
+import Button from '../ui/Button';
 
 import AccountSecurityModal from '../account/AccountSecurityModal';
 
@@ -278,15 +279,25 @@ function TopBar({
       <div className="topbar__identity">
 
         {/* دکمه باز و بسته کردن منوی کناری */}
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          iconOnly
           className="topbar__icon-button topbar__menu-button"
           onClick={onToggleSidebar}
-          aria-label={sidebarCollapsed ? 'باز کردن منو' : 'جمع کردن منو'}
-          title={sidebarCollapsed ? 'باز کردن منو' : 'جمع کردن منو'}
+          aria-label={
+            sidebarCollapsed
+              ? 'باز کردن منو'
+              : 'جمع کردن منو'
+          }
+          title={
+            sidebarCollapsed
+              ? 'باز کردن منو'
+              : 'جمع کردن منو'
+          }
         >
           <MenuIcon />
-        </button>
+        </Button>
 
         {/* نشان و نام برنامه */}
         <div className="topbar__brand">
@@ -327,8 +338,10 @@ function TopBar({
           {/* اعلان‌ها */}
           <div className="topbar__action-item">
 
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              iconOnly
               className="topbar__icon-button"
               onClick={() => togglePanel('notifications')}
               aria-label="اعلان‌ها"
@@ -337,7 +350,7 @@ function TopBar({
               title="اعلان‌ها"
             >
               <BellIcon />
-            </button>
+            </Button>
 
             {activePanel === 'notifications' && (
               <div
@@ -360,8 +373,10 @@ function TopBar({
           {/* تنظیمات */}
           <div className="topbar__action-item">
 
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              iconOnly
               className="topbar__icon-button"
               onClick={() => togglePanel('settings')}
               aria-label="تنظیمات"
@@ -370,7 +385,7 @@ function TopBar({
               title="تنظیمات"
             >
               <SettingsIcon />
-            </button>
+            </Button>
 
             {activePanel === 'settings' && (
               <div

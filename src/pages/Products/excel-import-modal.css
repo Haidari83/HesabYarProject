@@ -65,30 +65,6 @@
   line-height: 1.8;
 }
 
-/* دکمه بستن */
-.excel-import-close {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #fff;
-  color: #64748b;
-  font-size: 23px;
-  cursor: pointer;
-}
-
-.excel-import-close:hover {
-  background: #f8fafc;
-}
-
-.excel-import-close:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* محتوای قابل پیمایش پنجره */
 .excel-import-body {
   flex: 1 1 0;
@@ -158,41 +134,6 @@
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
-}
-
-.excel-import-file-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  min-height: 40px;
-  padding: 0 17px;
-
-  border: none;
-  border-radius: 8px;
-
-  background: #172554;
-  color: #fff;
-
-  font: inherit;
-  font-size: var(--excel-text-md);
-
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.excel-import-file-button:hover {
-  background: #263b70;
-}
-
-.excel-import-file-button:focus-visible {
-  outline: 3px solid rgb(15 118 110 / 20%);
-  outline-offset: 3px;
-}
-
-.excel-import-file-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .excel-import-file-info {
@@ -298,25 +239,6 @@
   line-height: 1.8;
 }
 
-.excel-import-footer button {
-  min-width: 100px;
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 7px;
-  font: inherit;
-  font-size: var(--excel-text-sm);
-  cursor: pointer;
-}
-
-.excel-import-footer button:hover {
-  background: #f8fafc;
-}
-
-.excel-import-footer button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* کارت‌های خلاصه اعتبارسنجی */
 .excel-import-summary {
   display: grid;
@@ -420,57 +342,6 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.excel-import-footer-actions button {
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 7px;
-  font: inherit;
-  font-size: var(--excel-text-sm);
-  cursor: pointer;
-}
-
-.excel-import-submit-button {
-  border: none;
-  background: #172554;
-  color: #fff;
-}
-
-.excel-import-submit-button:hover {
-  background: #263b70;
-}
-
-.excel-import-submit-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.excel-import-footer-actions button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* دکمه‌های فرعی */
-.excel-import-footer-actions button:not(.excel-import-submit-button) {
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #475569;
-}
-
-.excel-import-footer-actions button:not(.excel-import-submit-button):hover {
-  background: #f8fafc;
-}
-
-/* دکمه اصلی */
-.excel-import-footer-actions button.excel-import-submit-button {
-  border: none;
-  background: #172554;
-  color: #fff;
-}
-
-.excel-import-footer-actions button.excel-import-submit-button:hover {
-  background: #263b70;
 }
 
 /* ساختار محتوای صفحات واردسازی */
@@ -580,7 +451,8 @@
     width: 100%;
   }
 
-  .excel-import-footer-actions button {
+  /* دکمه‌های پایین پنجره در موبایل عرض مساوی می‌گیرند. */
+  .excel-import-footer-actions>.ui-button {
     flex: 1;
   }
 

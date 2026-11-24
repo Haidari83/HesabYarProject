@@ -176,42 +176,6 @@
   padding-top: 5px;
 }
 
-.documents-filter-actions button {
-  min-height: 38px;
-
-  padding: 8px 15px;
-
-  border: 0;
-  border-radius: 7px;
-
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-
-  cursor: pointer;
-}
-
-
-.documents-apply-button {
-  background: var(--documents-primary);
-  color: #fff;
-}
-
-.documents-apply-button:hover {
-  background: #176da9;
-}
-
-
-.documents-reset-button {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.documents-reset-button:hover {
-  background: #e2e8f0;
-}
-
-
 /* جدول اسناد */
 
 .documents-table-wrapper {
@@ -397,38 +361,6 @@
   min-width: 0;
 }
 
-/* دکمه تلاش مجدد */
-.documents-error button {
-  flex: 0 0 auto;
-  padding: 7px 11px;
-  border: 1px solid var(--color-danger-border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-danger-text);
-  font-family: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.documents-error button {
-  flex-shrink: 0;
-
-  padding: 7px 11px;
-
-  border: 1px solid currentColor;
-  border-radius: 6px;
-
-  background: transparent;
-
-  color: inherit;
-
-  font-family: inherit;
-  font-size: 11px;
-
-  cursor: pointer;
-}
-
-
 /* صفحه‌بندی */
 
 .documents-pagination {
@@ -445,34 +377,9 @@
   font-size: 12px;
 }
 
-
-.documents-pagination button {
+/* عرض دکمه‌های صفحه‌بندی ثابت می‌ماند. */
+.documents-pagination>.ui-button {
   min-width: 65px;
-  min-height: 34px;
-
-  padding: 6px 12px;
-
-  border: 1px solid var(--documents-border);
-  border-radius: 7px;
-
-  background: #fff;
-
-  color: #475569;
-
-  font-family: inherit;
-  font-size: 11px;
-
-  cursor: pointer;
-}
-
-
-.documents-pagination button:hover:not(:disabled) {
-  background: #f8fafc;
-}
-
-.documents-pagination button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 /* دکمه‌های عملیاتی داخل تقویم */
@@ -494,34 +401,11 @@
   direction: rtl;
 }
 
-
-/* استایل مشترک دکمه‌های تقویم */
-
-.documents-date-picker-actions button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
+/* هر دو دکمه تقویم عرض مساوی می‌گیرند. */
+.documents-date-picker-actions>.ui-button {
   flex: 1;
   min-width: 0;
-  min-height: 36px;
-
-  padding: 8px 12px;
-
-  border: 1px solid transparent;
-  border-radius: 7px;
-
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
 }
-
 
 /* دکمه رفتن به امروز */
 
@@ -715,10 +599,6 @@
   .documents-filter-actions {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .documents-filter-actions button {
-    width: 100%;
   }
 
   .documents-filter-section,

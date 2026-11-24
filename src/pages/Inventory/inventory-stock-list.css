@@ -57,14 +57,6 @@
   color: #94a3b8;
 }
 
-.stock-search-clear {
-  border: none;
-  background: transparent;
-  color: var(--stock-muted);
-  font-size: 20px;
-  cursor: pointer;
-}
-
 .stock-filter-row {
   display: flex;
   align-items: flex-end;
@@ -100,29 +92,6 @@
 
 .stock-filter-field select:focus {
   border-color: #93c5fd;
-}
-
-.stock-sort-direction,
-.stock-reset-button {
-  height: 38px;
-  padding: 0 12px;
-  border: 1px solid var(--stock-border);
-  border-radius: 7px;
-  background: #fff;
-  color: #475569;
-  font-family: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.stock-sort-direction {
-  min-width: 38px;
-  font-size: 19px;
-}
-
-.stock-reset-button:hover,
-.stock-sort-direction:hover {
-  background: #f8fafc;
 }
 
 /* فیلتر وضعیت موجودی */
@@ -272,33 +241,6 @@
   color: #64748b;
 }
 
-/* دکمه جزئیات */
-.stock-detail-button {
-  padding: 6px 10px;
-  border: 1px solid #dbeafe;
-  border-radius: 6px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-family: inherit;
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.stock-detail-button:hover {
-  background: #dbeafe;
-}
-
-/* حالت بدون نتیجه */
-.stock-empty-state {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  gap: 9px;
-  padding: 45px 15px;
-  color: var(--stock-muted);
-  text-align: center;
-}
-
 .stock-empty-state>span {
   font-size: 27px;
 }
@@ -376,9 +318,9 @@
   font-weight: 500;
 }
 
+/* دکمه مشاهده جزئیات در ابتدای کارت موبایل قرار می‌گیرد. */
 .stock-mobile-card>.stock-detail-button {
   align-self: flex-start;
-  padding: 8px 13px;
 }
 
 /* صفحه‌بندی */
@@ -392,21 +334,9 @@
   font-size: 11px;
 }
 
-.stock-pagination button {
+/* ثابت ماندن حداقل عرض دکمه‌های صفحه‌بندی */
+.stock-pagination>.ui-button {
   min-width: 65px;
-  padding: 8px 12px;
-  border: 1px solid var(--stock-border);
-  border-radius: 7px;
-  background: #fff;
-  color: var(--stock-text);
-  font-family: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.stock-pagination button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 /* پنجره جزئیات */
@@ -454,17 +384,6 @@
   font-size: 11px;
 }
 
-.stock-detail-modal-header button {
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 7px;
-  background: #f1f5f9;
-  color: #475569;
-  font-size: 20px;
-  cursor: pointer;
-}
-
 .stock-detail-modal-content {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -495,17 +414,6 @@
   justify-content: flex-end;
   padding: 14px 20px;
   border-top: 1px solid var(--stock-border);
-}
-
-.stock-detail-modal-footer button {
-  padding: 8px 16px;
-  border: 1px solid var(--stock-border);
-  border-radius: 7px;
-  background: #fff;
-  color: var(--stock-text);
-  font-family: inherit;
-  font-size: 11px;
-  cursor: pointer;
 }
 
 /* واکنش‌گرایی */

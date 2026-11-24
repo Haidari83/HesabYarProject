@@ -208,28 +208,6 @@
   margin-bottom: 12px;
 }
 
-.product-form-unit-actions button {
-  min-height: 35px;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  background: #fff;
-  color: #334155;
-  font: inherit;
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.product-form-unit-actions button:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-}
-
-.product-form-unit-actions button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
 /* پیام خالی بودن فهرست واحدها */
 .product-form-empty-units {
   padding: 16px;
@@ -261,17 +239,6 @@
 .product-form-unit-row-heading strong {
   color: #334155;
   font-size: 11px;
-}
-
-.product-form-unit-row-heading button {
-  padding: 4px 8px;
-  border: none;
-  border-radius: 5px;
-  background: #fff1f2;
-  color: #be123c;
-  font: inherit;
-  font-size: 10px;
-  cursor: pointer;
 }
 
 /* نسبت تبدیل واحد بسته‌بندی */
@@ -376,39 +343,6 @@
   background: #fff;
 }
 
-.product-form-cancel,
-.product-form-submit {
-  min-width: 110px;
-  height: 39px;
-  padding: 0 15px;
-  border-radius: 7px;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.product-form-cancel {
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #64748b;
-}
-
-.product-form-submit {
-  border: none;
-  background: #172554;
-  color: #fff;
-}
-
-.product-form-submit:hover {
-  background: #263b70;
-}
-
-.product-form-cancel:disabled,
-.product-form-submit:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 /* سازگاری با نمایشگرهای کوچک */
 @media (max-width: 650px) {
   .product-form-backdrop {
@@ -436,9 +370,4 @@
     padding: 12px 14px;
   }
 
-  .product-form-cancel,
-  .product-form-submit {
-    flex: 1;
-    min-width: 0;
-  }
 }

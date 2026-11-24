@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import Alert from '../ui/Alert';
+import Button from '../ui/Button';
 
 import './account-security-modal.css';
 
@@ -615,15 +616,17 @@ function AccountSecurityModal({
 
           </div>
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            iconOnly
             className="account-security-close"
             onClick={onClose}
             disabled={isSubmitting}
             aria-label="بستن پنجره"
           >
             ×
-          </button>
+          </Button>
 
         </header>
 
@@ -695,31 +698,31 @@ function AccountSecurityModal({
                     <div
                       className='account-image-wrapper'>
 
-                      <button
+                      <Button
                         type="button"
-                        className="account-security-image-button"
-                        onClick={() =>
-                          profileImageInputRef.current?.click()
-                        }
+                        variant="secondary"
+                        size="small"
+                        onClick={() => profileImageInputRef.current?.click()}
                         disabled={isSubmitting}
                       >
                         {profileImagePreview
                           ? 'تغییر تصویر'
                           : 'انتخاب تصویر'}
-                      </button>
+                      </Button>
 
                       {hasPendingProfileImage && (
 
-                        <button
+                        <Button
                           type="button"
-                          className="account-security-image-save"
+                          variant="primary"
+                          size="small"
+                          loading={isSubmitting}
                           onClick={handleSaveProfileImage}
-                          disabled={isSubmitting}
                         >
                           {isSubmitting
                             ? 'در حال ذخیره...'
                             : 'ذخیره تصویر'}
-                        </button>
+                        </Button>
 
                       )}
 
@@ -1122,27 +1125,32 @@ function AccountSecurityModal({
               {/* دکمه‌های فرم */}
               <div className="account-security-form-actions">
 
-                <button
+                <Button
                   type="button"
-                  className="account-security-secondary-button"
+                  variant="secondary"
                   onClick={handleBack}
                   disabled={isSubmitting}
                 >
                   انصراف
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="submit"
-                  className={`account-security-submit-button ${activeAction === 'removePin' ? 'danger' : ''
-                    }`}
-                  disabled={isSubmitting}
+                  // حذف PIN عملیات خطرناک است؛ سایر عملیات با رنگ اصلی نمایش داده می‌شوند.
+                  variant={
+                    activeAction === 'removePin'
+                      ? 'danger'
+                      : 'primary'
+                  }
+                  // هنگام ارسال اطلاعات، دکمه غیرفعال و نشانگر بارگذاری نمایش داده می‌شود.
+                  loading={isSubmitting}
                 >
                   {isSubmitting
                     ? 'در حال ثبت...'
                     : activeAction === 'removePin'
                       ? 'حذف PIN'
                       : 'ثبت تغییرات'}
-                </button>
+                </Button>
 
               </div>
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { formatNumber } from '../../utils/numberFormat';
 import { normalizePersianText as normalizeName } from '../../utils/persianText';
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import { createRows } from '../../utils/listHelpers';
 
@@ -851,13 +852,17 @@ function UnitList({ currentUser }) {
           <strong>دریافت اطلاعات ناموفق بود.</strong>
           <p>{loadError}</p>
 
-          <button
+          <Button
             type="button"
-            className="unit-retry-button"
-            onClick={() => setLoadAttempt((value) => value + 1)}
+            variant="secondary"
+            size="small"
+            onClick={() => {
+              // افزایش شمارنده باعث تلاش مجدد در دریافت واحدها می‌شود.
+              setLoadAttempt((value) => value + 1);
+            }}
           >
             تلاش مجدد
-          </button>
+          </Button>
         </div>
       )}
 
@@ -944,21 +949,21 @@ function UnitList({ currentUser }) {
 
             {canManageUnits && (
               <div className="unit-add-actions">
-                <button
+                <Button
                   type="button"
-                  className="unit-add-single"
+                  variant="secondary"
                   onClick={openSingleForm}
                 >
                   + افزودن تکی
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
-                  className="unit-add-bulk"
+                  variant="primary"
                   onClick={openBulkForm}
                 >
                   + افزودن گروهی
-                </button>
+                </Button>
               </div>
             )}
 
@@ -1064,21 +1069,19 @@ function UnitList({ currentUser }) {
                         {canManageUnits ? (
                           <div className="unit-actions">
 
-                            <button
+                            <Button
                               type="button"
-                              className="unit-edit-action"
+                              variant="secondary"
+                              size="small"
                               onClick={() => openEditForm(unit)}
                             >
                               ویرایش
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
                               type="button"
-                              className={
-                                unit.isActive
-                                  ? 'unit-deactivate-action'
-                                  : 'unit-activate-action'
-                              }
+                              variant={unit.isActive ? 'warning' : 'success'}
+                              size="small"
                               disabled={cannotDeactivate}
                               title={
                                 cannotDeactivate
@@ -1089,14 +1092,13 @@ function UnitList({ currentUser }) {
                               }
                               onClick={() => requestStatusChange(unit)}
                             >
-                              {unit.isActive
-                                ? 'غیرفعال'
-                                : 'فعال'}
-                            </button>
+                              {unit.isActive ? 'غیرفعال' : 'فعال'}
+                            </Button>
 
-                            <button
+                            <Button
                               type="button"
-                              className="unit-delete-action"
+                              variant="danger"
+                              size="small"
                               disabled={cannotDelete}
                               title={
                                 unit.isSystem
@@ -1108,7 +1110,7 @@ function UnitList({ currentUser }) {
                               onClick={() => requestDelete(unit)}
                             >
                               حذف
-                            </button>
+                            </Button>
 
                           </div>
                         ) : (
@@ -1176,15 +1178,17 @@ function UnitList({ currentUser }) {
                 </p>
               </div>
 
-              <button
+              <Button
                 type="button"
-                className="unit-modal-close"
+                variant="ghost"
+                size="small"
+                iconOnly
                 onClick={closeForm}
                 disabled={isSaving}
                 aria-label="بستن"
               >
                 ×
-              </button>
+              </Button>
             </header>
 
             {/* فرم ثبت تکی یا ویرایش */}
@@ -1345,26 +1349,26 @@ function UnitList({ currentUser }) {
                 )}
 
                 <footer className="unit-modal-actions">
-                  <button
+                  <Button
                     type="button"
-                    className="unit-cancel-button"
+                    variant="secondary"
                     onClick={closeForm}
                     disabled={isSaving}
                   >
                     انصراف
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="submit"
-                    className="unit-submit-button"
-                    disabled={isSaving}
+                    variant="primary"
+                    loading={isSaving}
                   >
                     {isSaving
                       ? 'در حال ذخیره...'
                       : editingUnit
                         ? 'ذخیره تغییرات'
                         : 'ثبت واحد'}
-                  </button>
+                  </Button>
                 </footer>
 
               </form>
@@ -1518,15 +1522,18 @@ function UnitList({ currentUser }) {
                           </td>
 
                           <td>
-                            <button
+                            <Button
                               type="button"
+                              variant="danger"
+                              size="small"
+                              iconOnly
                               className="unit-row-remove"
                               onClick={() => removeBulkRow(row.rowId)}
                               aria-label={`حذف ردیف ${index + 1}`}
                               disabled={isSaving}
                             >
                               ×
-                            </button>
+                            </Button>
                           </td>
 
                         </tr>
@@ -1538,21 +1545,25 @@ function UnitList({ currentUser }) {
 
                 <div className="unit-bulk-add-row">
                   <div>
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="small"
                       onClick={() => addBulkRows(1)}
                       disabled={bulkRows.length >= 200 || isSaving}
                     >
                       + یک ردیف
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="small"
                       onClick={() => addBulkRows(5)}
                       disabled={bulkRows.length >= 200 || isSaving}
                     >
                       + پنج ردیف
-                    </button>
+                    </Button>
                   </div>
 
                   <span>
@@ -1571,24 +1582,22 @@ function UnitList({ currentUser }) {
                 )}
 
                 <footer className="unit-modal-actions">
-                  <button
+                  <Button
                     type="button"
-                    className="unit-cancel-button"
+                    variant="secondary"
                     onClick={closeForm}
                     disabled={isSaving}
                   >
                     انصراف
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="submit"
-                    className="unit-submit-button"
-                    disabled={isSaving}
+                    variant="primary"
+                    loading={isSaving}
                   >
-                    {isSaving
-                      ? 'در حال ثبت...'
-                      : 'ثبت همه واحدها'}
-                  </button>
+                    {isSaving ? 'در حال ثبت...' : 'ثبت همه واحدها'}
+                  </Button>
                 </footer>
 
               </form>
@@ -1637,27 +1646,27 @@ function UnitList({ currentUser }) {
               )}
 
             <div className="unit-confirm-actions">
-              <button
+              <Button
                 type="button"
-                className="unit-cancel-button"
+                variant="secondary"
                 onClick={() => setConfirmAction(null)}
                 disabled={isSaving}
               >
                 انصراف
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
-                className={
+                variant={
                   confirmAction.type === 'delete'
-                    ? 'unit-delete-confirm'
-                    : 'unit-submit-button'
+                    ? 'danger'
+                    : 'primary'
                 }
                 onClick={handleConfirmAction}
-                disabled={isSaving}
+                loading={isSaving}
               >
                 {isSaving ? 'در حال انجام...' : 'تأیید'}
-              </button>
+              </Button>
             </div>
 
           </section>

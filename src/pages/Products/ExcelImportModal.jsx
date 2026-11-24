@@ -4,6 +4,7 @@ import { validateExcelProductRows } from './excel-import-validation';
 import { normalizePersianText } from '../../utils/persianText';
 import { formatNumber } from '../../utils/numberFormat';
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import './excel-import-modal.css';
 
@@ -634,16 +635,6 @@ function ExcelImportModal({
             </p>
           </div>
 
-          <button
-            ref={closeButtonRef}
-            type="button"
-            className="excel-import-close"
-            onClick={onClose}
-            disabled={isReading || isImporting}
-            aria-label="بستن پنجره"
-          >
-            ×
-          </button>
         </header>
 
         {/* ورودی فایل در تمام مراحل مودال در دسترس می‌ماند */}
@@ -695,16 +686,16 @@ function ExcelImportModal({
 
               <section className="excel-import-file-section">
 
-                <button
+                <Button
                   type="button"
-                  className="excel-import-file-button"
+                  variant="secondary"
                   onClick={openFilePicker}
                   disabled={isReading || isImporting}
                 >
                   {isReading
                     ? 'در حال خواندن فایل...'
                     : 'انتخاب فایل Excel'}
-                </button>
+                </Button>
 
                 {fileName && (
                   <div className="excel-import-file-info">
@@ -1103,25 +1094,27 @@ function ExcelImportModal({
             {/* صفحه اول */}
             {currentStep === 'validation' && (
               <>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={openFilePicker}
                   disabled={isReading || isImporting}
                 >
                   انتخاب فایل دیگر
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
-                  className="excel-import-submit-button"
+                  variant="secondary"
                   disabled={approvedGroups.length === 0}
                   onClick={() => {
+                    // پاک‌کردن خطای قبلی و انتقال به مرحله نمایش موارد تأییدشده
                     setImportError('');
                     setCurrentStep('approved');
                   }}
                 >
                   نمایش موارد مورد تأیید
-                </button>
+                </Button>
               </>
             )}
 
@@ -1129,24 +1122,24 @@ function ExcelImportModal({
             {/* صفحه دوم */}
             {currentStep === 'approved' && (
               <>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => {
+                    // بازگشت به مرحله بررسی تمام ردیف‌های فایل
                     setImportError('');
                     setCurrentStep('validation');
                   }}
                   disabled={isImporting}
                 >
                   بازگشت به بررسی همه موارد
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
-                  className="excel-import-submit-button"
-                  disabled={
-                    isImporting ||
-                    approvedGroups.length === 0
-                  }
+                  variant="primary"
+                  loading={isImporting}
+                  disabled={approvedGroups.length === 0}
                   onClick={handleImport}
                 >
                   {isImporting
@@ -1155,20 +1148,21 @@ function ExcelImportModal({
                       approvedGroups.length,
                       EXCEL_NUMBER_OPTIONS
                     )} محصول`}
-                </button>
+                </Button>
               </>
             )}
 
 
             {/* دکمه پایان پس از ثبت موفق */}
             {(currentStep === 'completed' || currentStep === 'upload') && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={onClose}
                 disabled={isReading || isImporting}
               >
                 {currentStep === 'completed' ? 'پایان' : 'بستن'}
-              </button>
+              </Button>
             )}
 
           </div>

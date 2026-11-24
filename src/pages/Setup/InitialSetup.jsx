@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import '../Login/login.css';
 import './initial-setup.css';
@@ -173,14 +174,16 @@ function InitialSetup({ onComplete }) {
 
                 </label>
 
-                <button
+                <Button
                   type="button"
+                  variant="primary"
+                  fullWidth
                   className="login-submit"
                   disabled={!recoveryConfirmed}
                   onClick={finishSetup}
                 >
                   پایان راه‌اندازی
-                </button>
+                </Button>
 
                 <div className="setup-recovery-warning">
                   در صورت گم‌شدن کد، بازیابی حساب از طریق این کد
@@ -299,12 +302,15 @@ function InitialSetup({ onComplete }) {
                         required
                       />
 
-                      <button
+                      <Button
                         type="button"
-                        className="password-toggle"
-                        onClick={() =>
-                          setShowPassword((previous) => !previous)
-                        }
+                        variant="ghost"
+                        size="small"
+                        className="initial-setup-password-toggle"
+                        onClick={() => {
+                          // تغییر وضعیت نمایش گذرواژه
+                          setShowPassword((previous) => !previous);
+                        }}
                         aria-label={
                           showPassword
                             ? 'مخفی کردن گذرواژه'
@@ -312,8 +318,7 @@ function InitialSetup({ onComplete }) {
                         }
                       >
                         {showPassword ? 'مخفی' : 'نمایش'}
-                      </button>
-
+                      </Button>
                     </div>
 
                   </div>
@@ -350,15 +355,18 @@ function InitialSetup({ onComplete }) {
                     </Alert>
                   )}
 
-                  <button
+                  <Button
                     type="submit"
+                    variant="primary"
+                    size="large"
+                    fullWidth
                     className="login-submit"
-                    disabled={isSubmitting}
+                    loading={isSubmitting}
                   >
                     {isSubmitting
                       ? 'در حال ایجاد حساب...'
                       : 'ایجاد مدیر سیستم'}
-                  </button>
+                  </Button>
 
                 </form>
 

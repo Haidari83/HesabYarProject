@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import './user-management.css';
 
@@ -611,15 +612,14 @@ function UserManagement() {
           <option value="inactive">کاربران غیرفعال</option>
         </select>
 
-        <button
+        <Button
           type="button"
-          className="user-create-button"
+          variant="primary"
+          startIcon="+"
           onClick={openCreateModal}
         >
-          <span aria-hidden="true">+</span>
           ایجاد کاربر
-        </button>
-
+        </Button>
       </section>
 
 
@@ -648,12 +648,14 @@ function UserManagement() {
           <div className="user-message user-error">
             <strong>دریافت اطلاعات ناموفق بود</strong>
             <p>{error}</p>
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="small"
               onClick={() => window.location.reload()}
             >
               تلاش مجدد
-            </button>
+            </Button>
           </div>
 
         ) : filteredUsers.length === 0 ? (
@@ -742,30 +744,34 @@ function UserManagement() {
                       <div className="user-row-actions">
 
                         {/* دکمه ویرایش */}
-                        <button
+                        <Button
                           type="button"
-                          className="user-edit-button"
+                          variant="secondary"
+                          size="small"
                           onClick={() => openEditModal(user)}
                           disabled={Boolean(processingUserId) || isSubmitting}
                         >
                           ویرایش
-                        </button>
+                        </Button>
 
 
                         {/* دکمه تغییر وضعیت */}
-                        <button
+                        <Button
                           type="button"
-                          className={`user-toggle-button ${user.isActive ? 'deactivate' : 'activate'
-                            }`}
+                          variant={user.isActive ? 'warning' : 'success'}
+                          size="small"
+                          loading={processingUserId === user.id}
                           onClick={() => handleSetUserActive(user)}
-                          disabled={Boolean(processingUserId) || isSubmitting}
+                          disabled={
+                            Boolean(processingUserId) || isSubmitting
+                          }
                         >
                           {processingUserId === user.id
                             ? 'در حال انجام...'
                             : user.isActive
                               ? 'غیرفعال‌سازی'
                               : 'فعال‌سازی'}
-                        </button>
+                        </Button>
 
                       </div>
 
@@ -813,15 +819,17 @@ function UserManagement() {
                 </p>
               </div>
 
-              <button
+              <Button
                 type="button"
-                className="user-modal-close"
+                variant="ghost"
+                size="small"
+                iconOnly
                 onClick={closeCreateModal}
                 disabled={isSubmitting}
                 aria-label="بستن پنجره"
               >
                 ×
-              </button>
+              </Button>
 
             </header>
 
@@ -1083,21 +1091,21 @@ function UserManagement() {
               {/* دکمه‌های فرم */}
               <footer className="user-form-footer">
 
-                <button
+                <Button
                   type="button"
-                  className="user-cancel-button"
+                  variant="secondary"
                   onClick={closeCreateModal}
                   disabled={isSubmitting}
                 >
                   انصراف
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="submit"
-                  className="user-submit-button"
+                  variant="primary"
+                  loading={isSubmitting}
                   disabled={
-                    isSubmitting ||
-                    (isLoadingPermissions && form.role === 'user')
+                    isLoadingPermissions && form.role === 'user'
                   }
                 >
                   {isSubmitting
@@ -1107,7 +1115,7 @@ function UserManagement() {
                     : isEditModalOpen
                       ? 'ذخیره تغییرات'
                       : 'ایجاد حساب کاربری'}
-                </button>
+                </Button>
 
               </footer>
 

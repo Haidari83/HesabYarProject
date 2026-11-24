@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import './product-form-modal.css';
 
@@ -373,15 +374,17 @@ function ProductFormModal({
               مشخصات اصلی و واحدهای اندازه‌گیری کالا را وارد کن.            </p>
           </div>
 
-          <button
+          <Button
             type="button"
-            className="product-form-close"
+            variant="ghost"
+            size="small"
+            iconOnly
             onClick={onClose}
             disabled={isSaving}
             aria-label="بستن فرم"
           >
             ×
-          </button>
+          </Button>
         </header>
 
         <form onSubmit={handleSubmit}>
@@ -512,21 +515,25 @@ function ProductFormModal({
               </div>
 
               <div className="product-form-unit-actions">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="small"
                   onClick={() => addUnitOption('standard')}
                   disabled={!selectedBaseUnit}
                 >
                   افزودن واحد استاندارد
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="small"
                   onClick={() => addUnitOption('package')}
                   disabled={!selectedBaseUnit}
                 >
                   افزودن واحد بسته‌بندی
-                </button>
+                </Button>
               </div>
 
               {!selectedBaseUnit && (
@@ -561,12 +568,14 @@ function ProductFormModal({
                         {index + 1}
                       </strong>
 
-                      <button
+                      <Button
                         type="button"
+                        variant="danger"
+                        size="small"
                         onClick={() => removeUnitOption(option.rowId)}
                       >
                         حذف
-                      </button>
+                      </Button>
                     </div>
 
                     <div className="product-form-grid">
@@ -670,26 +679,27 @@ function ProductFormModal({
           </div>
 
           <footer className="product-form-footer">
-            <button
+            <Button
               type="button"
-              className="product-form-cancel"
+              variant="secondary"
               onClick={onClose}
               disabled={isSaving}
             >
               انصراف
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="submit"
-              className="product-form-submit"
-              disabled={isSaving || categories.length === 0}
+              variant="primary"
+              loading={isSaving}
+              disabled={categories.length === 0}
             >
               {isSaving
                 ? 'در حال ذخیره...'
                 : isEditMode
                   ? 'ذخیره تغییرات'
                   : 'ثبت کالا'}
-            </button>
+            </Button>
           </footer>
         </form>
       </section>

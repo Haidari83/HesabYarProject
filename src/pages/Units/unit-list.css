@@ -186,42 +186,6 @@
   flex: 0 0 auto;
 }
 
-.unit-add-actions button,
-.unit-add-conversion {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 42px;
-  padding: 0 13px;
-  border: none;
-  border-radius: 8px;
-  font: inherit;
-  font-size: 11px;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.unit-add-single {
-  background-color: #eef2ff;
-  color: #3730a3;
-}
-
-.unit-add-single:hover {
-  background-color: #e0e7ff;
-}
-
-.unit-add-bulk,
-.unit-add-conversion {
-  background-color: var(--unit-primary);
-  color: #fff;
-}
-
-.unit-add-bulk:hover,
-.unit-add-conversion:hover {
-  background-color: #263b70;
-}
-
 .unit-table-header {
   display: flex;
   align-items: center;
@@ -330,49 +294,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.unit-actions button {
-  min-height: 29px;
-  padding: 0 9px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font: inherit;
-  font-size: 10px;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.unit-edit-action {
-  border-color: #cbd5e1 !important;
-  background-color: #fff;
-  color: #334155;
-}
-
-.unit-edit-action:hover {
-  background-color: #f1f5f9;
-}
-
-.unit-deactivate-action {
-  background-color: #fff7ed;
-  color: #c2410c;
-}
-
-.unit-activate-action {
-  background-color: #ecfdf5;
-  color: #047857;
-}
-
-.unit-delete-action {
-  background-color: #fff1f2;
-  color: #be123c;
-}
-
-.unit-delete-action:disabled {
-  border-color: #e2e8f0;
-  background-color: #f8fafc;
-  color: #94a3b8;
-  cursor: not-allowed;
 }
 
 /* پنجره‌های ثبت واحد */
@@ -592,18 +513,9 @@
   line-height: 1.8;
 }
 
+/* حفظ جایگاه دکمه حذف ردیف در جدول گروهی */
 .unit-row-remove {
-  display: grid;
-  width: 30px;
-  height: 30px;
   margin: auto;
-  place-items: center;
-  border: none;
-  border-radius: 6px;
-  background-color: #fff1f2;
-  color: #be123c;
-  font-size: 20px;
-  cursor: pointer;
 }
 
 /* افزودن ردیف */
@@ -619,18 +531,6 @@
 .unit-bulk-add-row>div {
   display: flex;
   gap: 8px;
-}
-
-.unit-bulk-add-row button {
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  background-color: #fff;
-  color: #475569;
-  font: inherit;
-  font-size: 10px;
-  cursor: pointer;
 }
 
 .unit-bulk-add-row>span {
@@ -665,35 +565,6 @@
   margin-top: 20px;
   padding: 14px 20px;
   border-top: 1px solid var(--unit-border);
-}
-
-.unit-cancel-button,
-.unit-submit-button,
-.unit-delete-confirm {
-  min-width: 105px;
-  height: 39px;
-  padding: 0 13px;
-  border: none;
-  border-radius: 8px;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.unit-cancel-button {
-  border: 1px solid var(--unit-border);
-  background-color: #fff;
-  color: var(--unit-muted);
-}
-
-.unit-submit-button {
-  background-color: var(--unit-primary);
-  color: #fff;
-}
-
-.unit-delete-confirm {
-  background-color: #be123c;
-  color: #fff;
 }
 
 /* پنجره تأیید */
@@ -757,17 +628,6 @@
 .unit-state-error {
   border-color: #fecaca;
   background-color: #fffafa;
-}
-
-.unit-retry-button {
-  min-height: 37px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 7px;
-  background-color: var(--unit-primary);
-  color: #fff;
-  font: inherit;
-  font-size: 11px;
 }
 
 .unit-permission-note {
@@ -985,7 +845,8 @@
     flex-basis: 100%;
   }
 
-  .unit-add-actions button {
+  /* دکمه‌های افزودن در صفحه واحدها عرض مساوی می‌گیرند. */
+  .unit-add-actions>.ui-button {
     flex: 1;
   }
 

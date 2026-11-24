@@ -6,6 +6,7 @@ import {
 } from 'react';
 
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import './inventory-entry.css';
 
@@ -53,24 +54,27 @@ function InventoryDatePickerActions({
   return (
     <div className="entry-date-picker-actions">
 
-      <button
+      <Button
         type="button"
-        className="entry-date-picker-today"
+        variant="secondary"
+        size="small"
         onClick={onSelectToday}
       >
         رفتن به امروز
-      </button>
+      </Button>
 
-      <button
+      <Button
         type="button"
-        className="entry-date-picker-confirm"
+        variant="primary"
+        size="small"
         onClick={() => {
+          // ابتدا تاریخ تأیید می‌شود و سپس تقویم بسته می‌شود.
           onConfirm();
           DatePicker?.closeCalendar?.();
         }}
       >
         تأیید
-      </button>
+      </Button>
 
     </div>
   );
@@ -1369,12 +1373,14 @@ function InventoryEntry() {
             {loadError || 'اطلاعات موردنیاز فرم در دسترس نیست.'}
           </p>
 
-          <button
+          <Button
             type="button"
-            onClick={handleRetryFormOptions
-            }          >
+            variant="secondary"
+            size="small"
+            onClick={handleRetryFormOptions}
+          >
             تلاش مجدد
-          </button>
+          </Button>
 
         </div>
 
@@ -1401,13 +1407,14 @@ function InventoryEntry() {
           >
             {loadError}
           </Alert>
-
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="small"
             onClick={handleRetryFormOptions}
           >
             تلاش مجدد
-          </button>
+          </Button>
 
         </div>
 
@@ -1673,14 +1680,14 @@ function InventoryEntry() {
 
 
             {/* دکمه افزودن کالا در بالای فهرست */}
-            <button
+            <Button
               type="button"
-              className="entry-add-item-button"
+              variant="secondary"
+              startIcon="＋"
               onClick={addItemRow}
             >
-              <span>＋</span>
               افزودن کالا
-            </button>
+            </Button>
 
           </div>
 
@@ -1701,12 +1708,13 @@ function InventoryEntry() {
               برای شروع، کالاهای موردنظر را به سند ورود اضافه کن.
             </p>
 
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={addItemRow}
             >
               افزودن اولین کالا
-            </button>
+            </Button>
 
           </div>
 
@@ -2006,15 +2014,18 @@ function InventoryEntry() {
                         {/* حذف ردیف */}
                         <td data-label="عملیات">
 
-                          <button
+                          <Button
                             type="button"
+                            variant="danger"
+                            size="small"
+                            iconOnly
                             className="entry-remove-item-button"
                             onClick={() => removeItemRow(item.id)}
                             title="حذف این ردیف"
-                            aria-label={`حذف ردیف ${index + 1}`}
+                            aria-label={`حذف ردیف $DIL3`}
                           >
                             ×
-                          </button>
+                          </Button>
 
                         </td>
 
@@ -2038,14 +2049,14 @@ function InventoryEntry() {
                 برای افزودن ردیف دیگری، از دکمه زیر استفاده کن.
               </p>
 
-              <button
+              <Button
                 type="button"
-                className="entry-add-item-button"
+                variant="secondary"
+                startIcon="＋"
                 onClick={addItemRow}
               >
-                <span>＋</span>
                 افزودن کالای دیگر
-              </button>
+              </Button>
 
             </div>
 
@@ -2171,29 +2182,26 @@ function InventoryEntry() {
 
         <div className="entry-form-actions">
 
-          <button
+          <Button
             type="button"
-            className="entry-submit-button"
+            variant="primary"
             disabled
             title="ثبت نهایی سند در مرحله بعد پیاده‌سازی می‌شود."
           >
             ثبت نهایی سند
-          </button>
+          </Button>
 
-
-          <button
+          <Button
             type="button"
-            className="entry-draft-button"
+            variant="secondary"
+            loading={isSaving}
             onClick={handleSaveDraft}
             disabled={!canSaveDraft}
           >
-
             {isSaving
               ? 'در حال ذخیره...'
               : 'ذخیره پیش‌نویس'}
-
-          </button>
-
+          </Button>
         </div>
 
       </section>

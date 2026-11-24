@@ -246,27 +246,17 @@
    تاگل پسورد
 ************************ */
 
+/* جایگاه دکمه نمایش گذرواژه درون ورودی */
 .password-toggle {
   position: absolute;
   left: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 6px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: #9ca3af;
-  transition:
-    color var(--transition-fast),
-    background-color var(--transition-fast);
+  z-index: 2;
 }
 
-.password-toggle:hover {
-  color: var(--color-primary);
-  background-color: #f0f2f7;
+/* اندازه آیکون داخل دکمه */
+.password-toggle svg {
+  width: 100%;
+  height: 100%;
 }
 
 .password-toggle svg {
@@ -278,33 +268,16 @@
   دکمه ثبت
 ************************ */
 
+/* =============================================
+   تنظیمات چیدمان دکمه ورود
+   ظاهر و رنگ از Button مرکزی دریافت می‌شود.
+============================================= */
+
 .login-submit {
   width: 100%;
   min-height: 54px;
   margin-top: 5px;
-  padding: 12px 20px;
-  border: 0;
-  border-radius: var(--radius-md);
-  background-color: var(--color-primary);
-  color: #ffffff;
-  font-family: var(--font-family);
-  font-size: var(--font-size-md);
-  font-weight: 600;
-  transition:
-    background-color var(--transition-fast),
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
 }
-
-.login-submit:hover {
-  background-color: var(--color-primary-hover);
-  box-shadow: 0 5px 14px rgba(23, 37, 84, 0.16);
-}
-
-.login-submit:active {
-  transform: translateY(1px);
-}
-
 
 /* ************************
    متن پایانی

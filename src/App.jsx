@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import Login from './pages/Login/Login';
 import InitialSetup from './pages/Setup/InitialSetup';
-
+import Button from './components/ui/Button';
 import AppLayout from './layouts/AppLayout';
 import PageLayout from './components/page/PageLayout';
 import Dashboard from './pages/Dashboard/Dashboard';
@@ -149,8 +149,6 @@ function ApplicationShell({
               <InventoryDocuments />
             ) : activePageId === 'users' ? (
               <UserManagement />
-            ) : activePageId === 'users' ? (
-              <div>شما اجازه دسترسی به این بخش را ندارید.</div>
             ) : (
               <div className="page-demo-content">
                 <h2>{currentPage.title}</h2>
@@ -352,12 +350,16 @@ function App() {
 
         <p>{startupError}</p>
 
-        <button
+        <Button
           type="button"
-          onClick={() => window.location.reload()}
+          variant="primary"
+          onClick={() => {
+            // بارگذاری مجدد برنامه برای بررسی دوباره وضعیت راه‌اندازی
+            window.location.reload();
+          }}
         >
           تلاش مجدد
-        </button>
+        </Button>
 
       </div>
     );

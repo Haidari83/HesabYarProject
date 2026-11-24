@@ -5,6 +5,8 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 
+import Button from './Button';
+
 // عناصر تعاملی که باید در چرخه فوکوس مودال باقی بمانند.
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -34,7 +36,7 @@ let previousBodyOverflow = '';
 
 function acquireBodyScrollLock() {
   if (typeof document === 'undefined') {
-    return () => {};
+    return () => { };
   }
 
   if (activeScrollLocks === 0) {
@@ -351,6 +353,7 @@ function ModalFooter({
 }
 
 // دکمه بستن مشترک که در Header و خارج از آن قابل استفاده است.
+// دکمه مشترک بستن پنجره‌ها با استفاده از Button مرکزی
 function ModalCloseButton({
   onClick,
   disabled = false,
@@ -358,18 +361,23 @@ function ModalCloseButton({
   className = '',
 }) {
   return (
-    <button
+    <Button
       type="button"
-      className={joinClasses('ui-modal__close', className)}
+      variant="ghost"
+      size="small"
+      iconOnly
+      className={joinClasses(
+        'ui-modal__close',
+        className
+      )}
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
     >
       ×
-    </button>
+    </Button>
   );
 }
-
 ModalShell.Header = ModalHeader;
 ModalShell.Body = ModalBody;
 ModalShell.Footer = ModalFooter;

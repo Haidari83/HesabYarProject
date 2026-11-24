@@ -1,7 +1,9 @@
-/* =================================
-   ۱. دکمه‌های عمومی
-================================= */
+/* =============================================
+   ۱. دکمه‌های عمومی حساب‌یار
+============================================= */
 
+
+/* ساختار پایه تمام دکمه‌ها */
 .ui-button {
   display: inline-flex;
   align-items: center;
@@ -10,6 +12,7 @@
 
   min-width: 0;
   min-height: 40px;
+
   padding: 0 var(--spacing-4);
 
   border: 1px solid transparent;
@@ -23,26 +26,40 @@
   font-weight: var(--font-weight-semibold);
 
   line-height: var(--line-height-tight);
+  text-align: center;
+  text-decoration: none;
   white-space: nowrap;
+
+  cursor: pointer;
 
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
     color var(--transition-fast),
-    box-shadow var(--transition-fast);
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
 }
 
-.ui-button:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
+
+/* نمایش کادر مناسب هنگام حرکت با صفحه‌کلید */
+.ui-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
 }
 
+
+/* وضعیت غیرفعال */
 .ui-button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 
-/* دکمه اصلی */
+/* =============================================
+   گونه اول: دکمه اصلی
+   برای ثبت، تأیید و عملیات اصلی
+============================================= */
 
 .ui-button--primary {
   border-color: var(--color-primary);
@@ -56,7 +73,10 @@
 }
 
 
-/* دکمه فرعی */
+/* =============================================
+   گونه دوم: دکمه فرعی
+   برای انصراف، بازگشت و عملیات کمکی
+============================================= */
 
 .ui-button--secondary {
   border-color: var(--color-neutral-border);
@@ -70,7 +90,10 @@
 }
 
 
-/* دکمه خطا و عملیات خطرناک */
+/* =============================================
+   گونه سوم: دکمه خطرناک
+   برای حذف و عملیات غیرقابل بازگشت
+============================================= */
 
 .ui-button--danger {
   border-color: var(--color-danger);
@@ -84,7 +107,10 @@
 }
 
 
-/* دکمه شفاف */
+/* =============================================
+   گونه چهارم: دکمه شفاف
+   برای بستن پنجره‌ها و کنترل‌های آیکونی
+============================================= */
 
 .ui-button--ghost {
   border-color: transparent;
@@ -98,47 +124,140 @@
 }
 
 
-/* اندازه کوچک */
+/* =============================================
+   گونه پنجم: دکمه موفقیت
+   برای فعال‌سازی و عملیات موفق
+============================================= */
+
+.ui-button--success {
+  border-color: var(--color-success);
+  background-color: var(--color-success);
+  color: var(--color-text-inverse);
+}
+
+.ui-button--success:hover:not(:disabled) {
+  border-color: #166534;
+  background-color: #166534;
+}
+
+
+/* =============================================
+   گونه ششم: دکمه هشدار
+   برای غیرفعال‌سازی و عملیات نیازمند توجه
+============================================= */
+
+.ui-button--warning {
+  border-color: var(--color-warning);
+  background-color: var(--color-warning);
+  color: var(--color-text-inverse);
+}
+
+.ui-button--warning:hover:not(:disabled) {
+  border-color: #b45309;
+  background-color: #b45309;
+}
+
+
+/* =============================================
+   اندازه کوچک
+============================================= */
 
 .ui-button--small {
   min-height: 32px;
   padding: 0 var(--spacing-3);
+
   border-radius: var(--radius-sm);
+
   font-size: var(--font-size-2xs);
 }
 
 
-/* اندازه بزرگ */
+/* =============================================
+   اندازه بزرگ
+============================================= */
 
 .ui-button--large {
   min-height: 46px;
   padding: 0 var(--spacing-5);
+
   font-size: var(--font-size-sm);
 }
 
 
-/* دکمه آیکونی */
+/* =============================================
+   دکمه تمام‌عرض
+============================================= */
 
+.ui-button--full-width {
+  width: 100%;
+}
+
+
+/* =============================================
+   دکمه‌های فقط آیکون
+============================================= */
+
+/* اندازه پیش‌فرض: متوسط */
 .ui-button--icon {
   width: 40px;
   min-width: 40px;
   height: 40px;
+
   padding: var(--spacing-2);
 }
 
+
+/* اندازه کوچک: ۳۲ در ۳۲ */
+.ui-button--small.ui-button--icon {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+}
+
+
+/* اندازه بزرگ: ۴۶ در ۴۶ */
+.ui-button--large.ui-button--icon {
+  width: 46px;
+  min-width: 46px;
+  height: 46px;
+}
+
+
+/* اندازه استاندارد آیکون داخل دکمه */
 .ui-button--icon svg {
   width: 20px;
   height: 20px;
+
   flex-shrink: 0;
 }
 
-/* جایگاه آیکون‌های ابتدا و انتهای دکمه */
+
+/* آیکون دکمه کوچک */
+.ui-button--small.ui-button--icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+
+/* آیکون دکمه بزرگ */
+.ui-button--large.ui-button--icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+
+/* =============================================
+   آیکون‌های ابتدا و انتهای متن دکمه
+============================================= */
+
 .ui-button__start-icon,
 .ui-button__end-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   flex: 0 0 auto;
+
   line-height: 0;
 }
 
@@ -147,6 +266,26 @@
   display: block;
   width: 1.15em;
   height: 1.15em;
+}
+
+
+/* =============================================
+   نشانگر بارگذاری دکمه
+============================================= */
+
+.ui-button[aria-busy="true"]::after {
+  width: 1em;
+  height: 1em;
+
+  flex: 0 0 auto;
+
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+
+  content: "";
+
+  animation: ui-button-spinner 700ms linear infinite;
 }
 
 
@@ -711,8 +850,23 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ui-button[aria-busy="true"]::after {
-    animation-duration: 1.5s;
+/* چرخش نشانگر بارگذاری */
+@keyframes ui-button-spinner {
+  to {
+    transform: rotate(360deg);
   }
+}
+
+
+/* احترام به تنظیمات کاهش حرکت سیستم‌عامل */
+@media (prefers-reduced-motion: reduce) {
+
+  .ui-button {
+    transition: none;
+  }
+
+  .ui-button[aria-busy="true"]::after {
+    animation: none;
+  }
+
 }

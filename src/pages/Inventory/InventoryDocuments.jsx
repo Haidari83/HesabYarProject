@@ -5,6 +5,7 @@ import persianCalendar from 'react-date-object/calendars/persian';
 import persianAfghanistan from '../../locales/persianAfghanistan';
 import { formatNumber } from '../../utils/numberFormat';
 import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import {
   getTodayGregorianDate as getLocalDate,
@@ -103,24 +104,26 @@ function DocumentDatePickerActions({
 
     <div className="documents-date-picker-actions">
 
-      <button
+      <Button
         type="button"
-        className="documents-date-picker-today"
+        variant="secondary"
+        size="small"
         onClick={onSelectToday}
       >
         رفتن به امروز
-      </button>
+      </Button>
 
-
-      <button
+      <Button
         type="button"
-        className="documents-date-picker-confirm"
+        variant="primary"
+        size="small"
         onClick={() => {
+          // بستن تقویم پس از تأیید تاریخ
           DatePicker?.closeCalendar?.();
         }}
       >
         تأیید
-      </button>
+      </Button>
 
     </div>
 
@@ -925,20 +928,20 @@ function InventoryDocuments() {
           {/* دکمه‌های عملیات فیلتر */}
           <div className="documents-filter-actions">
 
-            <button
+            <Button
               type="submit"
-              className="documents-apply-button"
+              variant="primary"
             >
               اعمال فیلتر
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
-              className="documents-reset-button"
+              variant="secondary"
               onClick={handleResetFilters}
             >
               پاک‌کردن فیلترها
-            </button>
+            </Button>
 
           </div>
 
@@ -973,13 +976,14 @@ function InventoryDocuments() {
             >
               {loadError}
             </Alert>
-
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="small"
               onClick={handleRetry}
             >
               تلاش مجدد
-            </button>
+            </Button>
 
           </div>
         )}
@@ -1098,15 +1102,15 @@ function InventoryDocuments() {
 
               <div className="documents-pagination">
 
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="small"
                   disabled={currentPage === 1 || isLoading}
-                  onClick={() =>
-                    handlePageChange(currentPage - 1)
-                  }
+                  onClick={() => handlePageChange(currentPage - 1)}
                 >
                   قبلی
-                </button>
+                </Button>
 
 
                 <span>
@@ -1122,15 +1126,15 @@ function InventoryDocuments() {
                 </span>
 
 
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="small"
                   disabled={currentPage === totalPages || isLoading}
-                  onClick={() =>
-                    handlePageChange(currentPage + 1)
-                  }
+                  onClick={() => handlePageChange(currentPage + 1)}
                 >
                   بعدی
-                </button>
+                </Button>
 
               </div>
 
