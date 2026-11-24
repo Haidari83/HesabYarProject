@@ -173,8 +173,20 @@
 /* محتوای پیام */
 
 .ui-alert__content {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* محفظه توضیحات پیام */
+.ui-alert__description {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* وقتی پیام فقط عنوان دارد، فاصله اضافی حذف شود. */
+.ui-alert__content>strong:last-child {
+  margin-bottom: 0;
 }
 
 .ui-alert__content p {
@@ -246,16 +258,18 @@
 .ui-alert--inline .ui-alert__icon {
   width: 25px;
   height: 25px;
+
+  border: 1px solid currentColor;
   border-radius: 50%;
-  background-color: #d1fae5;
+
+  background-color: transparent;
   font-weight: var(--font-weight-bold);
 }
 
-/* متن پیام */
-.ui-alert--inline>p {
-  flex: 1;
+/* محفظه محتوای پیام در حالت inline */
+.ui-alert--inline .ui-alert__content {
+  flex: 1 1 auto;
   min-width: 0;
-  margin: 0;
 }
 
 /* دکمه بستن */
@@ -518,8 +532,8 @@
 
 /* آیکون حالت خالی جدول */
 
-.ui-empty-state--table > .ui-empty-state__icon,
-.ui-empty-state--table > span:not([class]) {
+.ui-empty-state--table>.ui-empty-state__icon,
+.ui-empty-state--table>span:not([class]) {
   font-size: 30px;
 }
 

@@ -1,4 +1,5 @@
 // پیام عمومی برای نمایش موفقیت، هشدار، خطا و اطلاع‌رسانی
+
 const DEFAULT_ICONS = {
   success: '✓',
   warning: '!',
@@ -22,21 +23,77 @@ function Alert({
   closeLabel = 'بستن پیام',
   role,
   ariaLive,
+  'aria-live': nativeAriaLive,
+  'aria-atomic': nativeAriaAtomic,
   className = '',
   ...rest
 }) {
+  // فقط گونه‌های تعریف‌شده پذیرفته می‌شوند.
   const safeVariant = Object.hasOwn(DEFAULT_ICONS, variant)
     ? variant
     : 'info';
 
-  const resolvedRole =
-    role || (safeVariant === 'danger' ? 'alert' : 'status');
+  // وضعیت پیش‌فرض برای پیام‌های عمومی، status است.
+  // برای پیام‌های فوری باید role="alert" صریحاً تعیین شود.
+  const resolvedRole = role === undefined
+    ? 'status'
+    : role;
+
+  // نقش alert به‌صورت ضمنی assertive است.
+  // برای status، مقدار polite را نیز صریح تعیین می‌کنیم.
+  const defaultAriaLive =
+    resolvedRole === 'status'
+      ? 'polite'
+      : undefined;
 
   const resolvedLive =
-    ariaLive || (resolvedRole === 'alert' ? 'assertive' : 'polite');
+    ariaLive !== undefined
+      ? ariaLive
+      : nativeAriaLive !== undefined
+        ? nativeAriaLive
+        : defaultAriaLive;
 
+  const isLiveRegion =
+    resolvedRole === 'alert' ||
+    resolvedRole === 'status';
+
+  const resolvedAtomic =
+    nativeAriaAtomic !== undefined
+      ? nativeAriaAtomic
+      : isLiveRegion
+        ? 'true'
+        : undefined;
+
+  // آیکون سفارشی در اولویت است.
+  // اگر آیکون تعیین نشده باشد، آیکون پیش‌فرض گونه انتخاب می‌شود.
   const resolvedIcon =
-    icon === undefined ? DEFAULT_ICONS[safeVariant] : icon;
+    icon === undefined
+      ? DEFAULT_ICONS[safeVariant]
+      : icon;
+
+  const hasIcon =
+    showIcon &&
+    resolvedIcon !== null &&
+    resolvedIcon !== false &&
+    resolvedIcon !== true &&
+    resolvedIcon !== '';
+
+  // بررسی وجود عنوان و توضیحات بدون حذف مقدار معتبر صفر
+  const hasTitle =
+    title !== null &&
+    title !== undefined &&
+    title !== false &&
+    title !== true &&
+    title !== '';
+
+  const hasChildren =
+    children !== null &&
+    children !== undefined &&
+    children !== false &&
+    children !== true &&
+    children !== '';
+
+  const hasContent = hasTitle || hasChildren;
 
   return (
     <div
@@ -46,36 +103,45 @@ function Alert({
         inline && 'ui-alert--inline',
         className
       )}
-      role={resolvedRole}
-      aria-live={resolvedLive}
-      aria-atomic="true"
       {...rest}
     >
-      {showIcon && resolvedIcon !== null && (
-        <span className="ui-alert__icon" aria-hidden="true">
+      {/* آیکون تزئینی پیام */}
+      {hasIcon && (
+        <span
+          className="ui-alert__icon"
+          aria-hidden="true"
+        >
           {resolvedIcon}
         </span>
       )}
 
-      {title ? (
-        <div className="ui-alert__content">
-          <strong>{title}</strong>
-          {children !== null && children !== undefined && (
-            <p>{children}</p>
+      {/* ناحیه متنی پیام؛ بدون کنترل تعاملی */}
+      {hasContent && (
+        <div
+          className="ui-alert__content"
+          role={resolvedRole || undefined}
+          aria-live={resolvedLive}
+          aria-atomic={resolvedAtomic}
+        >
+          {hasTitle && (
+            <strong>{title}</strong>
+          )}
+
+          {hasChildren && (
+            <div className="ui-alert__description">
+              {children}
+            </div>
           )}
         </div>
-      ) : inline ? (
-        <p>{children}</p>
-      ) : (
-        <div className="ui-alert__content">{children}</div>
       )}
 
+      {/* دکمه بستن خارج از ناحیه زنده پیام */}
       {closable && typeof onClose === 'function' && (
         <button
           type="button"
           className="ui-alert__close"
           onClick={onClose}
-          aria-label={closeLabel}
+          aria-label={closeLabel || 'بستن پیام'}
         >
           ×
         </button>
