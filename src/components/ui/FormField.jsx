@@ -27,56 +27,68 @@ function FormField({
   ...containerProps
 }) {
   const generatedId = useId().replace(/:/g, '');
+
   const childList = Children.toArray(children);
 
-  // اگر کنترل از قبل شناسه داشته باشد همان را نگه می‌داریم.
-  const firstControl = childList.find(
+  // پیدا کردن موقعیت اولین کنترل معتبر در میان فرزندان
+  const firstControlIndex = childList.findIndex(
     (child) => isValidElement(child) && child.type !== Fragment
   );
 
+  const firstControl =
+    firstControlIndex >= 0
+      ? childList[firstControlIndex]
+      : null;
+
+  // اگر کنترل از قبل شناسه داشته باشد همان شناسه حفظ می‌شود،
+  // مگر اینکه شناسه مستقلی از طریق FormField تعیین شده باشد.
   const controlId =
     id || firstControl?.props?.id || `ui-field-${generatedId}`;
 
-  const hintId = hint !== null && hint !== undefined
-    ? `${controlId}-hint`
-    : undefined;
+  const hintId =
+    hint !== null && hint !== undefined
+      ? `${controlId}-hint`
+      : undefined;
 
-  const hasError = error !== null && error !== undefined && error !== '';
+  const hasError =
+    error !== null && error !== undefined && error !== '';
 
   const errorId = hasError
     ? `${controlId}-error`
     : undefined;
 
-  let controlDecorated = false;
-
-  const enhancedChildren = Children.map(children, (child) => {
+  // فقط اولین کنترل معتبر را با ویژگی‌های عمومی فرم تکمیل می‌کنیم.
+  const enhancedChildren = childList.map((child, index) => {
     if (
+      index !== firstControlIndex ||
       !isValidElement(child) ||
-      child.type === Fragment ||
-      controlDecorated
+      child.type === Fragment
     ) {
       return child;
     }
 
-    controlDecorated = true;
-
     const existingDescription = child.props['aria-describedby'];
+
     const describedBy = [
       existingDescription,
       hintId,
       errorId,
-    ].filter(Boolean).join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     return cloneElement(child, {
-      id: child.props.id || controlId,
+      id: controlId,
       className: joinClasses(
         'ui-field__control',
         controlClassName,
         child.props.className
       ),
-      'aria-invalid': hasError ? true : child.props['aria-invalid'],
+      'aria-invalid': hasError
+        ? true
+        : child.props['aria-invalid'],
       'aria-describedby': describedBy || undefined,
-      required: required ? child.props.required ?? true : child.props.required,
+      required: required || child.props.required,
     });
   });
 

@@ -69,12 +69,31 @@ function KeyboardSelect({
   const generatedId = useId();
   const listboxId = `${generatedId}-options`;
 
+
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+
+  // نگهداری مقدار قبلی disabled برای تشخیص تغییر آن
+  const [previousDisabled, setPreviousDisabled] = useState(disabled);
 
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
   const optionRefs = useRef([]);
+
+  // این دو ref برای تشخیص بسته‌شدن انتخاب‌گر استفاده می‌شوند.
+  const previousDisabledRef = useRef(disabled);
+  const wasOpenRef = useRef(false);
+
+  // اگر انتخاب‌گر هنگام بازبودن غیرفعال شود، همان‌جا بسته می‌شود.
+  if (disabled !== previousDisabled) {
+    setPreviousDisabled(disabled);
+
+    if (disabled && isOpen) {
+      setIsOpen(false);
+      setActiveIndex(-1);
+    }
+  }
+
 
   const selectedIndex = options.findIndex(
     (option) => getOptionValue(option) === value
@@ -84,10 +103,21 @@ function KeyboardSelect({
     selectedIndex >= 0 ? options[selectedIndex] : null;
 
   // تغییر وضعیت باز بودن فهرست از یک مسیر انجام می‌شود.
+
   const updateOpenState = useCallback((nextValue) => {
-    setIsOpen(nextValue);
-    onOpenChange?.(nextValue);
-  }, [onOpenChange]);
+    const nextOpenState = Boolean(nextValue) && !disabled;
+
+    // اگر وضعیت جدید با وضعیت فعلی تفاوتی ندارد، کاری انجام نمی‌دهیم.
+    if (wasOpenRef.current === nextOpenState) {
+      return;
+    }
+
+    wasOpenRef.current = nextOpenState;
+
+    setIsOpen(nextOpenState);
+    onOpenChange?.(nextOpenState);
+  }, [disabled, onOpenChange]);
+
 
   // پس از بازشدن فهرست، گزینه فعال دریافت‌کننده فوکوس می‌شود.
   useEffect(() => {
@@ -115,12 +145,25 @@ function KeyboardSelect({
     };
   }, [isOpen, updateOpenState]);
 
-  // غیرفعال‌شدن کنترل در زمان بازبودن فهرست، آن را می‌بندد.
+
+  // هماهنگ‌سازی تغییر disabled با وضعیت داخلی انتخاب‌گر
   useEffect(() => {
-    if (disabled && isOpen) {
-      updateOpenState(false);
+    if (
+      disabled &&
+      !previousDisabledRef.current &&
+      wasOpenRef.current
+    ) {
+      // ثبت بسته‌شدن انتخاب‌گر
+      wasOpenRef.current = false;
+
+      // اطلاع به کامپوننت والد
+      onOpenChange?.(false);
     }
-  }, [disabled, isOpen, updateOpenState]);
+
+    // نگهداری وضعیت فعلی disabled برای بررسی تغییر بعدی
+    previousDisabledRef.current = disabled;
+  }, [disabled, onOpenChange]);
+
 
   function openPicker() {
     const nextIndex =
@@ -181,29 +224,28 @@ function KeyboardSelect({
     }
   }
 
-  function handleOptionKeyDown(event, index) {
-    let nextIndex = index;
 
+  function handleOptionKeyDown(event, index) {
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
-        nextIndex = getNextEnabledIndex(options, index, 1);
-        break;
+        setActiveIndex(getNextEnabledIndex(options, index, 1));
+        return;
 
       case 'ArrowUp':
         event.preventDefault();
-        nextIndex = getNextEnabledIndex(options, index, -1);
-        break;
+        setActiveIndex(getNextEnabledIndex(options, index, -1));
+        return;
 
       case 'Home':
         event.preventDefault();
-        nextIndex = getFirstEnabledIndex(options);
-        break;
+        setActiveIndex(getFirstEnabledIndex(options));
+        return;
 
       case 'End':
         event.preventDefault();
-        nextIndex = getLastEnabledIndex(options);
-        break;
+        setActiveIndex(getLastEnabledIndex(options));
+        return;
 
       case 'Escape':
         event.preventDefault();
@@ -219,9 +261,8 @@ function KeyboardSelect({
       default:
         return;
     }
-
-    setActiveIndex(nextIndex);
   }
+
 
   const selectedValue = selectedOption
     ? renderValue
@@ -319,9 +360,9 @@ function KeyboardSelect({
                 >
                   {renderOption
                     ? renderOption(option, {
-                        selected: isSelected,
-                        active: isActive,
-                      })
+                      selected: isSelected,
+                      active: isActive,
+                    })
                     : (
                       <>
                         <span>{getOptionLabel(option)}</span>
