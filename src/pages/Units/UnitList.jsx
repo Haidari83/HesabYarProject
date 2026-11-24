@@ -1156,7 +1156,7 @@ function UnitList({ currentUser }) {
       {/* پنجره ثبت یا ویرایش واحد */}
       {isFormOpen && (
         <div
-          className="unit-modal-backdrop"
+          className="ui-modal-backdrop ui-modal-backdrop--inset-10"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !isSaving) {
               closeForm();
@@ -1605,7 +1605,7 @@ function UnitList({ currentUser }) {
       {/* پنجره تأیید حذف یا تغییر وضعیت */}
       {confirmAction && (
         <div
-          className="unit-modal-backdrop"
+          className="ui-modal-backdrop ui-modal-backdrop--inset-10"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !isSaving) {
               setConfirmAction(null);

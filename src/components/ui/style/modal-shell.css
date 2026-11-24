@@ -378,6 +378,10 @@
     padding: var(--spacing-2, 8px);
   }
 
+  /* فاصله بیشتر برای مودال‌های نیازمند حاشیه ۱۰ پیکسلی */
+  .ui-modal-backdrop--inset-10 {
+    padding: 10px;
+  }
 
   .ui-modal {
     --ui-modal-max-height: calc(100vh - 16px);

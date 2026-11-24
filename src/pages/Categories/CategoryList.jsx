@@ -1218,7 +1218,7 @@ function CategoryList({ currentUser }) {
       {/* پنجره ثبت تکی یا گروهی */}
       {isFormOpen && (
         <div
-          className="category-modal-backdrop"
+          className="ui-modal-backdrop ui-modal-backdrop--inset-10"
           onMouseDown={(event) => {
             if (
               event.target === event.currentTarget &&
@@ -1497,7 +1497,7 @@ function CategoryList({ currentUser }) {
       {/* پنجره تأیید تغییر وضعیت یا حذف */}
       {confirmAction && (
         <div
-          className="category-modal-backdrop"
+          className="ui-modal-backdrop ui-modal-backdrop--inset-10"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               setConfirmAction(null);

@@ -788,7 +788,7 @@ function UserManagement() {
       {/* پنجره ایجاد یا ویرایش کاربر */}
       {(isCreateModalOpen || isEditModalOpen) && (
 
-        <div className="user-modal-backdrop">
+        <div className="ui-modal-backdrop">
 
           <section
             className="user-create-modal"
