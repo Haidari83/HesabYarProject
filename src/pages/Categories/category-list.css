@@ -353,28 +353,6 @@
   cursor: not-allowed;
 }
 
-/* حالت خالی جدول */
-.category-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 9px;
-  padding: 55px 15px;
-  color: var(--category-muted);
-  text-align: center;
-  white-space: normal;
-}
-
-.category-empty-state strong {
-  color: var(--category-text);
-  font-size: 13px;
-}
-
-.category-empty-state p {
-  margin: 0;
-  font-size: 11px;
-}
-
 /* پس‌زمینه پنجره‌ها */
 .category-modal-backdrop {
   position: fixed;

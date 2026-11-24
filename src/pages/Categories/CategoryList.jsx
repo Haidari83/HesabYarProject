@@ -881,7 +881,7 @@ function CategoryList({ currentUser }) {
 
       <div className="category-page">
 
-        <div className="category-empty-state">
+        <div className="ui-empty-state ui-empty-state--table">
 
           <strong>
             در حال دریافت فهرست دسته‌بندی‌ها...
@@ -1194,7 +1194,7 @@ function CategoryList({ currentUser }) {
               {filteredCategories.length === 0 && (
                 <tr>
                   <td colSpan="6">
-                    <div className="category-empty-state">
+                    <div className="ui-empty-state ui-empty-state--table">
                       <strong>دسته‌بندی‌ای پیدا نشد</strong>
                       <p>جست‌وجو یا فیلتر را تغییر بده.</p>
                     </div>

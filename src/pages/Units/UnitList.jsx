@@ -1128,7 +1128,7 @@ function UnitList({ currentUser }) {
                 {filteredUnits.length === 0 && (
                   <tr>
                     <td colSpan="9">
-                      <div className="unit-empty-state">
+                      <div className="ui-empty-state ui-empty-state--table ui-empty-state--table-compact">
                         <strong>واحدی پیدا نشد</strong>
                         <p>
                           عبارت جست‌وجو یا فیلترها را تغییر بده.

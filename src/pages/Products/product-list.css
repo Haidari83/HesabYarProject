@@ -283,32 +283,6 @@
   color: #64748b;
 }
 
-/* حالت خالی جدول */
-.product-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 9px;
-  padding: 55px 15px;
-  color: var(--product-muted);
-  white-space: normal;
-  text-align: center;
-}
-
-.product-empty-state>span {
-  font-size: 30px;
-}
-
-.product-empty-state strong {
-  color: var(--product-text);
-  font-size: 13px;
-}
-
-.product-empty-state p {
-  margin: 0;
-  font-size: 11px;
-}
-
 /* پس‌زمینه پنجره ثبت گروهی */
 .product-modal-backdrop {
   position: fixed;

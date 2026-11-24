@@ -388,3 +388,43 @@
   font-size: var(--font-size-xs-compact);
   line-height: var(--line-height-relaxed);
 }
+
+/* =================================
+   حالت خالی داخل جدول‌ها
+================================= */
+
+.ui-empty-state--table {
+  gap: 9px;
+  padding: 55px 15px;
+
+  border: 0;
+  border-radius: 0;
+
+  white-space: normal;
+}
+
+/* عنوان حالت خالی جدول */
+
+.ui-empty-state--table strong {
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+}
+
+/* توضیحات حالت خالی جدول */
+
+.ui-empty-state--table p {
+  font-size: 11px;
+}
+
+/* آیکون حالت خالی جدول */
+
+.ui-empty-state--table>span {
+  font-size: 30px;
+}
+
+/* فاصله کمتر برای بعضی جدول‌ها */
+
+.ui-empty-state--table-compact {
+  padding-top: 45px;
+  padding-bottom: 45px;
+}

@@ -793,7 +793,7 @@ function ProductList({ currentUser }) {
                 {filteredProducts.length === 0 && (
                   <tr>
                     <td colSpan="9">
-                      <div className="product-empty-state">
+                      <div className="ui-empty-state ui-empty-state--table">
                         <span>⌕</span>
 
                         <strong>محصولی پیدا نشد</strong>
