@@ -165,36 +165,14 @@
   font-size: 18px;
 }
 
-.category-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.category-table th,
-.category-table td {
-  padding: 14px 13px;
-  border-bottom: 1px solid #edf0f4;
-  font-size: 11px;
-}
-
+/* رنگ متن سربرگ ستون‌های دسته‌بندی */
 .category-table th {
-  background-color: #f8fafc;
   color: var(--category-muted);
-  font-weight: 600;
 }
 
+/* رنگ متن اطلاعات دسته‌بندی */
 .category-table td {
   color: var(--category-text);
-}
-
-.category-table tbody tr:hover {
-  background-color: #f8fafc;
-}
-
-.category-table tbody tr:last-child td {
-  border-bottom: none;
 }
 
 .category-name {

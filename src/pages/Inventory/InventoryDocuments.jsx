@@ -7,6 +7,12 @@ import { formatNumber } from '../../utils/numberFormat';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
 
+// قاب مشترک جدول و صفحه‌بندی
+import DataTableShell from '../../components/ui/DataTableShell';
+
+// نمایش یکپارچه وضعیت خالی
+import EmptyState from '../../components/ui/EmptyState';
+
 import {
   getTodayGregorianDate as getLocalDate,
   toPersianDate as getPersianDateValue,
@@ -950,43 +956,99 @@ function InventoryDocuments() {
       </section>
 
 
-      {/* جدول اسناد */}
-      <section className="documents-table-section">
+      {/* =========================================
+    خطای دریافت اسناد
+========================================= */}
 
-        <div className="documents-section-heading">
+      {loadError && (
 
-          <div>
-            <h2>اسناد انبار</h2>
+        <div className="documents-error">
 
-            <p>
-              فهرست اسناد ثبت‌شده و پیش‌نویس‌های ذخیره‌شده
-            </p>
-          </div>
+          <Alert
+            variant="danger"
+            role="alert"
+            className="documents-error__message"
+          >
+            {loadError}
+          </Alert>
+
+
+          <Button
+            type="button"
+            variant="secondary"
+            size="small"
+            onClick={handleRetry}
+          >
+            تلاش مجدد
+          </Button>
 
         </div>
 
+      )}
 
-        {loadError && (
-          <div className="documents-error">
 
-            <Alert
-              variant="danger"
-              role="alert"
-              className="documents-error__message"
-            >
-              {loadError}
-            </Alert>
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={handleRetry}
-            >
-              تلاش مجدد
-            </Button>
+      {/* =========================================
+    قاب مشترک فهرست اسناد انبار
+========================================= */}
 
-          </div>
-        )}
+      <DataTableShell
+        title="اسناد انبار"
+        description="فهرست اسناد ثبت‌شده و پیش‌نویس‌های ذخیره‌شده"
+        bordered
+        paginationClassName="documents-pagination"
+
+        // انتقال صفحه‌بندی به قاب مشترک جدول
+        pagination={
+          totalPages > 1 ? (
+
+            <>
+
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                disabled={currentPage === 1 || isLoading}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                قبلی
+              </Button>
+
+
+              <span>
+                صفحه{' '}
+                {formatNumber(
+                  currentPage,
+                  DOCUMENT_NUMBER_OPTIONS
+                )}
+                {' '}
+                از{' '}
+                {formatNumber(
+                  totalPages,
+                  DOCUMENT_NUMBER_OPTIONS
+                )}
+              </span>
+
+
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                disabled={currentPage === totalPages || isLoading}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                بعدی
+              </Button>
+
+            </>
+
+          ) : null
+        }
+      >
+
+
+        {/* =====================================
+      وضعیت بارگذاری
+  ====================================== */}
 
         {isLoading ? (
 
@@ -996,170 +1058,117 @@ function InventoryDocuments() {
 
         ) : documents.length > 0 ? (
 
-          <>
+          /* =====================================
+             جدول اسناد
+          ====================================== */
 
-            <div className="documents-table-wrapper">
+          <table className="ui-data-table documents-table">
 
-              <table className="documents-table">
+            <thead>
 
-                <thead>
+              <tr>
+                <th>شماره سند</th>
+                <th>تاریخ</th>
+                <th>نوع سند</th>
+                <th>طرف حساب</th>
+                <th>تعداد اقلام</th>
+                <th>ثبت‌کننده</th>
+                <th>وضعیت</th>
+              </tr>
 
-                  <tr>
-                    <th>شماره سند</th>
-                    <th>تاریخ</th>
-                    <th>نوع سند</th>
-                    <th>طرف حساب</th>
-                    <th>تعداد اقلام</th>
-                    <th>ثبت‌کننده</th>
-                    <th>وضعیت</th>
-                  </tr>
-
-                </thead>
-
-
-                <tbody>
-
-                  {documents.map((document) => (
-
-                    <tr key={document.id}>
-
-                      <td>
-                        <strong className="documents-number">
-                          {document.documentNumber}
-                        </strong>
-                      </td>
+            </thead>
 
 
-                      <td>
-                        {formatPersianDate(document.documentDate)}
-                      </td>
+            <tbody>
+
+              {documents.map((document) => (
+
+                <tr key={document.id}>
+
+                  <td>
+                    <strong className="documents-number">
+                      {document.documentNumber}
+                    </strong>
+                  </td>
 
 
-                      <td>
-                        {DOCUMENT_TYPE_LABELS[
-                          document.documentType
-                        ] || 'نامشخص'}
-                      </td>
+                  <td>
+                    {formatPersianDate(document.documentDate)}
+                  </td>
 
 
-                      <td>
-                        {document.sourcePartyName || '—'}
-                      </td>
+                  <td>
+                    {DOCUMENT_TYPE_LABELS[
+                      document.documentType
+                    ] || 'نامشخص'}
+                  </td>
 
 
-                      <td>
-                        {formatNumber(
-                          document.itemCount,
-                          DOCUMENT_NUMBER_OPTIONS
-                        )}
-                      </td>
+                  <td>
+                    {document.sourcePartyName || '—'}
+                  </td>
 
 
-                      <td>
-                        <div className="documents-creator">
-
-                          <strong>
-                            {document.createdBy?.displayName || '—'}
-                          </strong>
-
-                          {document.createdBy?.username && (
-                            <small>
-                              {document.createdBy.username}
-                            </small>
-                          )}
-
-                        </div>
-                      </td>
+                  <td>
+                    {formatNumber(
+                      document.itemCount,
+                      DOCUMENT_NUMBER_OPTIONS
+                    )}
+                  </td>
 
 
-                      <td>
+                  <td>
+                    <div className="documents-creator">
 
-                        <span
-                          className={`documents-status documents-status-${getStatusClass(document.status)}`}
-                        >
+                      <strong>
+                        {document.createdBy?.displayName || '—'}
+                      </strong>
 
-                          {DOCUMENT_STATUS_LABELS[
-                            document.status
-                          ] || 'نامشخص'}
+                      {document.createdBy?.username && (
+                        <small>
+                          {document.createdBy.username}
+                        </small>
+                      )}
 
-                        </span>
-
-                      </td>
-
-                    </tr>
-
-                  ))}
-
-                </tbody>
-
-              </table>
-
-            </div>
+                    </div>
+                  </td>
 
 
-            {/* صفحه‌بندی */}
-            {totalPages > 1 && (
+                  <td>
+                    <span
+                      className={`documents-status documents-status-${getStatusClass(
+                        document.status
+                      )}`}
+                    >
+                      {DOCUMENT_STATUS_LABELS[
+                        document.status
+                      ] || 'نامشخص'}
+                    </span>
+                  </td>
 
-              <div className="documents-pagination">
+                </tr>
 
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="small"
-                  disabled={currentPage === 1 || isLoading}
-                  onClick={() => handlePageChange(currentPage - 1)}
-                >
-                  قبلی
-                </Button>
+              ))}
 
+            </tbody>
 
-                <span>
-                  صفحه {formatNumber(
-                    currentPage,
-                    DOCUMENT_NUMBER_OPTIONS
-                  )}
-                  {' '}
-                  از {formatNumber(
-                    totalPages,
-                    DOCUMENT_NUMBER_OPTIONS
-                  )}
-                </span>
-
-
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="small"
-                  disabled={currentPage === totalPages || isLoading}
-                  onClick={() => handlePageChange(currentPage + 1)}
-                >
-                  بعدی
-                </Button>
-
-              </div>
-
-            )}
-
-          </>
+          </table>
 
         ) : (
 
-          <div className="documents-empty">
+          /* =====================================
+             وضعیت خالی اسناد
+          ====================================== */
 
-            <strong>
-              سندی پیدا نشد.
-            </strong>
-
-            <p>
-              برای این فیلترها سندی در پایگاه داده وجود ندارد.
-            </p>
-
-          </div>
+          <EmptyState
+            variant="table"
+            title="سندی پیدا نشد."
+            description="برای این فیلترها سندی در پایگاه داده وجود ندارد."
+          />
 
         )}
 
-      </section>
-
+      </DataTableShell>
     </div>
 
   );

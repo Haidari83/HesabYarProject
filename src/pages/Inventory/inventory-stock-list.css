@@ -134,45 +134,20 @@
   font-size: 11px;
 }
 
-/* جدول */
-.stock-table-wrapper {
-  overflow-x: auto;
-  border: 1px solid var(--stock-border);
-  border-radius: 12px;
-  background: #fff;
-}
-
+/* حداقل عرض جدول برای حفظ خوانایی ستون‌های موجودی */
 .stock-table {
-  width: 100%;
   min-width: 1050px;
-  border-collapse: collapse;
-  text-align: right;
 }
 
-.stock-table th {
-  padding: 14px 11px;
-  border-bottom: 1px solid var(--stock-border);
-  background: #f8fafc;
-  color: #475569;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
+/* فاصله اختصاصی سلول‌های جدول موجودی */
+.stock-table th,
 .stock-table td {
   padding: 13px 11px;
-  border-bottom: 1px solid #edf1f5;
+}
+
+/* رنگ اطلاعات موجودی */
+.stock-table td {
   color: var(--stock-text);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.stock-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.stock-table tbody tr:hover {
-  background: #fafcff;
 }
 
 .stock-number {
@@ -255,16 +230,9 @@
   font-size: 11px;
 }
 
-.stock-empty-state button {
+/* فقط فاصله دکمه پاک‌کردن فیلترها از متن حالت خالی */
+.stock-empty-state>.ui-button {
   margin-top: 7px;
-  padding: 8px 13px;
-  border: 1px solid var(--stock-border);
-  border-radius: 7px;
-  background: #fff;
-  color: #475569;
-  font-family: inherit;
-  font-size: 11px;
-  cursor: pointer;
 }
 
 /* کارت‌های موبایل */
@@ -418,7 +386,9 @@
 
 /* واکنش‌گرایی */
 @media (max-width: 720px) {
-  .stock-table-wrapper {
+
+  /* در موبایل جدول دسکتاپ مخفی می‌شود؛ کارت کالاها نمایش داده می‌شوند. */
+  .stock-table-shell {
     display: none;
   }
 

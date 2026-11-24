@@ -186,25 +186,6 @@
   flex: 0 0 auto;
 }
 
-.unit-table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.unit-table-header h2 {
-  margin: 0;
-  color: var(--unit-primary);
-  font-size: 15px;
-}
-
-.unit-table-header p {
-  margin: 6px 0 0;
-  color: var(--unit-muted);
-  font-size: 11px;
-}
-
 .unit-conversion-info {
   margin: 14px 18px 0;
   padding: 11px 13px;
@@ -216,36 +197,14 @@
   line-height: 1.9;
 }
 
-.unit-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.unit-table th,
-.unit-table td {
-  padding: 14px 13px;
-  border-bottom: 1px solid #edf0f4;
-  font-size: 11px;
-}
-
+/* رنگ متن سربرگ جدول واحدها */
 .unit-table th {
-  background-color: #f8fafc;
   color: var(--unit-muted);
-  font-weight: 600;
 }
 
+/* رنگ متن بدنه جدول واحدها */
 .unit-table td {
   color: var(--unit-text);
-}
-
-.unit-table tbody tr:hover {
-  background-color: #f8fafc;
-}
-
-.unit-table tbody tr:last-child td {
-  border-bottom: none;
 }
 
 .unit-name {
@@ -857,12 +816,6 @@
   .unit-tabs button {
     flex: 1;
     padding: 0 8px;
-  }
-
-  .unit-table-header {
-    align-items: flex-start;
-    flex-wrap: wrap;
-    padding: 15px;
   }
 
   .unit-modal {

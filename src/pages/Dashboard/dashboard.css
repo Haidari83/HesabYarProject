@@ -310,33 +310,22 @@
   gap: 15px;
 }
 
-.dashboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: right;
-  white-space: nowrap;
-}
-
+/* فاصله اختصاصی سلول‌های جدول داشبورد */
 .dashboard-table th,
 .dashboard-table td {
   padding: 13px 10px;
-  border-bottom: 1px solid var(--dashboard-border);
-  font-size: 11px;
 }
 
+/* رنگ سربرگ جدول داشبورد */
 .dashboard-table th {
-  background-color: #f8fafc;
   color: var(--dashboard-muted);
-  font-weight: 600;
 }
 
+/* رنگ اطلاعات جدول داشبورد */
 .dashboard-table td {
   color: var(--dashboard-text);
 }
 
-.dashboard-table tbody tr:last-child td {
-  border-bottom: none;
-}
 
 .dashboard-status {
   display: inline-block;

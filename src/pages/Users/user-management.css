@@ -105,69 +105,6 @@
   border-color: #0f766e;
 }
 
-/* کارت جدول */
-.user-table-card {
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
-}
-
-.user-table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.user-table-header h2 {
-  margin: 0;
-  color: #263b70;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.user-table-header p {
-  margin: 6px 0 0;
-  color: #64748b;
-  font-size: 10px;
-}
-
-.user-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.user-table th,
-.user-table td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #edf0f4;
-  font-size: 11px;
-}
-
-.user-table th {
-  background-color: #f8fafc;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.user-table td {
-  color: #475569;
-}
-
-.user-table tbody tr:hover {
-  background-color: #f8fafc;
-}
-
-.user-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
 .user-name {
   color: #263b70 !important;
   font-weight: 600;

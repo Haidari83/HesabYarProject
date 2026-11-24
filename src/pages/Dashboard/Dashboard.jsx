@@ -1,6 +1,10 @@
-
 import Alert from '../../components/ui/Alert';
 
+// قاب مشترک جدول‌ها
+import DataTableShell from '../../components/ui/DataTableShell';
+
+// نمایش وضعیت خالی جدول
+import EmptyState from '../../components/ui/EmptyState';
 import './dashboard.css';
 
 // اطلاعات آزمایشی کارت‌های داشبورد
@@ -342,48 +346,84 @@ function Dashboard() {
       {/* آخرین فروش‌ها و کالاهای پرفروش */}
       <div className="dashboard-bottom-grid">
 
-        <section className="dashboard-card dashboard-recent-sales">
-          <div className="dashboard-card-header">
-            <div>
-              <h2>آخرین فروش‌ها</h2>
-              <p>آخرین فاکتورهای ثبت‌شده</p>
-            </div>
+        {/* =========================================
+    جدول آخرین فروش‌ها
+========================================= */}
 
+        <DataTableShell
+          title="آخرین فروش‌ها"
+          description="آخرین فاکتورهای ثبت‌شده"
+
+          // نمایش تعداد فاکتورها در سربرگ
+          actions={
             <span className="dashboard-count-badge">
               {recentSales.length} فاکتور
             </span>
-          </div>
+          }
+        >
 
-          <div className="ui-data-table-wrapper">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>شماره فاکتور</th>
-                  <th>مشتری</th>
-                  <th>زمان</th>
-                  <th>مبلغ</th>
-                  <th>وضعیت</th>
+          <table className="ui-data-table dashboard-table">
+
+            <thead>
+              <tr>
+                <th>شماره فاکتور</th>
+                <th>مشتری</th>
+                <th>زمان</th>
+                <th>مبلغ</th>
+                <th>وضعیت</th>
+              </tr>
+            </thead>
+
+
+            <tbody>
+
+              {recentSales.map((sale) => (
+
+                <tr key={sale.id}>
+
+                  <td>{sale.id}</td>
+
+                  <td>{sale.customer}</td>
+
+                  <td>{sale.time}</td>
+
+                  <td>{sale.amount} افغانی</td>
+
+                  <td>
+                    <span
+                      className={`dashboard-status ${sale.status}`}
+                    >
+                      {sale.statusLabel}
+                    </span>
+                  </td>
+
                 </tr>
-              </thead>
 
-              <tbody>
-                {recentSales.map((sale) => (
-                  <tr key={sale.id}>
-                    <td>{sale.id}</td>
-                    <td>{sale.customer}</td>
-                    <td>{sale.time}</td>
-                    <td>{sale.amount} افغانی</td>
-                    <td>
-                      <span className={`dashboard-status ${sale.status}`}>
-                        {sale.statusLabel}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+              ))}
+
+
+              {/* اگر هیچ فروشی ثبت نشده باشد */}
+              {recentSales.length === 0 && (
+
+                <tr>
+                  <td colSpan={5}>
+
+                    <EmptyState
+                      variant="table"
+                      title="فروشی ثبت نشده است."
+                      description="پس از ثبت فاکتورهای فروش، اطلاعات آن‌ها در این بخش نمایش داده می‌شود."
+                    />
+
+                  </td>
+                </tr>
+
+              )}
+
+            </tbody>
+
+          </table>
+
+        </DataTableShell>
 
         <section className="dashboard-card dashboard-top-products">
           <div className="dashboard-card-header">

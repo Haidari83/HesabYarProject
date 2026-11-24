@@ -3,6 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
 
+// قاب مشترک جدول
+import DataTableShell from '../../components/ui/DataTableShell';
+
+// نمایش مشترک حالت خالی
+import EmptyState from '../../components/ui/EmptyState';
+
 import './user-management.css';
 
 // وضعیت اولیه فرم ایجاد کاربر
@@ -623,20 +629,13 @@ function UserManagement() {
       </section>
 
 
-      {/* جدول کاربران */}
-      <section className="user-table-card">
+      {/* قاب مشترک فهرست کاربران */}
+      <DataTableShell
+        title="فهرست کاربران"
+        description={`${filteredUsers.length.toLocaleString('fa-IR')} کاربر یافت شد`}
+      >
 
-        <header className="user-table-header">
-          <div>
-            <h2>فهرست کاربران</h2>
-            <p>
-              {filteredUsers.length.toLocaleString('fa-IR')} کاربر
-              {' '}یافت شد
-            </p>
-          </div>
-        </header>
-
-
+        {/* وضعیت بارگذاری */}
         {isLoading ? (
 
           <div className="user-message">
@@ -645,9 +644,13 @@ function UserManagement() {
 
         ) : error ? (
 
+          /* خطای دریافت اطلاعات */
           <div className="user-message user-error">
+
             <strong>دریافت اطلاعات ناموفق بود</strong>
+
             <p>{error}</p>
+
             <Button
               type="button"
               variant="secondary"
@@ -656,140 +659,167 @@ function UserManagement() {
             >
               تلاش مجدد
             </Button>
+
           </div>
 
         ) : filteredUsers.length === 0 ? (
 
-          <div className="user-empty-state">
-            <span aria-hidden="true">♙</span>
-
-            <strong>
-              {users.length === 0
+          /* وضعیت نبود کاربر */
+          <EmptyState
+            className="user-empty-state"
+            variant="table"
+            icon="♙"
+            title={
+              users.length === 0
                 ? 'هنوز کاربری ثبت نشده است.'
-                : 'کاربری با این مشخصات پیدا نشد.'}
-            </strong>
-
-            <p>
-              {users.length === 0
+                : 'کاربری با این مشخصات پیدا نشد.'
+            }
+            description={
+              users.length === 0
                 ? 'پس از ایجاد کاربران جدید، اطلاعات آن‌ها در این بخش نمایش داده می‌شود.'
-                : 'عبارت جست‌وجو یا فیلتر وضعیت را تغییر بده.'}
-            </p>
-          </div>
+                : 'عبارت جست‌وجو یا فیلتر وضعیت را تغییر بده.'
+            }
+          />
 
         ) : (
 
-          <div className="ui-data-table-wrapper">
+          /* جدول کاربران */
+          <table className="ui-data-table user-table">
 
-            <table className="user-table">
+            <thead>
+              <tr>
+                <th>ردیف</th>
+                <th>نام و نام خانوادگی</th>
+                <th>نام کاربری</th>
+                <th>نقش</th>
+                <th>تعداد دسترسی‌ها</th>
+                <th>وضعیت</th>
+                <th>تاریخ ایجاد</th>
+                <th>آخرین ورود</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
 
-              <thead>
-                <tr>
-                  <th>ردیف</th>
-                  <th>نام و نام خانوادگی</th>
-                  <th>نام کاربری</th>
-                  <th>نقش</th>
-                  <th>تعداد دسترسی‌ها</th>
-                  <th>وضعیت</th>
-                  <th>تاریخ ایجاد</th>
-                  <th>آخرین ورود</th>
-                  <th>عملیات</th>
+
+            <tbody>
+
+              {filteredUsers.map((user, index) => (
+
+                <tr key={user.id}>
+
+                  <td>
+                    {(index + 1).toLocaleString('fa-IR')}
+                  </td>
+
+
+                  <td className="user-name">
+                    {user.displayName}
+                  </td>
+
+
+                  <td className="user-username">
+                    {user.username}
+                  </td>
+
+
+                  <td>
+                    <span
+                      className={`user-role ${user.role === 'admin'
+                          ? 'admin'
+                          : 'regular'
+                        }`}
+                    >
+                      {getRoleLabel(user.role)}
+                    </span>
+                  </td>
+
+
+                  <td>
+                    {user.role === 'admin'
+                      ? 'همه دسترسی‌ها'
+                      : user.permissions.length.toLocaleString('fa-IR')}
+                  </td>
+
+
+                  <td>
+                    <span
+                      className={`user-status ${user.isActive
+                          ? 'active'
+                          : 'inactive'
+                        }`}
+                    >
+                      {user.isActive ? 'فعال' : 'غیرفعال'}
+                    </span>
+                  </td>
+
+
+                  <td>
+                    {formatDate(user.createdAt)}
+                  </td>
+
+
+                  <td>
+                    {formatDate(user.lastLoginAt)}
+                  </td>
+
+
+                  <td>
+
+                    <div className="user-row-actions">
+
+                      {/* ویرایش کاربر */}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        onClick={() => openEditModal(user)}
+                        disabled={
+                          Boolean(processingUserId) ||
+                          isSubmitting
+                        }
+                      >
+                        ویرایش
+                      </Button>
+
+
+                      {/* فعال‌سازی یا غیرفعال‌سازی */}
+                      <Button
+                        type="button"
+                        variant={
+                          user.isActive
+                            ? 'warning'
+                            : 'success'
+                        }
+                        size="small"
+                        loading={processingUserId === user.id}
+                        onClick={() => handleSetUserActive(user)}
+                        disabled={
+                          Boolean(processingUserId) ||
+                          isSubmitting
+                        }
+                      >
+                        {processingUserId === user.id
+                          ? 'در حال انجام...'
+                          : user.isActive
+                            ? 'غیرفعال‌سازی'
+                            : 'فعال‌سازی'}
+                      </Button>
+
+                    </div>
+
+                  </td>
+
                 </tr>
-              </thead>
 
-              <tbody>
-                {filteredUsers.map((user, index) => (
+              ))}
 
-                  <tr key={user.id}>
+            </tbody>
 
-                    <td>{(index + 1).toLocaleString('fa-IR')}</td>
-
-                    <td className="user-name">
-                      {user.displayName}
-                    </td>
-
-                    <td className="user-username">
-                      {user.username}
-                    </td>
-
-                    <td>
-                      <span
-                        className={`user-role ${user.role === 'admin' ? 'admin' : 'regular'
-                          }`}
-                      >
-                        {getRoleLabel(user.role)}
-                      </span>
-                    </td>
-
-                    <td>
-                      {user.role === 'admin'
-                        ? 'همه دسترسی‌ها'
-                        : user.permissions.length.toLocaleString('fa-IR')}
-                    </td>
-
-                    <td>
-                      <span
-                        className={`user-status ${user.isActive ? 'active' : 'inactive'
-                          }`}
-                      >
-                        {user.isActive ? 'فعال' : 'غیرفعال'}
-                      </span>
-                    </td>
-
-                    <td>{formatDate(user.createdAt)}</td>
-
-                    <td>{formatDate(user.lastLoginAt)}</td>
-
-                    <td>
-
-                      <div className="user-row-actions">
-
-                        {/* دکمه ویرایش */}
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="small"
-                          onClick={() => openEditModal(user)}
-                          disabled={Boolean(processingUserId) || isSubmitting}
-                        >
-                          ویرایش
-                        </Button>
-
-
-                        {/* دکمه تغییر وضعیت */}
-                        <Button
-                          type="button"
-                          variant={user.isActive ? 'warning' : 'success'}
-                          size="small"
-                          loading={processingUserId === user.id}
-                          onClick={() => handleSetUserActive(user)}
-                          disabled={
-                            Boolean(processingUserId) || isSubmitting
-                          }
-                        >
-                          {processingUserId === user.id
-                            ? 'در حال انجام...'
-                            : user.isActive
-                              ? 'غیرفعال‌سازی'
-                              : 'فعال‌سازی'}
-                        </Button>
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-
-                ))}
-              </tbody>
-
-            </table>
-
-          </div>
+          </table>
 
         )}
 
-      </section>
-
+      </DataTableShell>
 
       {/* پنجره ایجاد یا ویرایش کاربر */}
       {(isCreateModalOpen || isEditModalOpen) && (

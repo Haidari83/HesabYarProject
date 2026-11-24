@@ -7,6 +7,12 @@ import { normalizePersianText as normalizeSearch, } from '../../utils/persianTex
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
 
+// قاب مشترک جدول‌ها
+import DataTableShell from '../../components/ui/DataTableShell';
+
+// نمایش مشترک فهرست خالی
+import EmptyState from '../../components/ui/EmptyState';
+
 import { formatNumber } from '../../utils/numberFormat';
 
 import './product-list.css';
@@ -640,23 +646,12 @@ function ProductList({ currentUser }) {
 
           </section>
 
-          {/* جدول محصولات */}
-          <section className="management-table-card">
-
-            <header className="product-table-header management-table-card__header">
-              <div>
-                <h2>فهرست محصولات</h2>
-
-                <p>
-                  {formatNumber(filteredProducts.length)}
-                  {' '}
-                  محصول نمایش داده می‌شود
-                </p>
-              </div>
-            </header>
-
-            <div className="ui-data-table-wrapper">              <table className="product-table">
-
+          {/* قاب مشترک فهرست محصولات */}
+          <DataTableShell
+            title="فهرست محصولات"
+            description={`${formatNumber(filteredProducts.length)} محصول نمایش داده می‌شود`}
+          >
+            <table className="ui-data-table product-table">
               <thead>
                 <tr>
                   <th>کد محصول</th>
@@ -796,158 +791,164 @@ function ProductList({ currentUser }) {
                 {filteredProducts.length === 0 && (
                   <tr>
                     <td colSpan="9">
-                      <div className="ui-empty-state ui-empty-state--table">
-                        <span>⌕</span>
-
-                        <strong>محصولی پیدا نشد</strong>
-
-                        <p>
-                          عبارت جست‌وجو یا فیلترها را تغییر بده.
-                        </p>
-                      </div>
+                      <EmptyState
+                        variant="table"
+                        icon="⌕"
+                        title="محصولی پیدا نشد"
+                        description="عبارت جست‌وجو یا فیلترها را تغییر بده."
+                      />
                     </td>
                   </tr>
                 )}
 
               </tbody>
             </table>
-            </div>
 
-          </section>
+
+          </DataTableShell>
         </>
-      )}
+      )
+      }
 
       {/* پنجره مستقل ثبت کالای جدید */}
-      {isCreateFormOpen && (
-        <ProductFormModal
-          categories={categories}
-          units={units}
-          currencies={currencies}
-          onClose={() => setIsCreateFormOpen(false)}
-          onCreated={handleProductCreated}
-        />
-      )}
+      {
+        isCreateFormOpen && (
+          <ProductFormModal
+            categories={categories}
+            units={units}
+            currencies={currencies}
+            onClose={() => setIsCreateFormOpen(false)}
+            onCreated={handleProductCreated}
+          />
+        )
+      }
 
       {/* پنجره ویرایش محصول */}
-      {productToEdit && (
-        <ProductFormModal
-          product={productToEdit}
-          categories={editCategories}
-          units={units}
-          onClose={() => setProductToEdit(null)}
-          onUpdated={handleProductUpdated}
-        />
-      )}
+      {
+        productToEdit && (
+          <ProductFormModal
+            product={productToEdit}
+            categories={editCategories}
+            units={units}
+            onClose={() => setProductToEdit(null)}
+            onUpdated={handleProductUpdated}
+          />
+        )
+      }
 
       {/* پنجره تأیید فعال‌سازی یا غیرفعال‌سازی محصول */}
-      {productToChangeStatus && (
-        <div
-          className="product-form-backdrop"
-          onClick={(event) => {
-            // بستن پنجره با کلیک بیرون از آن
-            if (
-              event.target === event.currentTarget &&
-              !isChangingStatus
-            ) {
-              setProductToChangeStatus(null);
-            }
-          }}
-        >
-          <section
-            className="product-status-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="product-status-title"
+      {
+        productToChangeStatus && (
+          <div
+            className="product-form-backdrop"
+            onClick={(event) => {
+              // بستن پنجره با کلیک بیرون از آن
+              if (
+                event.target === event.currentTarget &&
+                !isChangingStatus
+              ) {
+                setProductToChangeStatus(null);
+              }
+            }}
           >
-            {/* آیکون هشدار */}
-            <div className="product-status-modal-icon">
-              !
-            </div>
+            <section
+              className="product-status-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="product-status-title"
+            >
+              {/* آیکون هشدار */}
+              <div className="product-status-modal-icon">
+                !
+              </div>
 
-            {/* عنوان پنجره */}
-            <h2 id="product-status-title">
-              {productToChangeStatus.isActive
-                ? 'غیرفعال‌سازی محصول'
-                : 'فعال‌سازی محصول'}
-            </h2>
-
-            {/* توضیح عملیات */}
-            <p>
-              آیا از{' '}
-              <strong>
+              {/* عنوان پنجره */}
+              <h2 id="product-status-title">
                 {productToChangeStatus.isActive
-                  ? 'غیرفعال‌کردن'
-                  : 'فعال‌کردن'}
-              </strong>
-              {' '}محصول{' '}
-              <strong>
-                «{productToChangeStatus.name}»
-              </strong>
-              {' '}اطمینان داری؟
-            </p>
+                  ? 'غیرفعال‌سازی محصول'
+                  : 'فعال‌سازی محصول'}
+              </h2>
 
-            {/* توضیح پیامد عملیات */}
-            <div className="product-status-warning">
-              {productToChangeStatus.isActive
-                ? 'غیرفعال‌سازی محصول به معنای حذف آن نیست. اطلاعات محصول و سوابق ثبت‌شده آن حفظ می‌شوند و امکان فعال‌سازی مجدد وجود دارد.'
-                : 'با فعال‌سازی مجدد، محصول دوباره در فهرست محصولات فعال قرار می‌گیرد.'}
-            </div>
+              {/* توضیح عملیات */}
+              <p>
+                آیا از{' '}
+                <strong>
+                  {productToChangeStatus.isActive
+                    ? 'غیرفعال‌کردن'
+                    : 'فعال‌کردن'}
+                </strong>
+                {' '}محصول{' '}
+                <strong>
+                  «{productToChangeStatus.name}»
+                </strong>
+                {' '}اطمینان داری؟
+              </p>
 
-            {/* نمایش خطای عملیات */}
-            {statusChangeError && (
-              <Alert
-                variant="danger"
-                role="alert"
-                className="product-status-change-error"
-              >
-                {statusChangeError}
-              </Alert>
-            )}
+              {/* توضیح پیامد عملیات */}
+              <div className="product-status-warning">
+                {productToChangeStatus.isActive
+                  ? 'غیرفعال‌سازی محصول به معنای حذف آن نیست. اطلاعات محصول و سوابق ثبت‌شده آن حفظ می‌شوند و امکان فعال‌سازی مجدد وجود دارد.'
+                  : 'با فعال‌سازی مجدد، محصول دوباره در فهرست محصولات فعال قرار می‌گیرد.'}
+              </div>
 
-            {/* دکمه‌های عملیات */}
-            <div className="product-status-actions">
+              {/* نمایش خطای عملیات */}
+              {statusChangeError && (
+                <Alert
+                  variant="danger"
+                  role="alert"
+                  className="product-status-change-error"
+                >
+                  {statusChangeError}
+                </Alert>
+              )}
 
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={isChangingStatus}
-                onClick={() => setProductToChangeStatus(null)}
-              >
-                انصراف
-              </Button>
+              {/* دکمه‌های عملیات */}
+              <div className="product-status-actions">
 
-              <Button
-                type="button"
-                variant={
-                  productToChangeStatus.isActive
-                    ? 'warning'
-                    : 'success'
-                }
-                disabled={isChangingStatus}
-                loading={isChangingStatus}
-                onClick={handleConfirmProductStatusChange}
-              >
-                {isChangingStatus
-                  ? 'در حال انجام...'
-                  : productToChangeStatus.isActive
-                    ? 'بله، غیرفعال کن'
-                    : 'بله، فعال کن'}
-              </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={isChangingStatus}
+                  onClick={() => setProductToChangeStatus(null)}
+                >
+                  انصراف
+                </Button>
 
-            </div>
-          </section>
-        </div>
-      )}
-      {isExcelImportOpen && (
-        <ExcelImportModal
-          categories={categories}
-          units={units}
-          products={products}
-          onClose={() => setIsExcelImportOpen(false)}
-          onImported={handleExcelProductsImported}
-        />
-      )}
-    </div>
+                <Button
+                  type="button"
+                  variant={
+                    productToChangeStatus.isActive
+                      ? 'warning'
+                      : 'success'
+                  }
+                  disabled={isChangingStatus}
+                  loading={isChangingStatus}
+                  onClick={handleConfirmProductStatusChange}
+                >
+                  {isChangingStatus
+                    ? 'در حال انجام...'
+                    : productToChangeStatus.isActive
+                      ? 'بله، غیرفعال کن'
+                      : 'بله، فعال کن'}
+                </Button>
+
+              </div>
+            </section>
+          </div>
+        )
+      }
+      {
+        isExcelImportOpen && (
+          <ExcelImportModal
+            categories={categories}
+            units={units}
+            products={products}
+            onClose={() => setIsExcelImportOpen(false)}
+            onImported={handleExcelProductsImported}
+          />
+        )
+      }
+    </div >
 
   );
 }

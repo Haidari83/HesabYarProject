@@ -4,6 +4,12 @@ import { normalizePersianText as normalizeName } from '../../utils/persianText';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
 
+// قاب مشترک جدول‌ها
+import DataTableShell from '../../components/ui/DataTableShell';
+
+// نمایش مشترک وضعیت خالی جدول
+import EmptyState from '../../components/ui/EmptyState';
+
 import { createRows } from '../../utils/listHelpers';
 
 import './unit-list.css';
@@ -969,19 +975,12 @@ function UnitList({ currentUser }) {
 
           </section>
 
-          {/* جدول واحدها */}
-          <section className="management-table-card">
-
-            <header className="unit-table-header management-table-card__header">
-              <div>
-                <h2>فهرست واحدهای اندازه‌گیری</h2>
-                <p>
-                  {formatNumber(filteredUnits.length)} واحد نمایش داده می‌شود
-                </p>
-              </div>
-            </header>
-
-            <div className="ui-data-table-wrapper">              <table className="unit-table">
+          {/* قاب مشترک فهرست واحدهای اندازه‌گیری */}
+          <DataTableShell
+            title="فهرست واحدهای اندازه‌گیری"
+            description={`${formatNumber(filteredUnits.length)} واحد نمایش داده می‌شود`}
+          >
+            <table className="ui-data-table unit-table">
 
               <thead>
                 <tr>
@@ -1124,22 +1123,18 @@ function UnitList({ currentUser }) {
 
                 {filteredUnits.length === 0 && (
                   <tr>
-                    <td colSpan="9">
-                      <div className="ui-empty-state ui-empty-state--table ui-empty-state--table-compact">
-                        <strong>واحدی پیدا نشد</strong>
-                        <p>
-                          عبارت جست‌وجو یا فیلترها را تغییر بده.
-                        </p>
-                      </div>
-                    </td>
+                    <EmptyState
+                      variant="table-compact"
+                      title="واحدی پیدا نشد"
+                      description="عبارت جست‌وجو یا فیلترها را تغییر بده."
+                    />
                   </tr>
                 )}
 
               </tbody>
             </table>
-            </div>
 
-          </section>
+          </DataTableShell>
         </>
       )}
 

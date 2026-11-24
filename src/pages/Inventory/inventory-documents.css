@@ -46,8 +46,8 @@
 
 /* بخش‌های اصلی */
 
-.documents-filter-section,
-.documents-table-section {
+/* قاب فرم فیلتر؛ قاب جدول را DataTableShell ایجاد می‌کند. */
+.documents-filter-section {
   min-width: 0;
 
   padding: 20px;
@@ -56,35 +56,6 @@
   border-radius: 11px;
 
   background: #fff;
-}
-
-
-.documents-section-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 12px;
-
-  margin-bottom: 20px;
-}
-
-.documents-section-heading h2 {
-  margin: 0;
-
-  color: #172554;
-
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.documents-section-heading p {
-  margin: 7px 0 0;
-
-  color: var(--documents-muted);
-
-  font-size: 11px;
-  line-height: 1.8;
 }
 
 
@@ -176,53 +147,25 @@
   padding-top: 5px;
 }
 
-/* جدول اسناد */
-
-.documents-table-wrapper {
-  width: 100%;
-
-  overflow-x: auto;
-
-  border: 1px solid var(--documents-border);
-  border-radius: 9px;
-}
-
-
+/* جدول اسناد در نمایشگرهای کوچک‌تر از عرض موردنیاز، اسکرول افقی می‌گیرد. */
 .documents-table {
-  width: 100%;
   min-width: 820px;
-
-  border-collapse: separate;
-  border-spacing: 0;
-
-  font-size: 12px;
-  text-align: right;
 }
 
-
-.documents-table th {
-  padding: 13px 12px;
-
-  border-bottom: 1px solid var(--documents-border);
-
-  background: #f8fafc;
-
-  color: var(--documents-muted);
-
-  font-size: 11px;
-  font-weight: 600;
-
-  white-space: nowrap;
-}
-
-
+/* فاصله اختصاصی سلول‌های جدول اسناد */
+.documents-table th,
 .documents-table td {
   padding: 13px 12px;
+}
 
-  border-bottom: 1px solid #eef0f3;
+/* رنگ عنوان ستون‌ها */
+.documents-table th {
+  color: var(--documents-muted);
+}
 
+/* رنگ متن اطلاعات */
+.documents-table td {
   color: #475569;
-
   vertical-align: middle;
 }
 
@@ -307,8 +250,7 @@
 
 /* وضعیت بارگذاری و خطا */
 
-.documents-loading,
-.documents-empty {
+.documents-loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -327,23 +269,6 @@
   text-align: center;
 }
 
-
-.documents-empty {
-  flex-direction: column;
-  background: #f8fafc;
-}
-
-.documents-empty strong {
-  color: #334155;
-  font-size: 14px;
-}
-
-.documents-empty p {
-  margin: 0;
-  line-height: 1.8;
-}
-
-
 /* محفظه پیام خطا و دکمه تلاش مجدد */
 .documents-error {
   display: flex;
@@ -352,7 +277,6 @@
   flex-wrap: wrap;
   gap: 12px;
   min-width: 0;
-  margin-bottom: 15px;
 }
 
 /* پیام عمومی فضای باقی‌مانده را می‌گیرد */
@@ -367,19 +291,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
   gap: 16px;
-
-  margin-top: 20px;
-
   color: var(--documents-muted);
-
   font-size: 12px;
-}
-
-/* عرض دکمه‌های صفحه‌بندی ثابت می‌ماند. */
-.documents-pagination>.ui-button {
-  min-width: 65px;
 }
 
 /* دکمه‌های عملیاتی داخل تقویم */
@@ -601,8 +515,7 @@
     align-items: stretch;
   }
 
-  .documents-filter-section,
-  .documents-table-section {
+  .documents-filter-section {
     padding: 15px;
   }
 

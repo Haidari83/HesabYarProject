@@ -4,9 +4,11 @@ import { useBusinessData } from '../../context/BusinessDataContext';
 
 import { formatNumber } from '../../utils/numberFormat';
 import { normalizePersianText as normalizeName } from '../../utils/persianText';
-import Button from '../../components/ui/Button';
+import DataTableShell from '../../components/ui/DataTableShell';
+import EmptyState from '../../components/ui/EmptyState';
 
 // import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
 
 import './inventory-stock-list.css';
 
@@ -422,33 +424,52 @@ function InventoryStockList() {
         </span>
       </div>
 
-      {/* جدول دسکتاپ */}
-      <section className="stock-table-wrapper">
-        <table className="stock-table">
-          <thead>
-            <tr>
-              <th>ردیف</th>
-              <th>نام کالا</th>
-              <th>دسته‌بندی</th>
-              <th>واحد</th>
-              <th>موجودی فعلی</th>
-              <th>حداقل موجودی</th>
-              <th>قیمت خرید ثبت‌شده</th>
-              <th>وضعیت</th>
-              <th>عملیات</th>
-            </tr>
-          </thead>
+      {/* =========================================
+    قاب مشترک جدول موجودی در دسکتاپ
+========================================= */}
 
-          <tbody>
-            {paginatedProducts.map(renderProductDetails)}
-          </tbody>
-        </table>
+      <DataTableShell
+        title="فهرست موجودی کالا"
+        className="stock-table-shell"
+        bordered
+      >
 
-        {filteredProducts.length === 0 && (
-          <div className="stock-empty-state">
-            <span>⌕</span>
-            <strong>کالایی پیدا نشد</strong>
-            <p>عبارت جست‌وجو یا فیلترهای انتخاب‌شده را بررسی کن.</p>
+        {filteredProducts.length > 0 ? (
+
+          /* جدول دسکتاپ */
+          <table className="ui-data-table stock-table">
+
+            <thead>
+              <tr>
+                <th>ردیف</th>
+                <th>نام کالا</th>
+                <th>دسته‌بندی</th>
+                <th>واحد</th>
+                <th>موجودی فعلی</th>
+                <th>حداقل موجودی</th>
+                <th>قیمت خرید ثبت‌شده</th>
+                <th>وضعیت</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+
+
+            <tbody>
+              {paginatedProducts.map(renderProductDetails)}
+            </tbody>
+
+          </table>
+
+        ) : (
+
+          /* وضعیت خالی جدول دسکتاپ */
+          <EmptyState
+            className="stock-empty-state"
+            variant="table"
+            icon="⌕"
+            title="کالایی پیدا نشد"
+            description="عبارت جست‌وجو یا فیلترهای انتخاب‌شده را بررسی کن."
+          >
 
             <Button
               type="button"
@@ -458,9 +479,12 @@ function InventoryStockList() {
             >
               پاک‌کردن فیلترها
             </Button>
-          </div>
+
+          </EmptyState>
+
         )}
-      </section>
+
+      </DataTableShell>
 
       {/* نمایش کارت‌ها در موبایل */}
       <section className="stock-mobile-list">
@@ -539,9 +563,15 @@ function InventoryStockList() {
         })}
 
         {filteredProducts.length === 0 && (
-          <div className="stock-empty-state">
-            <strong>کالایی پیدا نشد</strong>
-            <p>عبارت جست‌وجو یا فیلترها را بررسی کن.</p>
+
+          <EmptyState
+            className="stock-empty-state"
+            variant="table"
+            icon="⌕"
+            title="کالایی پیدا نشد"
+            description="عبارت جست‌وجو یا فیلترها را بررسی کن."
+          >
+
             <Button
               type="button"
               variant="secondary"
@@ -550,7 +580,9 @@ function InventoryStockList() {
             >
               پاک‌کردن فیلترها
             </Button>
-          </div>
+
+          </EmptyState>
+
         )}
       </section>
 

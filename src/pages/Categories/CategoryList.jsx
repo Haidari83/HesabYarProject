@@ -9,6 +9,11 @@ import { createRows } from '../../utils/listHelpers';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
 
+// قاب مشترک جدول‌ها
+import DataTableShell from '../../components/ui/DataTableShell';
+
+// نمایش یکپارچه وضعیت خالی فهرست‌ها
+import EmptyState from '../../components/ui/EmptyState';
 import './category-list.css';
 
 
@@ -884,17 +889,11 @@ function CategoryList({ currentUser }) {
 
       <div className="category-page">
 
-        <div className="ui-empty-state ui-empty-state--table">
-
-          <strong>
-            در حال دریافت فهرست دسته‌بندی‌ها...
-          </strong>
-
-          <p>
-            اطلاعات از پایگاه داده حساب‌یار دریافت می‌شود.
-          </p>
-
-        </div>
+        <EmptyState
+          variant="table"
+          title="دسته‌بندی‌ای پیدا نشد"
+          description="جست‌وجو یا فیلتر را تغییر بده."
+        />
 
       </div>
 
@@ -1053,506 +1052,503 @@ function CategoryList({ currentUser }) {
       </section>
 
       {/* جدول دسته‌بندی‌ها */}
-      <section className="management-table-card">
+      {/* قاب مشترک فهرست دسته‌بندی‌ها */}
+      <DataTableShell
+        title="فهرست دسته‌بندی‌ها"
+        description={`${formatNumber(filteredCategories.length)} دسته‌بندی`}
+      >
 
-        <header className="management-table-card__header">
-          <div>
-            <h2>فهرست دسته‌بندی‌ها</h2>
-            <p>
-              {formatNumber(filteredCategories.length)} دسته‌بندی
-            </p>
-          </div>
-        </header>
+        <table className="ui-data-table category-table">
 
-        <div className="ui-data-table-wrapper">
-          <table className="category-table">
+          <thead>
+            <tr>
+              <th>ردیف</th>
+              <th>نام دسته‌بندی</th>
+              <th>توضیحات</th>
+              <th>تعداد کالاها</th>
+              <th>وضعیت</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
 
-            <thead>
-              <tr>
-                <th>ردیف</th>
-                <th>نام دسته‌بندی</th>
-                <th>توضیحات</th>
-                <th>تعداد کالاها</th>
-                <th>وضعیت</th>
-                <th>عملیات</th>
-              </tr>
-            </thead>
+          <tbody>
+            {filteredCategories.map((category, index) => {
+              const count = getProductCount(category.id);
 
-            <tbody>
-              {filteredCategories.map((category, index) => {
-                const count = getProductCount(category.id);
+              return (
+                <tr key={category.id}>
 
-                return (
-                  <tr key={category.id}>
+                  <td>{formatNumber(index + 1)}</td>
 
-                    <td>{formatNumber(index + 1)}</td>
-
-                    <td className="category-name">
-                      {category.name}
-                    </td>
-
-                    <td className="category-description">
-                      {category.description || '—'}
-                    </td>
-
-                    <td>
-                      <span className="category-product-count">
-                        {formatNumber(count)} کالا
-                      </span>
-                    </td>
-
-                    <td>
-                      <span
-                        className={`category-status ${category.isActive ? 'active' : 'inactive'
-                          }`}
-                      >
-                        {category.isActive ? 'فعال' : 'غیرفعال'}
-                      </span>
-                    </td>
-
-
-                    <td>
-
-                      {canManageCategories ? (
-
-                        <div className="category-actions">
-
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="small"
-                            onClick={() => openEditForm(category)}
-                            disabled={isSaving}
-                          >
-                            ویرایش
-                          </Button>
-
-                          <Button
-                            type="button"
-                            // دسته فعال با هشدار و دسته غیرفعال با موفقیت نمایش داده می‌شود.
-                            variant={category.isActive ? 'warning' : 'success'}
-                            size="small"
-                            onClick={() => requestStatusChange(category)}
-                            disabled={isSaving}
-                          >
-                            {category.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
-                          </Button>
-
-                          <Button
-                            type="button"
-                            variant="danger"
-                            size="small"
-                            disabled={count > 0 || isSaving}
-                            onClick={() => requestDelete(category)}
-                            title={
-                              count > 0
-                                ? 'این دسته‌بندی دارای کالاست.'
-                                : 'حذف دسته‌بندی'
-                            }
-                          >
-                            حذف
-                          </Button>
-
-                        </div>
-
-                      ) : (
-
-                        <span>—</span>
-
-                      )}
-
-                    </td>
-
-
-                  </tr>
-                );
-              })}
-
-              {filteredCategories.length === 0 && (
-                <tr>
-                  <td colSpan="6">
-                    <div className="ui-empty-state ui-empty-state--table">
-                      <strong>دسته‌بندی‌ای پیدا نشد</strong>
-                      <p>جست‌وجو یا فیلتر را تغییر بده.</p>
-                    </div>
+                  <td className="category-name">
+                    {category.name}
                   </td>
+
+                  <td className="category-description">
+                    {category.description || '—'}
+                  </td>
+
+                  <td>
+                    <span className="category-product-count">
+                      {formatNumber(count)} کالا
+                    </span>
+                  </td>
+
+                  <td>
+                    <span
+                      className={`category-status ${category.isActive ? 'active' : 'inactive'
+                        }`}
+                    >
+                      {category.isActive ? 'فعال' : 'غیرفعال'}
+                    </span>
+                  </td>
+
+
+                  <td>
+
+                    {canManageCategories ? (
+
+                      <div className="category-actions">
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="small"
+                          onClick={() => openEditForm(category)}
+                          disabled={isSaving}
+                        >
+                          ویرایش
+                        </Button>
+
+                        <Button
+                          type="button"
+                          // دسته فعال با هشدار و دسته غیرفعال با موفقیت نمایش داده می‌شود.
+                          variant={category.isActive ? 'warning' : 'success'}
+                          size="small"
+                          onClick={() => requestStatusChange(category)}
+                          disabled={isSaving}
+                        >
+                          {category.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="small"
+                          disabled={count > 0 || isSaving}
+                          onClick={() => requestDelete(category)}
+                          title={
+                            count > 0
+                              ? 'این دسته‌بندی دارای کالاست.'
+                              : 'حذف دسته‌بندی'
+                          }
+                        >
+                          حذف
+                        </Button>
+
+                      </div>
+
+                    ) : (
+
+                      <span>—</span>
+
+                    )}
+
+                  </td>
+
+
                 </tr>
-              )}
+              );
+            })}
 
-            </tbody>
-          </table>
-        </div>
-
-      </section>
-
-      {/* پنجره ثبت تکی یا گروهی */}
-      {isFormOpen && (
-        <div
-          className="ui-modal-backdrop ui-modal-backdrop--inset-10"
-          onMouseDown={(event) => {
-            if (
-              event.target === event.currentTarget &&
-              !isSaving
-            ) {
-              closeForm();
-            }
-          }}
-        >
-          <section
-            className={
-              formMode === 'bulk'
-                ? 'category-modal category-bulk-modal'
-                : 'category-modal'
-            }
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="category-form-title"
-          >
-
-            <header className="category-modal-header">
-              <div>
-                <h2 id="category-form-title">
-                  {editingId
-                    ? 'ویرایش دسته‌بندی'
-                    : formMode === 'single'
-                      ? 'افزودن یک دسته‌بندی'
-                      : 'افزودن چندین دسته‌بندی'}
-                </h2>
-
-                <p>
-                  {editingId
-                    ? 'مشخصات دسته‌بندی را ویرایش کن.'
-                    : formMode === 'single'
-                      ? 'اطلاعات یک دسته‌بندی را وارد کن.'
-                      : 'چند دسته‌بندی را در ردیف‌های مختلف وارد کن و همه را یک‌جا ثبت کن.'}
-                </p>
-              </div>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="small"
-                iconOnly
-                onClick={closeForm}
-                aria-label="بستن پنجره"
-              >
-                ×
-              </Button>
-
-            </header>
-
-            {/* حالت ثبت تکی */}
-            {formMode === 'single' && (
-              <form
-                className="category-single-form"
-                onSubmit={handleSingleSubmit}
-              >
-
-                <div className="category-form-fields">
-
-                  <label className="category-form-field">
-                    <span>نام دسته‌بندی</span>
-
-                    <input
-                      name="name"
-                      value={singleForm.name}
-                      onChange={handleSingleChange}
-                      placeholder="مثلاً مواد غذایی"
-                      required
-                      autoFocus
-                    />
-                  </label>
-
-                  <label className="category-form-field">
-                    <span>توضیحات</span>
-
-                    <textarea
-                      name="description"
-                      value={singleForm.description}
-                      onChange={handleSingleChange}
-                      placeholder="توضیح کوتاهی درباره دسته‌بندی..."
-                      rows="3"
-                    />
-                  </label>
-
-                </div>
-
-                {singleError && (
-                  <Alert
-                    variant="danger"
-                    role="alert"
-                    className="category-form-error"
-                  >
-                    {singleError}
-                  </Alert>
-                )}
-
-                <footer className="category-modal-actions">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={closeForm}
-                    disabled={isSaving}
-                  >
-                    انصراف
-                  </Button>
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    loading={isSaving}
-                  >
-                    {isSaving
-                      ? 'در حال ذخیره...'
-                      : editingId
-                        ? 'ذخیره تغییرات'
-                        : 'ثبت دسته‌بندی'}
-                  </Button>
-
-                </footer>
-
-              </form>
+            {filteredCategories.length === 0 && (
+              <tr>
+                <td colSpan="6">
+                  <div className="ui-empty-state ui-empty-state--table">
+                    <strong>دسته‌بندی‌ای پیدا نشد</strong>
+                    <p>جست‌وجو یا فیلتر را تغییر بده.</p>
+                  </div>
+                </td>
+              </tr>
             )}
 
-            {/* حالت ثبت گروهی */}
-            {formMode === 'bulk' && (
-              <form
-                className="category-bulk-form"
-                onSubmit={handleBulkSubmit}
-              >
+          </tbody>
+        </table>
 
-                <div className="category-bulk-info">
-                  <span>ⓘ</span>
+      </DataTableShell >
+
+      {/* پنجره ثبت تکی یا گروهی */}
+      {
+        isFormOpen && (
+          <div
+            className="ui-modal-backdrop ui-modal-backdrop--inset-10"
+            onMouseDown={(event) => {
+              if (
+                event.target === event.currentTarget &&
+                !isSaving
+              ) {
+                closeForm();
+              }
+            }}
+          >
+            <section
+              className={
+                formMode === 'bulk'
+                  ? 'category-modal category-bulk-modal'
+                  : 'category-modal'
+              }
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="category-form-title"
+            >
+
+              <header className="category-modal-header">
+                <div>
+                  <h2 id="category-form-title">
+                    {editingId
+                      ? 'ویرایش دسته‌بندی'
+                      : formMode === 'single'
+                        ? 'افزودن یک دسته‌بندی'
+                        : 'افزودن چندین دسته‌بندی'}
+                  </h2>
+
                   <p>
-                    نام دسته‌بندی الزامی است و توضیحات اختیاری است.
-                    ردیف‌های کاملاً خالی نادیده گرفته می‌شوند.
+                    {editingId
+                      ? 'مشخصات دسته‌بندی را ویرایش کن.'
+                      : formMode === 'single'
+                        ? 'اطلاعات یک دسته‌بندی را وارد کن.'
+                        : 'چند دسته‌بندی را در ردیف‌های مختلف وارد کن و همه را یک‌جا ثبت کن.'}
                   </p>
                 </div>
 
-                <div className="category-bulk-table-wrapper">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="small"
+                  iconOnly
+                  onClick={closeForm}
+                  aria-label="بستن پنجره"
+                >
+                  ×
+                </Button>
 
-                  <table className="category-bulk-table">
+              </header>
 
-                    <thead>
-                      <tr>
-                        <th className="category-bulk-number">ردیف</th>
-                        <th>نام دسته‌بندی</th>
-                        <th>توضیحات</th>
-                        <th>عملیات</th>
-                      </tr>
-                    </thead>
+              {/* حالت ثبت تکی */}
+              {formMode === 'single' && (
+                <form
+                  className="category-single-form"
+                  onSubmit={handleSingleSubmit}
+                >
 
-                    <tbody>
-                      {bulkRows.map((row, index) => (
-                        <tr
-                          key={row.rowId}
-                          className={
-                            bulkErrors[row.rowId]
-                              ? 'category-row-invalid'
-                              : ''
-                          }
-                        >
+                  <div className="category-form-fields">
 
-                          <td className="category-bulk-number">
-                            {formatNumber(index + 1)}
-                          </td>
+                    <label className="category-form-field">
+                      <span>نام دسته‌بندی</span>
 
-                          <td>
-                            <input
-                              type="text"
-                              value={row.name}
-                              onChange={(event) =>
-                                updateBulkRow(row.rowId, {
-                                  name: event.target.value,
-                                })
-                              }
-                              placeholder="نام دسته‌بندی..."
-                              aria-label={`نام دسته‌بندی ردیف ${index + 1}`}
-                            />
+                      <input
+                        name="name"
+                        value={singleForm.name}
+                        onChange={handleSingleChange}
+                        placeholder="مثلاً مواد غذایی"
+                        required
+                        autoFocus
+                      />
+                    </label>
 
-                            {bulkErrors[row.rowId] && (
-                              <ul className="category-row-errors">
-                                {bulkErrors[row.rowId].map((error) => (
-                                  <li key={error}>{error}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </td>
+                    <label className="category-form-field">
+                      <span>توضیحات</span>
 
-                          <td>
-                            <input
-                              type="text"
-                              value={row.description}
-                              onChange={(event) =>
-                                updateBulkRow(row.rowId, {
-                                  description: event.target.value,
-                                })
-                              }
-                              placeholder="توضیحات اختیاری..."
-                              aria-label={`توضیحات ردیف ${index + 1}`}
-                            />
-                          </td>
+                      <textarea
+                        name="description"
+                        value={singleForm.description}
+                        onChange={handleSingleChange}
+                        placeholder="توضیح کوتاهی درباره دسته‌بندی..."
+                        rows="3"
+                      />
+                    </label>
 
-                          <td>
-                            <Button
-                              type="button"
-                              variant="danger"
-                              size="small"
-                              iconOnly
-                              className="category-row-remove"
-                              onClick={() => removeBulkRow(row.rowId)}
-                              title="حذف ردیف"
-                              aria-label={`حذف ردیف ${index + 1}`}
-                            >
-                              ×
-                            </Button>
-                          </td>
-
-                        </tr>
-                      ))}
-                    </tbody>
-
-                  </table>
-
-                </div>
-
-                <div className="category-bulk-add-row">
-                  <div>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="small"
-                      onClick={() => addBulkRows(1)}
-                    >
-                      + یک ردیف
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="small"
-                      onClick={() => addBulkRows(5)}
-                    >
-                      + پنج ردیف
-                    </Button>
                   </div>
 
-                  <span>
-                    {formatNumber(bulkRows.length)} ردیف
-                  </span>
-                </div>
+                  {singleError && (
+                    <Alert
+                      variant="danger"
+                      role="alert"
+                      className="category-form-error"
+                    >
+                      {singleError}
+                    </Alert>
+                  )}
 
-                {bulkError && (
-                  <Alert
-                    variant="danger"
-                    role="alert"
-                    className="category-form-error"
-                  >
-                    {bulkError}
-                  </Alert>
-                )}
+                  <footer className="category-modal-actions">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={closeForm}
+                      disabled={isSaving}
+                    >
+                      انصراف
+                    </Button>
 
-                <footer className="category-modal-actions">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={closeForm}
-                  >
-                    انصراف
-                  </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      loading={isSaving}
+                    >
+                      {isSaving
+                        ? 'در حال ذخیره...'
+                        : editingId
+                          ? 'ذخیره تغییرات'
+                          : 'ثبت دسته‌بندی'}
+                    </Button>
 
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    loading={isSaving}
-                  >
-                    {isSaving ? 'در حال ثبت...' : 'ثبت همه دسته‌بندی‌ها'}
-                  </Button>
+                  </footer>
 
-                </footer>
-
-              </form>
-            )}
-
-          </section>
-        </div>
-      )}
-
-      {/* پنجره تأیید تغییر وضعیت یا حذف */}
-      {confirmAction && (
-        <div
-          className="ui-modal-backdrop ui-modal-backdrop--inset-10"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setConfirmAction(null);
-            }
-          }}
-        >
-          <section
-            className="category-confirm-modal"
-            role="alertdialog"
-            aria-modal="true"
-          >
-
-            <h2>
-              {confirmAction.type === 'delete'
-                ? 'حذف دسته‌بندی'
-                : confirmAction.category.isActive
-                  ? 'غیرفعال‌کردن دسته‌بندی'
-                  : 'فعال‌کردن دسته‌بندی'}
-            </h2>
-
-            <p>
-              آیا از انجام این عملیات برای دسته‌بندی
-              {' '}
-              <strong>«{confirmAction.category.name}»</strong>
-              {' '}
-              مطمئنی؟
-            </p>
-
-            {confirmAction.type === 'status' &&
-              confirmAction.category.isActive && (
-                <div className="category-confirm-hint">
-                  کالاهای قبلی حذف نمی‌شوند؛ اما این دسته‌بندی برای
-                  ثبت کالاهای جدید قابل انتخاب نخواهد بود.
-                </div>
+                </form>
               )}
 
-            <div className="category-confirm-actions">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setConfirmAction(null)}
-                disabled={isSaving}
-              >
-                انصراف
-              </Button>
+              {/* حالت ثبت گروهی */}
+              {formMode === 'bulk' && (
+                <form
+                  className="category-bulk-form"
+                  onSubmit={handleBulkSubmit}
+                >
 
-              <Button
-                type="button"
-                // حذف با رنگ خطر و سایر تأییدها با رنگ اصلی نمایش داده می‌شوند.
-                variant={
-                  confirmAction.type === 'delete'
-                    ? 'danger'
-                    : 'primary'
-                }
-                onClick={handleConfirmAction}
-                loading={isSaving}
-              >
-                {isSaving
-                  ? 'در حال اجرا...'
-                  : confirmAction.type === 'delete'
-                    ? 'حذف دسته‌بندی'
-                    : 'تأیید'}
-              </Button>
+                  <div className="category-bulk-info">
+                    <span>ⓘ</span>
+                    <p>
+                      نام دسته‌بندی الزامی است و توضیحات اختیاری است.
+                      ردیف‌های کاملاً خالی نادیده گرفته می‌شوند.
+                    </p>
+                  </div>
 
-            </div>
+                  <div className="category-bulk-table-wrapper">
 
-          </section>
-        </div>
-      )}
+                    <table className="category-bulk-table">
 
-    </div>
+                      <thead>
+                        <tr>
+                          <th className="category-bulk-number">ردیف</th>
+                          <th>نام دسته‌بندی</th>
+                          <th>توضیحات</th>
+                          <th>عملیات</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {bulkRows.map((row, index) => (
+                          <tr
+                            key={row.rowId}
+                            className={
+                              bulkErrors[row.rowId]
+                                ? 'category-row-invalid'
+                                : ''
+                            }
+                          >
+
+                            <td className="category-bulk-number">
+                              {formatNumber(index + 1)}
+                            </td>
+
+                            <td>
+                              <input
+                                type="text"
+                                value={row.name}
+                                onChange={(event) =>
+                                  updateBulkRow(row.rowId, {
+                                    name: event.target.value,
+                                  })
+                                }
+                                placeholder="نام دسته‌بندی..."
+                                aria-label={`نام دسته‌بندی ردیف ${index + 1}`}
+                              />
+
+                              {bulkErrors[row.rowId] && (
+                                <ul className="category-row-errors">
+                                  {bulkErrors[row.rowId].map((error) => (
+                                    <li key={error}>{error}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </td>
+
+                            <td>
+                              <input
+                                type="text"
+                                value={row.description}
+                                onChange={(event) =>
+                                  updateBulkRow(row.rowId, {
+                                    description: event.target.value,
+                                  })
+                                }
+                                placeholder="توضیحات اختیاری..."
+                                aria-label={`توضیحات ردیف ${index + 1}`}
+                              />
+                            </td>
+
+                            <td>
+                              <Button
+                                type="button"
+                                variant="danger"
+                                size="small"
+                                iconOnly
+                                className="category-row-remove"
+                                onClick={() => removeBulkRow(row.rowId)}
+                                title="حذف ردیف"
+                                aria-label={`حذف ردیف ${index + 1}`}
+                              >
+                                ×
+                              </Button>
+                            </td>
+
+                          </tr>
+                        ))}
+                      </tbody>
+
+                    </table>
+
+                  </div>
+
+                  <div className="category-bulk-add-row">
+                    <div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        onClick={() => addBulkRows(1)}
+                      >
+                        + یک ردیف
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="small"
+                        onClick={() => addBulkRows(5)}
+                      >
+                        + پنج ردیف
+                      </Button>
+                    </div>
+
+                    <span>
+                      {formatNumber(bulkRows.length)} ردیف
+                    </span>
+                  </div>
+
+                  {bulkError && (
+                    <Alert
+                      variant="danger"
+                      role="alert"
+                      className="category-form-error"
+                    >
+                      {bulkError}
+                    </Alert>
+                  )}
+
+                  <footer className="category-modal-actions">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={closeForm}
+                    >
+                      انصراف
+                    </Button>
+
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      loading={isSaving}
+                    >
+                      {isSaving ? 'در حال ثبت...' : 'ثبت همه دسته‌بندی‌ها'}
+                    </Button>
+
+                  </footer>
+
+                </form>
+              )}
+
+            </section>
+          </div>
+        )
+      }
+
+      {/* پنجره تأیید تغییر وضعیت یا حذف */}
+      {
+        confirmAction && (
+          <div
+            className="ui-modal-backdrop ui-modal-backdrop--inset-10"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                setConfirmAction(null);
+              }
+            }}
+          >
+            <section
+              className="category-confirm-modal"
+              role="alertdialog"
+              aria-modal="true"
+            >
+
+              <h2>
+                {confirmAction.type === 'delete'
+                  ? 'حذف دسته‌بندی'
+                  : confirmAction.category.isActive
+                    ? 'غیرفعال‌کردن دسته‌بندی'
+                    : 'فعال‌کردن دسته‌بندی'}
+              </h2>
+
+              <p>
+                آیا از انجام این عملیات برای دسته‌بندی
+                {' '}
+                <strong>«{confirmAction.category.name}»</strong>
+                {' '}
+                مطمئنی؟
+              </p>
+
+              {confirmAction.type === 'status' &&
+                confirmAction.category.isActive && (
+                  <div className="category-confirm-hint">
+                    کالاهای قبلی حذف نمی‌شوند؛ اما این دسته‌بندی برای
+                    ثبت کالاهای جدید قابل انتخاب نخواهد بود.
+                  </div>
+                )}
+
+              <div className="category-confirm-actions">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setConfirmAction(null)}
+                  disabled={isSaving}
+                >
+                  انصراف
+                </Button>
+
+                <Button
+                  type="button"
+                  // حذف با رنگ خطر و سایر تأییدها با رنگ اصلی نمایش داده می‌شوند.
+                  variant={
+                    confirmAction.type === 'delete'
+                      ? 'danger'
+                      : 'primary'
+                  }
+                  onClick={handleConfirmAction}
+                  loading={isSaving}
+                >
+                  {isSaving
+                    ? 'در حال اجرا...'
+                    : confirmAction.type === 'delete'
+                      ? 'حذف دسته‌بندی'
+                      : 'تأیید'}
+                </Button>
+
+              </div>
+
+            </section>
+          </div>
+        )
+      }
+
+    </div >
   );
 }
 

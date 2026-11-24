@@ -15,8 +15,6 @@ import './components/ui/style/ui.css';
 import './components/ui/style/form-field.css';
 import './components/ui/style/data-table.css';
 import './components/ui/style/modal-shell.css';
-// استایل‌های مشترک صفحات مدیریتی
-import './management/management-shared.css';
 
 // نقطه ورود برنامه React
 ReactDOM.createRoot(document.getElementById('root')).render(
