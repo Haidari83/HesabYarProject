@@ -649,166 +649,165 @@ function ProductList({ currentUser }) {
               </div>
             </header>
 
-            <div className="product-table-wrapper">
-              <table className="product-table">
+            <div className="ui-data-table-wrapper">              <table className="product-table">
 
-                <thead>
-                  <tr>
-                    <th>کد محصول</th>
-                    <th>نام محصول</th>
-                    <th>دسته‌بندی</th>
-                    <th>واحد پایه</th>
-                    <th>واحدهای دیگر</th>
-                    <th>قیمت خرید پایه</th>
-                    <th>قیمت فروش پایه</th>
-                    <th>وضعیت</th>
-                    <th>عملیات</th>
-                  </tr>
-                </thead>
+              <thead>
+                <tr>
+                  <th>کد محصول</th>
+                  <th>نام محصول</th>
+                  <th>دسته‌بندی</th>
+                  <th>واحد پایه</th>
+                  <th>واحدهای دیگر</th>
+                  <th>قیمت خرید پایه</th>
+                  <th>قیمت فروش پایه</th>
+                  <th>وضعیت</th>
+                  <th>عملیات</th>
+                </tr>
+              </thead>
 
-                <tbody>
-                  {filteredProducts.map((product) => {
-                    const additionalUnits = product.units.filter(
-                      (unit) => !unit.isBaseUnit
-                    );
+              <tbody>
+                {filteredProducts.map((product) => {
+                  const additionalUnits = product.units.filter(
+                    (unit) => !unit.isBaseUnit
+                  );
 
-                    return (
-                      <tr key={product.id}>
+                  return (
+                    <tr key={product.id}>
 
-                        <td className="product-code">
-                          {product.code}
-                        </td>
+                      <td className="product-code">
+                        {product.code}
+                      </td>
 
-                        <td className="product-name">
-                          {product.name}
-                        </td>
+                      <td className="product-name">
+                        {product.name}
+                      </td>
 
-                        <td>
-                          {product.categoryName || '—'}
-                        </td>
+                      <td>
+                        {product.categoryName || '—'}
+                      </td>
 
-                        <td>
-                          <div className="product-base-unit">
-                            <strong>{product.baseUnitName}</strong>
+                      <td>
+                        <div className="product-base-unit">
+                          <strong>{product.baseUnitName}</strong>
 
-                            {product.baseUnitSymbol && (
-                              <small>{product.baseUnitSymbol}</small>
-                            )}
-                          </div>
-                        </td>
-
-                        <td>
-                          {additionalUnits.length > 0 ? (
-                            <div className="product-unit-tags">
-                              {additionalUnits.map((unit) => (
-                                <span
-                                  key={unit.productUnitId}
-                                  className={
-                                    unit.unitKind === 'package'
-                                      ? 'package'
-                                      : 'standard'
-                                  }
-                                >
-                                  {unit.unitName}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="product-price-empty">
-                              ندارد
-                            </span>
+                          {product.baseUnitSymbol && (
+                            <small>{product.baseUnitSymbol}</small>
                           )}
-                        </td>
-
-                        <td className="product-price-cell">
-                          <ProductPriceSummary
-                            product={product}
-                            priceType="purchase"
-                            currencies={currencies}
-                          />
-                        </td>
-
-                        <td className="product-price-cell">
-                          <ProductPriceSummary
-                            product={product}
-                            priceType="sale"
-                            currencies={currencies}
-                          />
-                        </td>
-
-                        <td>
-                          <span
-                            className={`product-status ${product.isActive ? 'active' : 'inactive'
-                              }`}
-                          >
-                            {product.isActive ? 'فعال' : 'غیرفعال'}
-                          </span>
-                        </td>
-
-                        <td>
-                          <div className="product-table-actions">
-
-                            {/* دکمه ویرایش برای محصولات فعال */}
-                            {canUpdateProducts && product.isActive && (
-                              <button
-                                type="button"
-                                className="product-edit-action"
-                                onClick={() => {
-                                  setCreateSuccessMessage('');
-                                  setProductToEdit(product);
-                                }}
-                              >
-                                ویرایش
-                              </button>
-                            )}
-
-                            {/* دکمه فعال‌سازی یا غیرفعال‌سازی */}
-                            {canDeactivateProducts && (
-                              <button
-                                type="button"
-                                className={
-                                  product.isActive
-                                    ? 'product-deactivate-action'
-                                    : 'product-activate-action'
-                                }
-                                onClick={() => openProductStatusDialog(product)}
-                              >
-                                {product.isActive
-                                  ? 'غیرفعال‌کردن'
-                                  : 'فعال‌کردن'}
-                              </button>
-                            )}
-
-                            {/* پیام برای کاربری که مجوز عملیات ندارد */}
-                            {!canUpdateProducts && !canDeactivateProducts && (
-                              <span className="product-price-empty">—</span>
-                            )}
-
-                          </div>
-                        </td>
-
-                      </tr>
-                    );
-                  })}
-
-                  {filteredProducts.length === 0 && (
-                    <tr>
-                      <td colSpan="9">
-                        <div className="product-empty-state">
-                          <span>⌕</span>
-
-                          <strong>محصولی پیدا نشد</strong>
-
-                          <p>
-                            عبارت جست‌وجو یا فیلترها را تغییر بده.
-                          </p>
                         </div>
                       </td>
-                    </tr>
-                  )}
 
-                </tbody>
-              </table>
+                      <td>
+                        {additionalUnits.length > 0 ? (
+                          <div className="product-unit-tags">
+                            {additionalUnits.map((unit) => (
+                              <span
+                                key={unit.productUnitId}
+                                className={
+                                  unit.unitKind === 'package'
+                                    ? 'package'
+                                    : 'standard'
+                                }
+                              >
+                                {unit.unitName}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="product-price-empty">
+                            ندارد
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="product-price-cell">
+                        <ProductPriceSummary
+                          product={product}
+                          priceType="purchase"
+                          currencies={currencies}
+                        />
+                      </td>
+
+                      <td className="product-price-cell">
+                        <ProductPriceSummary
+                          product={product}
+                          priceType="sale"
+                          currencies={currencies}
+                        />
+                      </td>
+
+                      <td>
+                        <span
+                          className={`product-status ${product.isActive ? 'active' : 'inactive'
+                            }`}
+                        >
+                          {product.isActive ? 'فعال' : 'غیرفعال'}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="product-table-actions">
+
+                          {/* دکمه ویرایش برای محصولات فعال */}
+                          {canUpdateProducts && product.isActive && (
+                            <button
+                              type="button"
+                              className="product-edit-action"
+                              onClick={() => {
+                                setCreateSuccessMessage('');
+                                setProductToEdit(product);
+                              }}
+                            >
+                              ویرایش
+                            </button>
+                          )}
+
+                          {/* دکمه فعال‌سازی یا غیرفعال‌سازی */}
+                          {canDeactivateProducts && (
+                            <button
+                              type="button"
+                              className={
+                                product.isActive
+                                  ? 'product-deactivate-action'
+                                  : 'product-activate-action'
+                              }
+                              onClick={() => openProductStatusDialog(product)}
+                            >
+                              {product.isActive
+                                ? 'غیرفعال‌کردن'
+                                : 'فعال‌کردن'}
+                            </button>
+                          )}
+
+                          {/* پیام برای کاربری که مجوز عملیات ندارد */}
+                          {!canUpdateProducts && !canDeactivateProducts && (
+                            <span className="product-price-empty">—</span>
+                          )}
+
+                        </div>
+                      </td>
+
+                    </tr>
+                  );
+                })}
+
+                {filteredProducts.length === 0 && (
+                  <tr>
+                    <td colSpan="9">
+                      <div className="product-empty-state">
+                        <span>⌕</span>
+
+                        <strong>محصولی پیدا نشد</strong>
+
+                        <p>
+                          عبارت جست‌وجو یا فیلترها را تغییر بده.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+
+              </tbody>
+            </table>
             </div>
 
           </section>

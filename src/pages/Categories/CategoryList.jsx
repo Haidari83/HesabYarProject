@@ -1081,7 +1081,7 @@ function CategoryList({ currentUser }) {
           </div>
         </header>
 
-        <div className="category-table-wrapper">
+        <div className="ui-data-table-wrapper">
           <table className="category-table">
 
             <thead>

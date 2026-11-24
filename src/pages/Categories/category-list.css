@@ -1,4 +1,5 @@
-ساختار اصلی صفحه دسته‌بندی‌ها .category-page {
+/* ساختار اصلی صفحه دسته‌بندی‌ها  */
+.category-page {
   --category-primary: #172554;
   --category-accent: #0f766e;
   --category-text: #1f2937;
@@ -231,11 +232,6 @@
 
 .category-add-bulk:hover {
   background-color: #263b70;
-}
-
-.category-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
 }
 
 .category-table {

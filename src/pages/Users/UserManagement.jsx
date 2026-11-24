@@ -676,7 +676,7 @@ function UserManagement() {
 
         ) : (
 
-          <div className="user-table-wrapper">
+          <div className="ui-data-table-wrapper">
 
             <table className="user-table">
 

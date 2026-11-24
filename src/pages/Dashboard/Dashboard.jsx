@@ -352,7 +352,7 @@ function Dashboard() {
             </span>
           </div>
 
-          <div className="dashboard-table-wrapper">
+          <div className="ui-data-table-wrapper">
             <table className="dashboard-table">
               <thead>
                 <tr>

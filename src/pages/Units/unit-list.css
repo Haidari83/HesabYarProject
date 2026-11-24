@@ -289,11 +289,6 @@
   line-height: 1.9;
 }
 
-.unit-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
 .unit-table {
   width: 100%;
   border-collapse: collapse;

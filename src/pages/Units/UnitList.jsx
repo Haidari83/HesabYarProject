@@ -981,166 +981,165 @@ function UnitList({ currentUser }) {
               </div>
             </header>
 
-            <div className="unit-table-wrapper">
-              <table className="unit-table">
+            <div className="ui-data-table-wrapper">              <table className="unit-table">
 
-                <thead>
-                  <tr>
-                    <th>ردیف</th>
-                    <th>نام واحد</th>
-                    <th>نماد</th>
-                    <th>نوع واحد</th>
-                    <th>بُعد</th>
-                    <th>نسبت به واحد مرجع</th>
-                    <th>کالاهای وابسته</th>
-                    <th>وضعیت</th>
-                    <th>عملیات</th>
-                  </tr>
-                </thead>
+              <thead>
+                <tr>
+                  <th>ردیف</th>
+                  <th>نام واحد</th>
+                  <th>نماد</th>
+                  <th>نوع واحد</th>
+                  <th>بُعد</th>
+                  <th>نسبت به واحد مرجع</th>
+                  <th>کالاهای وابسته</th>
+                  <th>وضعیت</th>
+                  <th>عملیات</th>
+                </tr>
+              </thead>
 
-                <tbody>
-                  {filteredUnits.map((unit, index) => {
-                    const productCount = Number(
-                      unit.productCount || 0
-                    );
+              <tbody>
+                {filteredUnits.map((unit, index) => {
+                  const productCount = Number(
+                    unit.productCount || 0
+                  );
 
-                    const cannotDelete =
-                      unit.isSystem || productCount > 0;
+                  const cannotDelete =
+                    unit.isSystem || productCount > 0;
 
-                    const cannotDeactivate =
-                      unit.isActive && productCount > 0;
+                  const cannotDeactivate =
+                    unit.isActive && productCount > 0;
 
-                    return (
-                      <tr key={unit.id}>
+                  return (
+                    <tr key={unit.id}>
 
-                        <td>{formatNumber(index + 1)}</td>
+                      <td>{formatNumber(index + 1)}</td>
 
-                        <td className="unit-name">
-                          <div className="unit-name-cell">
-                            <span>{unit.name}</span>
+                      <td className="unit-name">
+                        <div className="unit-name-cell">
+                          <span>{unit.name}</span>
 
-                            {unit.isSystem && (
-                              <small className="unit-system-badge">
-                                پیش‌فرض
-                              </small>
-                            )}
-                          </div>
-                        </td>
-
-                        <td className="unit-symbol">
-                          {unit.symbol || '—'}
-                        </td>
-
-                        <td>
-                          <span
-                            className={`unit-kind-badge ${unit.unitKind}`}
-                          >
-                            {unit.unitKind === 'standard'
-                              ? 'استاندارد'
-                              : 'بسته‌بندی'}
-                          </span>
-                        </td>
-
-                        <td>
-                          {unit.unitKind === 'standard'
-                            ? getDimensionLabel(unit.dimensionCode)
-                            : 'وابسته به کالا'}
-                        </td>
-
-                        <td className="unit-reference-cell">
-                          {getReferenceRatioText(unit)}
-                        </td>
-
-                        <td>
-                          <span className="unit-product-count">
-                            {formatNumber(productCount)} کالا
-                          </span>
-                        </td>
-
-                        <td>
-                          <span
-                            className={`unit-status ${unit.isActive ? 'active' : 'inactive'
-                              }`}
-                          >
-                            {unit.isActive ? 'فعال' : 'غیرفعال'}
-                          </span>
-                        </td>
-
-                        <td>
-                          {canManageUnits ? (
-                            <div className="unit-actions">
-
-                              <button
-                                type="button"
-                                className="unit-edit-action"
-                                onClick={() => openEditForm(unit)}
-                              >
-                                ویرایش
-                              </button>
-
-                              <button
-                                type="button"
-                                className={
-                                  unit.isActive
-                                    ? 'unit-deactivate-action'
-                                    : 'unit-activate-action'
-                                }
-                                disabled={cannotDeactivate}
-                                title={
-                                  cannotDeactivate
-                                    ? 'این واحد در کالاها استفاده شده و قابل غیرفعال‌سازی نیست.'
-                                    : unit.isActive
-                                      ? 'غیرفعال‌سازی'
-                                      : 'فعال‌سازی'
-                                }
-                                onClick={() => requestStatusChange(unit)}
-                              >
-                                {unit.isActive
-                                  ? 'غیرفعال'
-                                  : 'فعال'}
-                              </button>
-
-                              <button
-                                type="button"
-                                className="unit-delete-action"
-                                disabled={cannotDelete}
-                                title={
-                                  unit.isSystem
-                                    ? 'واحدهای پیش‌فرض قابل حذف نیستند.'
-                                    : productCount > 0
-                                      ? 'این واحد در کالاها استفاده شده است.'
-                                      : 'حذف واحد'
-                                }
-                                onClick={() => requestDelete(unit)}
-                              >
-                                حذف
-                              </button>
-
-                            </div>
-                          ) : (
-                            '—'
+                          {unit.isSystem && (
+                            <small className="unit-system-badge">
+                              پیش‌فرض
+                            </small>
                           )}
-                        </td>
-
-                      </tr>
-                    );
-                  })}
-
-                  {filteredUnits.length === 0 && (
-                    <tr>
-                      <td colSpan="9">
-                        <div className="unit-empty-state">
-                          <strong>واحدی پیدا نشد</strong>
-                          <p>
-                            عبارت جست‌وجو یا فیلترها را تغییر بده.
-                          </p>
                         </div>
                       </td>
-                    </tr>
-                  )}
 
-                </tbody>
-              </table>
+                      <td className="unit-symbol">
+                        {unit.symbol || '—'}
+                      </td>
+
+                      <td>
+                        <span
+                          className={`unit-kind-badge ${unit.unitKind}`}
+                        >
+                          {unit.unitKind === 'standard'
+                            ? 'استاندارد'
+                            : 'بسته‌بندی'}
+                        </span>
+                      </td>
+
+                      <td>
+                        {unit.unitKind === 'standard'
+                          ? getDimensionLabel(unit.dimensionCode)
+                          : 'وابسته به کالا'}
+                      </td>
+
+                      <td className="unit-reference-cell">
+                        {getReferenceRatioText(unit)}
+                      </td>
+
+                      <td>
+                        <span className="unit-product-count">
+                          {formatNumber(productCount)} کالا
+                        </span>
+                      </td>
+
+                      <td>
+                        <span
+                          className={`unit-status ${unit.isActive ? 'active' : 'inactive'
+                            }`}
+                        >
+                          {unit.isActive ? 'فعال' : 'غیرفعال'}
+                        </span>
+                      </td>
+
+                      <td>
+                        {canManageUnits ? (
+                          <div className="unit-actions">
+
+                            <button
+                              type="button"
+                              className="unit-edit-action"
+                              onClick={() => openEditForm(unit)}
+                            >
+                              ویرایش
+                            </button>
+
+                            <button
+                              type="button"
+                              className={
+                                unit.isActive
+                                  ? 'unit-deactivate-action'
+                                  : 'unit-activate-action'
+                              }
+                              disabled={cannotDeactivate}
+                              title={
+                                cannotDeactivate
+                                  ? 'این واحد در کالاها استفاده شده و قابل غیرفعال‌سازی نیست.'
+                                  : unit.isActive
+                                    ? 'غیرفعال‌سازی'
+                                    : 'فعال‌سازی'
+                              }
+                              onClick={() => requestStatusChange(unit)}
+                            >
+                              {unit.isActive
+                                ? 'غیرفعال'
+                                : 'فعال'}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="unit-delete-action"
+                              disabled={cannotDelete}
+                              title={
+                                unit.isSystem
+                                  ? 'واحدهای پیش‌فرض قابل حذف نیستند.'
+                                  : productCount > 0
+                                    ? 'این واحد در کالاها استفاده شده است.'
+                                    : 'حذف واحد'
+                              }
+                              onClick={() => requestDelete(unit)}
+                            >
+                              حذف
+                            </button>
+
+                          </div>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+
+                    </tr>
+                  );
+                })}
+
+                {filteredUnits.length === 0 && (
+                  <tr>
+                    <td colSpan="9">
+                      <div className="unit-empty-state">
+                        <strong>واحدی پیدا نشد</strong>
+                        <p>
+                          عبارت جست‌وجو یا فیلترها را تغییر بده.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+
+              </tbody>
+            </table>
             </div>
 
           </section>
