@@ -649,17 +649,10 @@
   line-height: 2;
 }
 
-/* پیام خطا */
+/* حفظ فاصله خطای فرم از محتوای اطراف */
 .unit-form-error {
   flex: 0 0 auto;
   margin: 13px 20px 0;
-  padding: 10px 12px;
-  border: 1px solid #fecaca;
-  border-radius: 7px;
-  background-color: #fef2f2;
-  color: #b91c1c;
-  font-size: 11px;
-  line-height: 1.8;
 }
 
 /* دکمه‌های فرم */
@@ -734,28 +727,6 @@
   color: #475569;
   font-size: 11px;
   line-height: 1.9;
-}
-
-/* پیام خطا در عملیات مدیریت واحدها */
-.unit-operation-error {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 15px;
-  border: 1px solid #fecaca;
-  border-radius: 9px;
-  background-color: #fef2f2;
-  color: #b91c1c;
-  font-size: 12px;
-}
-
-.unit-operation-error button {
-  flex: 0 0 auto;
-  border: none;
-  background: transparent;
-  color: #b91c1c;
-  font-size: 20px;
 }
 
 /* وضعیت بارگذاری، خطا و دسترسی */

@@ -224,27 +224,11 @@
   text-align: center;
 }
 
-/* خطای خواندن فایل */
+/* حفظ فاصله پیام خطا از بخش بالایی */
 .excel-import-error {
   margin-top: 15px;
-  padding: 12px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
   font-size: var(--excel-text-sm);
-  line-height: 1.9;
 }
-
-.excel-import-error strong {
-  display: block;
-  margin-bottom: 4px;
-}
-
-.excel-import-error p {
-  margin: 0;
-}
-
 
 .excel-import-preview-count {
   padding: 6px 10px;

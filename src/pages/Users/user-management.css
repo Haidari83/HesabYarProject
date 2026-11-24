@@ -288,17 +288,6 @@
   line-height: 1;
 }
 
-/* پیام موفقیت */
-.user-success-message {
-  padding: 11px 14px;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  background-color: #ecfdf5;
-  color: #047857;
-  font-size: 11px;
-  line-height: 1.8;
-}
-
 /* پنجره اصلی */
 .user-create-modal {
   display: flex;
@@ -578,13 +567,6 @@
 /* خطای فرم */
 .user-form-error {
   margin: 15px 22px 0;
-  padding: 10px 12px;
-  border: 1px solid #fecaca;
-  border-radius: 7px;
-  background-color: #fef2f2;
-  color: #b91c1c;
-  font-size: 11px;
-  line-height: 1.8;
 }
 
 /* دکمه‌های پایانی */
@@ -696,17 +678,6 @@
 .user-row-actions button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-/* خطای عملیات جدول */
-.user-action-error {
-  padding: 11px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background-color: #fef2f2;
-  color: #b91c1c;
-  font-size: 11px;
-  line-height: 1.8;
 }
 
 /* نمایش متفاوت نام کاربری در حالت فقط خواندنی */

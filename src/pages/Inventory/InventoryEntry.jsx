@@ -5,6 +5,8 @@ import {
   useState,
 } from 'react';
 
+import Alert from '../../components/ui/Alert';
+
 import './inventory-entry.css';
 
 // کتابخانه انتخاب تاریخ
@@ -144,7 +146,6 @@ function getInventoryErrorMessage(error) {
 
 // اعلان شناور موفقیت یا خطا
 function EntryToast({ toast }) {
-
   if (!toast) {
     return null;
   }
@@ -152,25 +153,15 @@ function EntryToast({ toast }) {
   const isSuccess = toast.type === 'success';
 
   return (
-
-    <div
-      className={`entry-toast entry-toast--${toast.type}`}
+    <Alert
+      variant={isSuccess ? 'success' : 'danger'}
+      className="entry-toast"
       role={isSuccess ? 'status' : 'alert'}
-      aria-live={isSuccess ? 'polite' : 'assertive'}
     >
-
-      <span className="entry-toast-icon" aria-hidden="true">
-        {isSuccess ? '✓' : '!'}
-      </span>
-
-      <p>{toast.message}</p>
-
-    </div>
-
+      {toast.message}
+    </Alert>
   );
-
 }
-
 
 // انتخاب کالا با قابلیت جست‌وجو
 function EntryProductPicker({
@@ -1401,12 +1392,15 @@ function InventoryEntry() {
       {/* نمایش خطا بدون حذف اطلاعات فعلی فرم */}
       {loadError && formOptions && (
 
-        <div
-          className="entry-feedback entry-feedback-error"
-          role="alert"
-        >
+        <div className="entry-feedback entry-feedback-error">
 
-          <span>{loadError}</span>
+          <Alert
+            variant="danger"
+            role="alert"
+            className="entry-feedback__alert"
+          >
+            {loadError}
+          </Alert>
 
           <button
             type="button"

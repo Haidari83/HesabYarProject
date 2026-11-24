@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import Alert from '../../components/ui/Alert';
+
 import './product-form-modal.css';
 
 // ساخت شناسه موقت برای ردیف‌های واحد فرعی
@@ -657,9 +659,13 @@ function ProductFormModal({
             </section>
 
             {formError && (
-              <div className="product-form-error-message">
+              <Alert
+                variant="danger"
+                role="alert"
+                className="product-form-error-message"
+              >
                 {formError}
-              </div>
+              </Alert>
             )}
           </div>
 

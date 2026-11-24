@@ -607,17 +607,10 @@
   white-space: nowrap;
 }
 
-/* خطاهای فرم */
+/* حفظ جایگاه خطاهای داخل فرم‌های دسته‌بندی */
 .category-form-error {
   flex: 0 0 auto;
   margin: 12px 20px 0;
-  padding: 10px 12px;
-  border: 1px solid #fecaca;
-  border-radius: 7px;
-  background-color: #fef2f2;
-  color: #b91c1c;
-  font-size: 11px;
-  line-height: 1.8;
 }
 
 /* دکمه‌های پایانی فرم */

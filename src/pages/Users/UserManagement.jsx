@@ -1,5 +1,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
+import Alert from '../../components/ui/Alert';
+
 import './user-management.css';
 
 // وضعیت اولیه فرم ایجاد کاربر
@@ -571,21 +573,19 @@ function UserManagement() {
 
       </section>
 
-
       {/* پیام موفقیت */}
       {successMessage && (
-        <div className="user-success-message">
+        <Alert variant="success">
           {successMessage}
-        </div>
+        </Alert>
       )}
 
       {/* خطای عملیات کاربران */}
       {tableActionError && (
-        <div className="user-action-error">
+        <Alert variant="danger" role="alert">
           {tableActionError}
-        </div>
+        </Alert>
       )}
-
 
       {/* ابزار جست‌وجو و فیلتر */}
       <section className="user-toolbar">
@@ -1069,14 +1069,16 @@ function UserManagement() {
                 </div>
               )}
 
-
               {/* خطای فرم */}
               {createError && (
-                <div className="user-form-error">
+                <Alert
+                  variant="danger"
+                  role="alert"
+                  className="user-form-error"
+                >
                   {createError}
-                </div>
+                </Alert>
               )}
-
 
               {/* دکمه‌های فرم */}
               <footer className="user-form-footer">

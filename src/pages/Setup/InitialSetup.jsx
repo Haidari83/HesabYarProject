@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import Alert from '../../components/ui/Alert';
 
 import '../Login/login.css';
 import './initial-setup.css';
@@ -344,14 +345,10 @@ function InitialSetup({ onComplete }) {
 
 
                   {error && (
-                    <div
-                      className="login-feedback error"
-                      role="alert"
-                    >
+                    <Alert variant="danger" role="alert">
                       {error}
-                    </div>
+                    </Alert>
                   )}
-
 
                   <button
                     type="submit"

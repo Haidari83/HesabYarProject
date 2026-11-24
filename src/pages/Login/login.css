@@ -275,29 +275,6 @@
 }
 
 /* ************************
-   فیدبک مسج
-************************ */
-
-.login-feedback {
-  padding: 11px 13px;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  line-height: 1.8;
-}
-
-.login-feedback.error {
-  color: #b91c1c;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-}
-
-.login-feedback.info {
-  color: #1d4ed8;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-}
-
-/* ************************
   دکمه ثبت
 ************************ */
 

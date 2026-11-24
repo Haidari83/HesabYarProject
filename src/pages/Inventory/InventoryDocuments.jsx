@@ -4,6 +4,7 @@ import DatePickerModule from 'react-multi-date-picker';
 import persianCalendar from 'react-date-object/calendars/persian';
 import persianAfghanistan from '../../locales/persianAfghanistan';
 import { formatNumber } from '../../utils/numberFormat';
+import Alert from '../../components/ui/Alert';
 
 import {
   getTodayGregorianDate as getLocalDate,
@@ -963,13 +964,15 @@ function InventoryDocuments() {
 
 
         {loadError && (
+          <div className="documents-error">
 
-          <div
-            className="documents-error"
-            role="alert"
-          >
-
-            <span>{loadError}</span>
+            <Alert
+              variant="danger"
+              role="alert"
+              className="documents-error__message"
+            >
+              {loadError}
+            </Alert>
 
             <button
               type="button"
@@ -979,9 +982,7 @@ function InventoryDocuments() {
             </button>
 
           </div>
-
         )}
-
 
         {isLoading ? (
 

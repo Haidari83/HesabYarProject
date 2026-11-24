@@ -4,6 +4,8 @@ import ProductFormModal from './ProductFormModal';
 import ExcelImportModal from './ExcelImportModal';
 import { normalizePersianText as normalizeSearch, } from '../../utils/persianText';
 
+import Alert from '../../components/ui/Alert';
+
 import { formatNumber } from '../../utils/numberFormat';
 
 import './product-list.css';

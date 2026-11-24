@@ -6,6 +6,8 @@ import { formatNumber } from '../../utils/numberFormat';
 import { normalizePersianText as normalizeName, } from '../../utils/persianText';
 import { createRows } from '../../utils/listHelpers';
 
+import Alert from '../../components/ui/Alert';
+
 import './category-list.css';
 
 
@@ -907,14 +909,13 @@ function CategoryList({ currentUser }) {
 
       <div className="category-page">
 
-        <div
-          className="category-form-error"
+        <Alert
+          variant="danger"
           role="alert"
+          title="دریافت اطلاعات ناموفق بود."
         >
-
           {loadError}
-
-        </div>
+        </Alert>
 
 
         <button
@@ -940,44 +941,23 @@ function CategoryList({ currentUser }) {
   return (
     <div className="category-page">
 
-      {/* پیام نتیجه عملیات */}
       {successMessage && (
-        <div
-          className="ui-alert ui-alert--success ui-alert--inline"
-          role="status"
+        <Alert
+          variant="success"
+          inline
+          closable
+          onClose={() => setSuccessMessage('')}
         >
-          <span className="ui-alert__icon" aria-hidden="true">
-            ✓
-          </span>
-
-          <p>{successMessage}</p>
-
-          <button
-            type="button"
-            className="ui-alert__close"
-            onClick={() => setSuccessMessage('')}
-            aria-label="بستن پیام"
-          >
-            ×
-          </button>
-        </div>
+          {successMessage}
+        </Alert>
       )}
 
       {/* نمایش خطای عملیات مدیریتی */}
-      {
-        operationError && (
-
-          <div
-            className="category-form-error"
-            role="alert"
-          >
-
-            {operationError}
-
-          </div>
-
-        )
-      }
+      {operationError && (
+        <Alert variant="danger" role="alert">
+          {operationError}
+        </Alert>
+      )}
 
       {/* آمار دسته‌بندی‌ها */}
       <section className="category-statistics">
@@ -1305,9 +1285,13 @@ function CategoryList({ currentUser }) {
                 </div>
 
                 {singleError && (
-                  <div className="category-form-error" role="alert">
+                  <Alert
+                    variant="danger"
+                    role="alert"
+                    className="category-form-error"
+                  >
                     {singleError}
-                  </div>
+                  </Alert>
                 )}
 
                 <footer className="category-modal-actions">
@@ -1460,9 +1444,13 @@ function CategoryList({ currentUser }) {
                 </div>
 
                 {bulkError && (
-                  <div className="category-form-error" role="alert">
+                  <Alert
+                    variant="danger"
+                    role="alert"
+                    className="category-form-error"
+                  >
                     {bulkError}
-                  </div>
+                  </Alert>
                 )}
 
                 <footer className="category-modal-actions">

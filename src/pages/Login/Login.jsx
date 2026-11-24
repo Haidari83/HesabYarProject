@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toEnglishDigits } from '../../utils/persianText';
+import Alert from '../../components/ui/Alert';
 
 import './login.css';
 
@@ -517,13 +518,12 @@ function Login({ onLogin }) {
 
               {/* پیام فرم */}
               {feedback && (
-                <div
-                  className={`login-feedback ${feedbackType}`}
+                <Alert
+                  variant={feedbackType === 'error' ? 'danger' : 'info'}
                   role="status"
-                  aria-live="polite"
                 >
                   {feedback}
-                </div>
+                </Alert>
               )}
 
 

@@ -544,32 +544,6 @@
   cursor: not-allowed;
 }
 
-
-/* =========================
-   پیام‌های عملیات
-========================= */
-
-.account-security-feedback {
-  padding: 11px 13px;
-  border: 1px solid;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  line-height: 1.8;
-}
-
-.account-security-feedback.success {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
-}
-
-.account-security-feedback.error {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-
 /* =========================
    پایین پنجره
 ========================= */

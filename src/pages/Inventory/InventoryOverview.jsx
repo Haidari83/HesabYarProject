@@ -1,6 +1,7 @@
 import { useBusinessData } from '../../context/BusinessDataContext';
 import { canAccessPage } from '../../routes/pageRegistry';
 import { formatNumber } from '../../utils/numberFormat';
+import Alert from '../../components/ui/Alert';
 
 import './inventory-overview.css';
 

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { formatNumber } from '../../utils/numberFormat';
 import { normalizePersianText as normalizeName } from '../../utils/persianText';
+import Alert from '../../components/ui/Alert';
+
 import { createRows } from '../../utils/listHelpers';
 
 import './unit-list.css';
@@ -814,40 +816,26 @@ function UnitList({ currentUser }) {
 
       {/* پیام موفقیت عملیات */}
       {successMessage && (
-        <div
-          className="ui-alert ui-alert--success ui-alert--inline"
-          role="status"
+        <Alert
+          variant="success"
+          inline
+          closable
+          onClose={() => setSuccessMessage('')}
         >
-          <span className="ui-alert__icon" aria-hidden="true">
-            ✓
-          </span>
-
-          <p>{successMessage}</p>
-
-          <button
-            type="button"
-            className="ui-alert__close"
-            onClick={() => setSuccessMessage('')}
-            aria-label="بستن پیام"
-          >
-            ×
-          </button>
-        </div>
+          {successMessage}
+        </Alert>
       )}
 
       {/* خطای عمومی عملیات */}
       {operationError && (
-        <div className="unit-operation-error" role="alert">
-          <span>{operationError}</span>
-
-          <button
-            type="button"
-            onClick={() => setOperationError('')}
-            aria-label="بستن پیام خطا"
-          >
-            ×
-          </button>
-        </div>
+        <Alert
+          variant="danger"
+          role="alert"
+          closable
+          onClose={() => setOperationError('')}
+        >
+          {operationError}
+        </Alert>
       )}
 
       {/* وضعیت بارگذاری اطلاعات */}
@@ -1347,9 +1335,13 @@ function UnitList({ currentUser }) {
                 )}
 
                 {formError && (
-                  <div className="unit-form-error" role="alert">
+                  <Alert
+                    variant="danger"
+                    role="alert"
+                    className="unit-form-error"
+                  >
                     {formError}
-                  </div>
+                  </Alert>
                 )}
 
                 <footer className="unit-modal-actions">

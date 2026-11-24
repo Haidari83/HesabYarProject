@@ -433,13 +433,9 @@
   cursor: not-allowed;
 }
 
+/* حفظ فاصله پیام خطای خروج از سایر گزینه‌های منو */
 .topbar__logout-error {
-  margin-top: 10px !important;
-  padding: 8px;
-  border-radius: 6px;
-  background: #fef2f2;
-  color: #b91c1c !important;
-  font-size: var(--font-size-xs) !important;
+  margin-top: 10px;
 }
 
 /* =========================

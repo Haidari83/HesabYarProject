@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import Alert from '../ui/Alert';
 
 import './account-security-modal.css';
 
@@ -629,16 +630,13 @@ function AccountSecurityModal({
 
         <div className="account-security-body">
 
-          {/* پیام موفقیت عملیات */}
           {feedback && !activeAction && (
-
-            <div
-              className={`account-security-feedback ${feedback.type}`}
-              role="status"
+            <Alert
+              variant={feedback.type === 'error' ? 'danger' : 'success'}
+              role={feedback.type === 'error' ? 'alert' : 'status'}
             >
               {feedback.message}
-            </div>
-
+            </Alert>
           )}
 
 
@@ -1116,16 +1114,10 @@ function AccountSecurityModal({
 
               {/* پیام خطا */}
               {feedback?.type === 'error' && (
-
-                <div
-                  className="account-security-feedback error"
-                  role="alert"
-                >
+                <Alert variant="danger" role="alert">
                   {feedback.message}
-                </div>
-
+                </Alert>
               )}
-
 
               {/* دکمه‌های فرم */}
               <div className="account-security-form-actions">

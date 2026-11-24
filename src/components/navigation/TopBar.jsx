@@ -5,6 +5,8 @@ import {
   getTodayGregorianDate,
 } from '../../utils/dateUtils';
 
+import Alert from '../ui/Alert';
+
 import AccountSecurityModal from '../account/AccountSecurityModal';
 
 import './topbar.css';
@@ -466,17 +468,15 @@ function TopBar({
                     <span>مدیریت حساب کاربری</span>
                   </button>
 
-
-                  {/* خطای احتمالی خروج */}
                   {logoutError && (
-                    <p
-                      className="topbar__logout-error"
+                    <Alert
+                      variant="danger"
                       role="alert"
+                      className="topbar__logout-error"
                     >
                       {logoutError}
-                    </p>
+                    </Alert>
                   )}
-
 
                   {/* خروج از حساب کاربری */}
                   <button

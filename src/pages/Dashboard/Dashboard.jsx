@@ -1,4 +1,6 @@
 
+import Alert from '../../components/ui/Alert';
+
 import './dashboard.css';
 
 // اطلاعات آزمایشی کارت‌های داشبورد

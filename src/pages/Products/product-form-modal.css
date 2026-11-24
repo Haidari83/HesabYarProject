@@ -362,14 +362,7 @@
 
 /* پیام خطای فرم */
 .product-form-error-message {
-  padding: 11px 13px;
   margin-top: 18px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
-  font-size: 11px;
-  line-height: 1.9;
 }
 
 /* دکمه‌های پایین فرم */

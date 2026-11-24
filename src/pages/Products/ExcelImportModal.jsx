@@ -3,6 +3,7 @@ import { readSheet } from 'read-excel-file/browser';
 import { validateExcelProductRows } from './excel-import-validation';
 import { normalizePersianText } from '../../utils/persianText';
 import { formatNumber } from '../../utils/numberFormat';
+import Alert from '../../components/ui/Alert';
 
 import './excel-import-modal.css';
 
@@ -726,12 +727,15 @@ function ExcelImportModal({
                 </div>
               )}
 
-
               {readError && (
-                <div className="excel-import-error" role="alert">
-                  <strong>خواندن فایل ناموفق بود.</strong>
-                  <p>{readError}</p>
-                </div>
+                <Alert
+                  variant="danger"
+                  role="alert"
+                  className="excel-import-error"
+                  title="خواندن فایل ناموفق بود."
+                >
+                  {readError}
+                </Alert>
               )}
 
             </>
@@ -900,14 +904,16 @@ function ExcelImportModal({
                 </span>
               </header>
 
-
               {importError && (
-                <div className="excel-import-error" role="alert">
-                  <strong>ثبت محصولات ناموفق بود.</strong>
-                  <p>{importError}</p>
-                </div>
+                <Alert
+                  variant="danger"
+                  role="alert"
+                  className="excel-import-error"
+                  title="ثبت محصولات ناموفق بود."
+                >
+                  {importError}
+                </Alert>
               )}
-
 
               {approvedGroups.length > 0 ? (
                 <div className="excel-import-table-wrapper excel-import-approved-table-wrapper">
