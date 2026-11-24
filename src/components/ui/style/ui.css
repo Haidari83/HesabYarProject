@@ -132,6 +132,23 @@
   flex-shrink: 0;
 }
 
+/* جایگاه آیکون‌های ابتدا و انتهای دکمه */
+.ui-button__start-icon,
+.ui-button__end-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.ui-button__start-icon svg,
+.ui-button__end-icon svg {
+  display: block;
+  width: 1.15em;
+  height: 1.15em;
+}
+
 
 /* =================================
    ۲. پیام‌های عمومی
@@ -242,7 +259,7 @@
 }
 
 /* دکمه بستن */
-.ui-alert--inline .ui-alert__close {
+.ui-alert__close {
   display: grid;
   width: 24px;
   height: 24px;
@@ -250,16 +267,25 @@
   place-items: center;
   padding: 0;
   border: none;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: inherit;
   font-family: var(--font-family);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
+  transition:
+    opacity var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
-.ui-alert--inline .ui-alert__close:hover {
+.ui-alert__close:hover {
   opacity: 0.75;
+}
+
+.ui-alert__close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 
@@ -332,6 +358,21 @@
 .ui-badge--primary {
   background-color: var(--color-primary-soft-bg);
   color: var(--color-primary-soft-text);
+}
+
+/* جایگاه آیکون در برچسب وضعیت */
+.ui-badge__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.ui-badge__icon svg {
+  display: block;
+  width: 1em;
+  height: 1em;
 }
 
 
@@ -413,6 +454,20 @@
   text-align: center;
 }
 
+/* آیکون مستقل حالت خالی */
+.ui-empty-state__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
+.ui-empty-state__icon svg {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
 
 /* عنوان حالت خالی */
 
@@ -463,7 +518,8 @@
 
 /* آیکون حالت خالی جدول */
 
-.ui-empty-state--table>span {
+.ui-empty-state--table > .ui-empty-state__icon,
+.ui-empty-state--table > span:not([class]) {
   font-size: 30px;
 }
 
@@ -472,4 +528,177 @@
 .ui-empty-state--table-compact {
   padding-top: 45px;
   padding-bottom: 45px;
+}
+
+/* =================================
+   ۶. انتخاب‌گر عمومی با پشتیبانی از صفحه‌کلید
+================================= */
+
+.ui-keyboard-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+/* بالا آمدن فهرست روی کنترل‌های مجاور هنگام تعامل */
+.ui-keyboard-select:focus-within {
+  z-index: var(--z-popover, 30);
+}
+
+.ui-keyboard-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+
+  width: 100%;
+  min-width: 0;
+  min-height: 41px;
+  padding: 0 var(--spacing-3);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+
+  background-color: var(--color-surface);
+  color: var(--color-text);
+
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs-compact);
+  line-height: var(--line-height-normal);
+  text-align: start;
+
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.ui-keyboard-select__trigger:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+.ui-keyboard-select__trigger:focus-visible {
+  border-color: var(--color-accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+.ui-keyboard-select__trigger:disabled {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.ui-keyboard-select__value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ui-keyboard-select__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+/* فهرست شناور گزینه‌ها */
+.ui-keyboard-select__options {
+  position: absolute;
+  top: calc(100% + var(--spacing-1));
+  inset-inline: 0;
+  z-index: var(--z-popover, 30);
+
+  max-height: min(280px, 50vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: var(--spacing-1);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-md);
+
+  overscroll-behavior: contain;
+}
+
+/* گزینه */
+.ui-keyboard-select__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: var(--spacing-2) var(--spacing-3);
+
+  border: 0;
+  border-radius: var(--radius-sm);
+
+  background: transparent;
+  color: var(--color-text);
+
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs-compact);
+  line-height: var(--line-height-normal);
+  text-align: start;
+}
+
+.ui-keyboard-select__option:hover:not(:disabled),
+.ui-keyboard-select__option[data-active="true"],
+.ui-keyboard-select__option:focus-visible {
+  outline: none;
+  background-color: var(--color-surface-muted);
+}
+
+.ui-keyboard-select__option[aria-selected="true"],
+.ui-keyboard-select__option[aria-pressed="true"] {
+  background-color: var(--color-primary-soft-bg);
+  color: var(--color-primary-soft-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ui-keyboard-select__option:disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.ui-keyboard-select__empty {
+  padding: var(--spacing-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs-compact);
+  line-height: var(--line-height-relaxed);
+  text-align: center;
+}
+
+/* نشانگر بارگذاری دکمه عمومی */
+.ui-button[aria-busy="true"]::after {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+
+  content: "";
+  animation: ui-button-spinner 700ms linear infinite;
+}
+
+@keyframes ui-button-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-button[aria-busy="true"]::after {
+    animation-duration: 1.5s;
+  }
 }

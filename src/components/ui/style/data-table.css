@@ -182,3 +182,38 @@
     gap: var(--spacing-2);
   }
 }
+
+/* =========================================
+   ۸. چیدمان سربرگ تولیدشده توسط DataTableShell
+========================================= */
+
+/* محفظه عنوان و توضیحات */
+.ui-data-table-card__heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* محفظه دکمه‌ها و عملیات سربرگ */
+.ui-data-table-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  min-width: 0;
+}
+
+.ui-data-table-card__actions > * {
+  max-width: 100%;
+}
+
+/* سربرگ در اندازه‌های کوچک */
+@media (max-width: 650px) {
+  .ui-data-table-card__actions {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
