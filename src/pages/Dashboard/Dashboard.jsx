@@ -233,10 +233,10 @@ function Dashboard() {
     <div className="dashboard">
 
       {/* هشدار نمایشی بودن اطلاعات */}
-      <div className="dashboard-demo-notice">
-        <span className="dashboard-demo-dot"></span>
+
+      <Alert variant="info" inline role="note">
         این صفحه با اطلاعات آزمایشی نمایش داده می‌شود.
-      </div>
+      </Alert>
 
       {/* کارت‌های شاخص اصلی */}
       <section className="dashboard-metrics">

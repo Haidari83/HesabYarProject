@@ -1561,9 +1561,13 @@ function UnitList({ currentUser }) {
                 </div>
 
                 {formError && (
-                  <div className="unit-form-error" role="alert">
+                  <Alert
+                    variant="danger"
+                    role="alert"
+                    className="unit-form-error"
+                  >
                     {formError}
-                  </div>
+                  </Alert>
                 )}
 
                 <footer className="unit-modal-actions">

@@ -5,7 +5,7 @@ import { useBusinessData } from '../../context/BusinessDataContext';
 import { formatNumber } from '../../utils/numberFormat';
 import { normalizePersianText as normalizeName } from '../../utils/persianText';
 
-import Alert from '../../components/ui/Alert';
+// import Alert from '../../components/ui/Alert';
 
 import './inventory-stock-list.css';
 

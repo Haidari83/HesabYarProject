@@ -537,13 +537,6 @@
   min-width: 0;
 }
 
-/* پیام موفقیت */
-.entry-feedback-success {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
-}
-
 /* رنگ دکمه تلاش مجدد */
 .entry-feedback-error {
   color: var(--color-danger-text);

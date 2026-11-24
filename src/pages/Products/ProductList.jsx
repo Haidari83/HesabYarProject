@@ -467,27 +467,18 @@ function ProductList({ currentUser }) {
       {!isLoading && !loadError && (
         <>
           {/* پیام موفقیت ثبت کالا */}
+
           {createSuccessMessage && (
-            <div
-              className="ui-alert ui-alert--success ui-alert--inline"
-              role="status"
+            <Alert
+              variant="success"
+              inline
+              closable
+              onClose={() => setCreateSuccessMessage('')}
             >
-              <span className="ui-alert__icon" aria-hidden="true">
-                ✓
-              </span>
-
-              <p>{createSuccessMessage}</p>
-
-              <button
-                type="button"
-                className="ui-alert__close"
-                onClick={() => setCreateSuccessMessage('')}
-                aria-label="بستن پیام"
-              >
-                ×
-              </button>
-            </div>
+              {createSuccessMessage}
+            </Alert>
           )}
+
 
           {/* یادداشت دسترسی‌های کاربر */}
           {!canCreateProducts &&
@@ -900,12 +891,13 @@ function ProductList({ currentUser }) {
 
             {/* نمایش خطای عملیات */}
             {statusChangeError && (
-              <div
-                className="product-form-error-message"
+              <Alert
+                variant="danger"
                 role="alert"
+                className="product-status-change-error"
               >
                 {statusChangeError}
-              </div>
+              </Alert>
             )}
 
             {/* دکمه‌های عملیات */}

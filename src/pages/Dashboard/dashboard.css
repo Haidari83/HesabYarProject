@@ -15,27 +15,6 @@
   color: var(--dashboard-text);
 }
 
-/* پیام نمایشی بودن اطلاعات */
-.dashboard-demo-notice {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 11px 14px;
-  border: 1px solid #bfdbfe;
-  border-radius: 10px;
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  font-size: 12px;
-}
-
-.dashboard-demo-dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background-color: #3b82f6;
-}
-
 /* کارت‌های شاخص */
 .dashboard-metrics {
   display: grid;

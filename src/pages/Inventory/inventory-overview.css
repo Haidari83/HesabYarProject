@@ -12,26 +12,6 @@
   color: var(--inventory-text);
 }
 
-/* اطلاعیه آزمایشی */
-.inventory-demo-notice {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 11px 14px;
-  border: 1px solid #bfdbfe;
-  border-radius: 10px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-size: 12px;
-}
-
-.inventory-demo-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #3b82f6;
-}
-
 /* شاخص‌های اصلی */
 .inventory-metrics {
   display: grid;

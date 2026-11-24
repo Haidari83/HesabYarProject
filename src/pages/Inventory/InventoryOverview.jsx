@@ -169,10 +169,10 @@ function InventoryOverview({ onNavigate, currentUser }) {
     <div className="inventory-overview">
 
       {/* پیام نمایشی بودن اطلاعات */}
-      <div className="inventory-demo-notice">
-        <span className="inventory-demo-dot"></span>
+
+      <Alert variant="info" inline role="note">
         اطلاعات این صفحه در حال حاضر آزمایشی است.
-      </div>
+      </Alert>
 
       {/* شاخص‌های اصلی انبار */}
       <section className="inventory-metrics">

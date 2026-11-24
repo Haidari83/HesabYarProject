@@ -932,6 +932,11 @@
   line-height: 1.9;
 }
 
+/* فاصله خطای تغییر وضعیت از توضیحات عملیات */
+.product-status-change-error {
+  margin-top: 18px;
+}
+
 .product-status-actions {
   display: flex;
   justify-content: center;
