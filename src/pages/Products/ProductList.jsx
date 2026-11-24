@@ -466,13 +466,19 @@ function ProductList({ currentUser }) {
         <>
           {/* پیام موفقیت ثبت کالا */}
           {createSuccessMessage && (
-            <div className="product-success-message" role="status">
-              <span>✓</span>
+            <div
+              className="ui-alert ui-alert--success ui-alert--inline"
+              role="status"
+            >
+              <span className="ui-alert__icon" aria-hidden="true">
+                ✓
+              </span>
 
               <p>{createSuccessMessage}</p>
 
               <button
                 type="button"
+                className="ui-alert__close"
                 onClick={() => setCreateSuccessMessage('')}
                 aria-label="بستن پیام"
               >

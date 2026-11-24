@@ -13,43 +13,6 @@
   color: var(--unit-text);
 }
 
-/* پیام موفقیت */
-.unit-success-message {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 15px;
-  border: 1px solid #a7f3d0;
-  border-radius: 9px;
-  background-color: #ecfdf5;
-  color: #047857;
-}
-
-.unit-success-message>span {
-  display: grid;
-  width: 25px;
-  height: 25px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background-color: #d1fae5;
-  font-weight: 700;
-}
-
-.unit-success-message p {
-  flex: 1;
-  margin: 0;
-  font-size: 12px;
-}
-
-.unit-success-message button {
-  border: none;
-  background: transparent;
-  color: #047857;
-  font-size: 20px;
-  cursor: pointer;
-}
-
 /* کارت‌های آماری */
 .unit-statistics {
   display: grid;

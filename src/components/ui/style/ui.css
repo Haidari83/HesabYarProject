@@ -217,6 +217,51 @@
   color: var(--color-info-text);
 }
 
+/* حالت پیام موفقیت درون صفحه */
+.ui-alert--inline {
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  border-radius: 9px;
+}
+
+/* آیکون دایره‌ای پیام موفقیت */
+.ui-alert--inline .ui-alert__icon {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background-color: #d1fae5;
+  font-weight: var(--font-weight-bold);
+}
+
+/* متن پیام */
+.ui-alert--inline>p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+/* دکمه بستن */
+.ui-alert--inline .ui-alert__close {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-family);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ui-alert--inline .ui-alert__close:hover {
+  opacity: 0.75;
+}
+
 
 /* =================================
    ۳. نشان‌های وضعیت

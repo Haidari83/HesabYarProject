@@ -814,12 +814,19 @@ function UnitList({ currentUser }) {
 
       {/* پیام موفقیت عملیات */}
       {successMessage && (
-        <div className="unit-success-message" role="status">
-          <span>✓</span>
+        <div
+          className="ui-alert ui-alert--success ui-alert--inline"
+          role="status"
+        >
+          <span className="ui-alert__icon" aria-hidden="true">
+            ✓
+          </span>
+
           <p>{successMessage}</p>
 
           <button
             type="button"
+            className="ui-alert__close"
             onClick={() => setSuccessMessage('')}
             aria-label="بستن پیام"
           >
