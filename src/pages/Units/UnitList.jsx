@@ -3,6 +3,7 @@ import { formatNumber } from '../../utils/numberFormat';
 import { normalizePersianText as normalizeName } from '../../utils/persianText';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import FormField from '../../components/ui/FormField';
 
 // قاب مشترک جدول‌ها
 import DataTableShell from '../../components/ui/DataTableShell';
@@ -1195,35 +1196,38 @@ function UnitList({ currentUser }) {
 
                 <div className="unit-form-grid">
 
-                  <label className="unit-form-field">
-                    <span>نام واحد</span>
-
+                  <FormField
+                    className="unit-form-field"
+                    label="نام واحد"
+                    required
+                  >
                     <input
                       name="name"
                       value={unitForm.name}
                       onChange={handleUnitFormChange}
                       placeholder="مثلاً کیلوگرام"
-                      required
                       autoFocus
                     />
-                  </label>
+                  </FormField>
 
-                  <label className="unit-form-field">
-                    <span>نماد واحد</span>
-
+                  <FormField
+                    className="unit-form-field"
+                    label="نماد واحد"
+                    required
+                  >
                     <input
                       name="symbol"
                       value={unitForm.symbol}
                       onChange={handleUnitFormChange}
                       placeholder="مثلاً kg"
                       dir="auto"
-                      required
                     />
-                  </label>
+                  </FormField>
 
-                  <label className="unit-form-field">
-                    <span>نوع واحد</span>
-
+                  <FormField
+                    className="unit-form-field"
+                    label="نوع واحد"
+                  >
                     <select
                       name="unitKind"
                       value={unitForm.unitKind}
@@ -1233,12 +1237,13 @@ function UnitList({ currentUser }) {
                       <option value="standard">واحد استاندارد</option>
                       <option value="package">واحد بسته‌بندی</option>
                     </select>
-                  </label>
+                  </FormField>
 
                   {unitForm.unitKind === 'standard' && (
-                    <label className="unit-form-field">
-                      <span>بُعد واحد</span>
-
+                    <FormField
+                      className="unit-form-field"
+                      label="بُعد واحد"
+                    >
                       <select
                         name="dimensionCode"
                         value={unitForm.dimensionCode}
@@ -1254,7 +1259,7 @@ function UnitList({ currentUser }) {
                           </option>
                         ))}
                       </select>
-                    </label>
+                    </FormField>
                   )}
 
                   {unitForm.unitKind === 'standard' && (
@@ -1262,8 +1267,13 @@ function UnitList({ currentUser }) {
                       <span>نسبت به واحد مرجع</span>
 
                       <div className="unit-ratio-inputs">
-                        <label>
-                          <small>صورت</small>
+
+                        {/* صورت نسبت تبدیل */}
+                        <FormField
+                          className="unit-ratio-field"
+                          label="صورت"
+                          required
+                        >
                           <input
                             type="number"
                             min="1"
@@ -1278,14 +1288,20 @@ function UnitList({ currentUser }) {
                               })
                             }
                             disabled={isStructureLocked}
-                            required
                           />
-                        </label>
+                        </FormField>
 
+
+                        {/* جداکننده صورت و مخرج */}
                         <span className="unit-ratio-divider">/</span>
 
-                        <label>
-                          <small>مخرج</small>
+
+                        {/* مخرج نسبت تبدیل */}
+                        <FormField
+                          className="unit-ratio-field"
+                          label="مخرج"
+                          required
+                        >
                           <input
                             type="number"
                             min="1"
@@ -1300,9 +1316,9 @@ function UnitList({ currentUser }) {
                               })
                             }
                             disabled={isStructureLocked}
-                            required
                           />
-                        </label>
+                        </FormField>
+
                       </div>
 
                       <small className="unit-field-description">

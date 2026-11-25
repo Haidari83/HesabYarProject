@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import FormField from '../../components/ui/FormField';
 
 // قاب مشترک جدول
 import DataTableShell from '../../components/ui/DataTableShell';
@@ -725,8 +726,8 @@ function UserManagement() {
                   <td>
                     <span
                       className={`user-role ${user.role === 'admin'
-                          ? 'admin'
-                          : 'regular'
+                        ? 'admin'
+                        : 'regular'
                         }`}
                     >
                       {getRoleLabel(user.role)}
@@ -744,8 +745,8 @@ function UserManagement() {
                   <td>
                     <span
                       className={`user-status ${user.isActive
-                          ? 'active'
-                          : 'inactive'
+                        ? 'active'
+                        : 'inactive'
                         }`}
                     >
                       {user.isActive ? 'فعال' : 'غیرفعال'}
@@ -880,8 +881,11 @@ function UserManagement() {
 
                 <div className="user-form-grid">
 
-                  <label className="user-form-field">
-                    <span>نام و نام خانوادگی</span>
+                  <FormField
+                    className="ui-field"
+                    label="نام و نام خانوادگی"
+                    required
+                  >
                     <input
                       type="text"
                       name="displayName"
@@ -890,12 +894,15 @@ function UserManagement() {
                       placeholder="مثلاً علی احمد حیدری"
                       minLength={2}
                       maxLength={80}
-                      required
                     />
-                  </label>
+                  </FormField>
 
-                  <label className="user-form-field">
-                    <span>نام کاربری</span>
+                  <FormField
+                    className="ui-field"
+                    label="نام کاربری"
+                    required
+                    hint="فقط حروف انگلیسی کوچک، عدد، نقطه، خط تیره و زیرخط."
+                  >
                     <input
                       type="text"
                       name="username"
@@ -905,20 +912,19 @@ function UserManagement() {
                       minLength={2}
                       maxLength={32}
                       autoComplete="off"
-                      dir="ltr"
                       readOnly={isEditModalOpen}
-                      required
                     />
-                    <small>
-                      فقط حروف انگلیسی کوچک، عدد، نقطه، خط تیره و زیرخط.
-                    </small>
-                  </label>
+                  </FormField>
 
                   {!isEditModalOpen && (
                     <>
                       {/* فیلد گذرواژه اولیه */}
-                      <label className="user-form-field">
-                        <span>گذرواژه اولیه</span>
+                      <FormField
+                        className="ui-field"
+                        label="گذرواژه اولیه"
+                        required
+                        hint="حداقل ۸ نویسه."
+                      >
                         <input
                           type="password"
                           name="password"
@@ -927,14 +933,15 @@ function UserManagement() {
                           minLength={8}
                           maxLength={128}
                           autoComplete="new-password"
-                          required
                         />
-                        <small>حداقل ۸ نویسه.</small>
-                      </label>
+                      </FormField>
 
                       {/* فیلد تکرار گذرواژه */}
-                      <label className="user-form-field">
-                        <span>تکرار گذرواژه</span>
+                      <FormField
+                        className="ui-field"
+                        label="تکرار گذرواژه"
+                        required
+                      >
                         <input
                           type="password"
                           name="confirmPassword"
@@ -943,9 +950,8 @@ function UserManagement() {
                           minLength={8}
                           maxLength={128}
                           autoComplete="new-password"
-                          required
                         />
-                      </label>
+                      </FormField>
                     </>
                   )}
 

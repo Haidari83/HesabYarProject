@@ -170,11 +170,6 @@
   cursor: not-allowed;
 }
 
-.login-field {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
 
 .login-field label {
   color: var(--color-text);

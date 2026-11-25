@@ -333,32 +333,45 @@
   min-width: 0;
 }
 
-.unit-form-field>span {
+.unit-form-field>.ui-field__label {
   color: var(--unit-text);
   font-size: 12px;
   font-weight: 600;
 }
 
-.unit-form-field input,
-.unit-form-field select {
+/* کنترل‌های فرم واحدها */
+.unit-form-field>.ui-field__control {
   box-sizing: border-box;
+
   width: 100%;
   min-width: 0;
-  height: 41px;
+  min-height: 41px;
+
   padding: 0 10px;
+
   border: 1px solid var(--unit-border);
   border-radius: 8px;
+
   outline: none;
+
   background-color: #fff;
   color: var(--unit-text);
+
   font: inherit;
   font-size: 11px;
 }
 
-.unit-form-field input:focus,
-.unit-form-field select:focus {
+/* حالت فوکوس */
+.unit-form-field>.ui-field__control:focus {
   border-color: var(--unit-accent);
   box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+/* حالت غیرفعال انتخاب‌گر */
+.unit-form-field>.ui-field__control:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .unit-form-field select:disabled {
@@ -660,39 +673,49 @@
   gap: 10px;
 }
 
-.unit-ratio-inputs label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* محفظه فیلدهای صورت و مخرج */
+.unit-ratio-field {
   min-width: 0;
+  gap: 6px;
 }
 
-.unit-ratio-inputs label small {
+/* برچسب صورت یا مخرج */
+.unit-ratio-field>.ui-field__label {
   color: var(--unit-muted);
   font-size: 10px;
 }
 
-.unit-ratio-inputs input {
+/* ورودی عددی نسبت تبدیل */
+.unit-ratio-field>.ui-field__control {
   box-sizing: border-box;
+
   width: 100%;
   height: 41px;
+  min-height: 41px;
+
   padding: 0 10px;
+
   border: 1px solid var(--unit-border);
   border-radius: 8px;
+
   outline: none;
+
   background-color: #fff;
   color: var(--unit-text);
+
   font: inherit;
   font-size: 12px;
   text-align: center;
 }
 
-.unit-ratio-inputs input:focus {
+/* فوکوس ورودی نسبت */
+.unit-ratio-field>.ui-field__control:focus {
   border-color: var(--unit-accent);
   box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
 }
 
-.unit-ratio-inputs input:disabled {
+/* نسبت‌های غیرقابل ویرایش */
+.unit-ratio-field>.ui-field__control:disabled {
   background-color: #f1f5f9;
   color: #94a3b8;
   cursor: not-allowed;

@@ -252,38 +252,6 @@
   gap: 15px;
 }
 
-.user-form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 0;
-}
-
-.user-form-field>span {
-  color: #334155;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.user-form-field>input {
-  width: 100%;
-  min-width: 0;
-  height: 39px;
-  padding: 0 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 7px;
-  outline: none;
-  background-color: #fff;
-  color: #334155;
-  font: inherit;
-  font-size: 11px;
-}
-
-.user-form-field>input:focus {
-  border-color: #0f766e;
-  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
-}
-
 .user-form-field>small {
   color: #94a3b8;
   font-size: 9px;
@@ -467,14 +435,6 @@
   display: flex;
   align-items: center;
   gap: 7px;
-}
-
-
-/* نمایش متفاوت نام کاربری در حالت فقط خواندنی */
-.user-form-field>input:read-only {
-  background-color: #f8fafc;
-  color: #64748b;
-  cursor: not-allowed;
 }
 
 /* واکنش‌گرایی */

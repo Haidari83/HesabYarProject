@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Alert from '../ui/Alert';
 import Button from '../ui/Button';
+import FormField from '../ui/FormField';
 
 import './account-security-modal.css';
 
@@ -27,7 +28,11 @@ const ACTION_TITLES = {
 };
 
 
-// ورودی عمومی فرم‌های امنیتی
+// =============================================
+// فیلد مشترک فرم‌های امنیتی
+// برچسب، شناسه و ویژگی‌های دسترس‌پذیری را FormField مدیریت می‌کند.
+// =============================================
+
 function SecurityField({
   id,
   label,
@@ -42,14 +47,15 @@ function SecurityField({
 }) {
 
   return (
-    <div className="security-field">
 
-      <label htmlFor={id}>
-        {label}
-      </label>
+    <FormField
+      id={id}
+      label={label}
+      required
+      className="ui-field"
+    >
 
       <input
-        id={id}
         name={id}
         type={type}
         value={value}
@@ -59,10 +65,10 @@ function SecurityField({
         dir={dir}
         maxLength={maxLength}
         inputMode={inputMode}
-        required
       />
 
-    </div>
+    </FormField>
+
   );
 
 }

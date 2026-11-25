@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import FormField from '../../components/ui/FormField';
 
 import '../Login/login.css';
 import './initial-setup.css';
@@ -219,11 +220,12 @@ function InitialSetup({ onComplete }) {
                   noValidate
                 >
 
-                  <div className="login-field">
-
-                    <label htmlFor="setup-display-name">
-                      نام و نام خانوادگی
-                    </label>
+                  <FormField
+                    id='setup-display-name'
+                    className="ui-field"
+                    label='نام و نام خانوادگی'
+                    required
+                  >
 
                     <div className="login-input-wrapper">
 
@@ -243,10 +245,17 @@ function InitialSetup({ onComplete }) {
 
                     </div>
 
-                  </div>
+                  </FormField>
 
 
-                  <div className="login-field">
+                  <FormField
+                    id="setup-username"
+                    className="ui-field"
+                    label="نام کاربری"
+                    required
+                    hint="از حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط استفاده کن."
+                    hintClassName="setup-field-hint"
+                  >
 
                     <label htmlFor="setup-username">
                       نام کاربری
@@ -273,18 +282,14 @@ function InitialSetup({ onComplete }) {
 
                     </div>
 
-                    <small className="setup-field-hint">
-                      از حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط استفاده کن.
-                    </small>
-
-                  </div>
+                  </FormField>
 
 
-                  <div className="login-field">
-
-                    <label htmlFor="setup-password">
-                      گذرواژه
-                    </label>
+                  <FormField
+                    id="setup-password"
+                    className="ui-field"
+                    label="گذرواژه"
+                    required>
 
                     <div className="login-input-wrapper">
 
@@ -321,14 +326,15 @@ function InitialSetup({ onComplete }) {
                       </Button>
                     </div>
 
-                  </div>
+                  </FormField>
 
 
-                  <div className="login-field">
-
-                    <label htmlFor="setup-confirm-password">
-                      تکرار گذرواژه
-                    </label>
+                  <FormField
+                    id="setup-confirm-password"
+                    className="ui-field"
+                    label="تکرار گذرواژه"
+                    required
+                  >
 
                     <div className="login-input-wrapper">
 
@@ -346,7 +352,7 @@ function InitialSetup({ onComplete }) {
 
                     </div>
 
-                  </div>
+                  </FormField>
 
 
                   {error && (

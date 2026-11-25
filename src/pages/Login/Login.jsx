@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toEnglishDigits } from '../../utils/persianText';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import FormField from '../../components/ui/FormField';
 
 import './login.css';
 
@@ -360,12 +361,12 @@ function Login({ onLogin }) {
               </div>
 
               {/* نام کاربری */}
-              <div className="login-field">
-
-                <label htmlFor="username">
-                  نام کاربری
-                </label>
-
+              {/* فیلد نام کاربری */}
+              <FormField
+                id="username"
+                className="ui-field"
+                label="نام کاربری"
+              >
                 <div className="login-input-wrapper">
 
                   <span className="login-input-icon">
@@ -390,8 +391,7 @@ function Login({ onLogin }) {
                   />
 
                 </div>
-
-              </div>
+              </FormField>
 
 
 
@@ -400,11 +400,11 @@ function Login({ onLogin }) {
               {loginMethod === 'password' ? (
 
                 /* ورود با گذرواژه اصلی */
-                <div className="login-field">
-
-                  <label htmlFor="password">
-                    گذرواژه اصلی
-                  </label>
+                <FormField
+                  id='password'
+                  className="ui-field"
+                  label='گذرواژه اصلی'
+                >
 
                   <div className="login-input-wrapper">
 
@@ -452,16 +452,15 @@ function Login({ onLogin }) {
 
                   </div>
 
-                </div>
+                </FormField>
 
               ) : (
 
                 /* ورود با PIN چهار تا هشت‌رقمی */
-                <div className="login-field">
-
-                  <label htmlFor="pin">
-                    PIN
-                  </label>
+                <FormField
+                  id='pin'
+                  className="ui-field"
+                  label='PIN'>
 
                   <div className="login-input-wrapper">
 
@@ -519,7 +518,7 @@ function Login({ onLogin }) {
 
                   </div>
 
-                </div>
+                </FormField>
 
               )}
 

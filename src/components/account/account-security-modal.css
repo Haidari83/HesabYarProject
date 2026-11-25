@@ -377,47 +377,6 @@
 }
 
 
-/* ورودی‌های فرم */
-
-.security-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.security-field label {
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
-.security-field input {
-  width: 100%;
-  height: 48px;
-  padding: 0 13px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  outline: none;
-  background: #fafbfc;
-  color: var(--color-text);
-  font-family: var(--font-family);
-  font-size: var(--font-size-sm);
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast),
-    background-color var(--transition-fast);
-}
-
-.security-field input:focus {
-  border-color: var(--color-accent);
-  background: var(--color-surface);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.09);
-}
-
-.security-field input::placeholder {
-  color: var(--color-text-disabled);
-}
-
 .account-security-help {
   margin-top: -9px;
   color: var(--color-text-secondary);

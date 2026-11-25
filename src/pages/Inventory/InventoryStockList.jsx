@@ -10,6 +10,8 @@ import EmptyState from '../../components/ui/EmptyState';
 // import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
 
+import FormField from '../../components/ui/FormField';
+
 import './inventory-stock-list.css';
 
 // تشخیص وضعیت موجودی کالا
@@ -302,12 +304,14 @@ function InventoryStockList() {
 
         <div className="stock-filter-row">
 
-          <label className="stock-filter-field">
-            <span>دسته‌بندی</span>
-
+          <FormField
+            className="ui-field"
+            label="دسته‌بندی"
+          >
             <select
               value={categoryFilter}
               onChange={(event) => {
+                // به‌روزرسانی دسته‌بندی و بازگشت به صفحه اول
                 setCategoryFilter(event.target.value);
                 setCurrentPage(1);
               }}
@@ -320,14 +324,16 @@ function InventoryStockList() {
                 </option>
               ))}
             </select>
-          </label>
+          </FormField>
 
-          <label className="stock-filter-field">
-            <span>وضعیت کالا</span>
-
+          <FormField
+            className="ui-field"
+            label="وضعیت کالا"
+          >
             <select
               value={activityFilter}
               onChange={(event) => {
+                // تغییر وضعیت کالا و بازگشت به صفحه اول
                 setActivityFilter(event.target.value);
                 setCurrentPage(1);
               }}
@@ -336,11 +342,12 @@ function InventoryStockList() {
               <option value="active">فقط فعال</option>
               <option value="inactive">فقط غیرفعال</option>
             </select>
-          </label>
+          </FormField>
 
-          <label className="stock-filter-field">
-            <span>مرتب‌سازی</span>
-
+          <FormField
+            className="ui-field"
+            label="مرتب‌سازی"
+          >
             <select
               value={sortBy}
               onChange={(event) =>
@@ -352,7 +359,7 @@ function InventoryStockList() {
               <option value="minStock">حداقل موجودی</option>
               <option value="purchasePrice">قیمت خرید</option>
             </select>
-          </label>
+          </FormField>
 
           <Button
             type="button"

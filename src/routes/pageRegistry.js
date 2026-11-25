@@ -39,12 +39,6 @@ export const navigationItems = [
         requiredPermission: 'units.view',
       },
       {
-        id: 'inventory',
-        label: 'موجودی انبار',
-        description: 'بررسی موجودی و وضعیت انبار.',
-        requiredPermission: 'inventory.view',
-      },
-      {
         id: 'inventory-stock-list',
         label: 'فهرست موجودی',
         description: 'مشاهده و بررسی موجودی کالاهای انبار.',

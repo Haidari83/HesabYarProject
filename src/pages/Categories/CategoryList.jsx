@@ -8,6 +8,7 @@ import { createRows } from '../../utils/listHelpers';
 
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import FormField from '../../components/ui/FormField';
 
 // قاب مشترک جدول‌ها
 import DataTableShell from '../../components/ui/DataTableShell';
@@ -1243,30 +1244,32 @@ function CategoryList({ currentUser }) {
 
                   <div className="category-form-fields">
 
-                    <label className="category-form-field">
-                      <span>نام دسته‌بندی</span>
-
+                    <FormField
+                      className="category-form-field"
+                      label="نام دسته‌بندی"
+                      required
+                    >
                       <input
                         name="name"
                         value={singleForm.name}
                         onChange={handleSingleChange}
                         placeholder="مثلاً مواد غذایی"
-                        required
                         autoFocus
                       />
-                    </label>
+                    </FormField>
 
-                    <label className="category-form-field">
-                      <span>توضیحات</span>
-
+                    <FormField
+                      className="category-form-field"
+                      label="توضیحات"
+                    >
                       <textarea
                         name="description"
                         value={singleForm.description}
                         onChange={handleSingleChange}
                         placeholder="توضیح کوتاهی درباره دسته‌بندی..."
-                        rows="3"
+                        rows={3}
                       />
-                    </label>
+                    </FormField>
 
                   </div>
 

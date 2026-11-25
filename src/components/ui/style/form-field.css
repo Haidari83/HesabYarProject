@@ -5,7 +5,8 @@
 .ui-field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  /* gap: var(--spacing-2); */
+  gap: 9px;
 
   width: 100%;
   min-width: 0;
@@ -17,6 +18,7 @@
 ================================= */
 
 .ui-field__label {
+  color: #64748b;
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
@@ -65,7 +67,6 @@
     box-shadow var(--transition-fast),
     background-color var(--transition-fast);
 }
-
 
 /* =================================
    ۴. حالت فوکوس

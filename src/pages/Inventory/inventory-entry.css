@@ -63,6 +63,13 @@
   color: var(--color-text, #374151);
 }
 
+/* برچسب فیلدهایی که از FormField استفاده می‌کنند */
+.entry-field>.ui-field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text, #374151);
+}
+
 .entry-field input,
 .entry-field select,
 .entry-field textarea {

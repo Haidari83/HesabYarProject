@@ -298,33 +298,34 @@
   gap: 8px;
 }
 
-.category-form-field>span {
-  color: var(--category-text);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.category-form-field input,
-.category-form-field textarea {
+/* کنترل‌های واقعی فرم دسته‌بندی */
+.category-form-field>.ui-field__control {
   box-sizing: border-box;
   width: 100%;
+  min-height: 42px;
+
   padding: 10px 11px;
+
   border: 1px solid var(--category-border);
   border-radius: 8px;
+
   outline: none;
+
   background-color: #fff;
   color: var(--category-text);
+
   font: inherit;
   font-size: 12px;
+}
+
+/* فیلد توضیحات چندخطی */
+.category-form-field>textarea.ui-field__control {
+  min-height: 90px;
   resize: vertical;
 }
 
-.category-form-field input {
-  height: 42px;
-}
-
-.category-form-field input:focus,
-.category-form-field textarea:focus {
+/* حالت فوکوس */
+.category-form-field>.ui-field__control:focus {
   border-color: var(--category-accent);
   box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
 }

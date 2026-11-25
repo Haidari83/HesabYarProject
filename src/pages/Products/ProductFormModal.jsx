@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import FormField from '../../components/ui/FormField';
 
 import './product-form-modal.css';
 
@@ -401,13 +402,15 @@ function ProductFormModal({
               </div>
 
               <div className="product-form-grid">
-                <label className="product-form-field">
-                  <span>نام کالا *</span>
-
+                <FormField
+                  className="product-form-field"
+                  label="نام کالا *"
+                >
                   <input
                     type="text"
                     value={name}
                     onChange={(event) => {
+                      // به‌روزرسانی نام کالا و پاک‌کردن خطای قبلی فرم
                       setName(event.target.value);
                       setFormError('');
                     }}
@@ -415,32 +418,38 @@ function ProductFormModal({
                     placeholder="مثلاً برنج پاکستانی"
                     autoFocus
                   />
-                </label>
+                </FormField>
 
                 <label className="product-form-field">
                   <span>دسته‌بندی *</span>
 
-                  <select
-                    value={categoryId}
-                    onChange={(event) => {
-                      setCategoryId(event.target.value);
-                      setFormError('');
-                    }}
+                  <FormField
+                    className="product-form-field"
+                    label="دسته‌بندی *"
                   >
-                    <option value="">انتخاب دسته‌بندی</option>
+                    <select
+                      value={categoryId}
+                      onChange={(event) => {
+                        // ثبت دسته‌بندی انتخاب‌شده
+                        setCategoryId(event.target.value);
+                        setFormError('');
+                      }}
+                    >
+                      <option value="">انتخاب دسته‌بندی</option>
 
-                    {categories.map((category) => (
-                      <option
-                        key={category.id}
-                        value={category.id}
-                      >
-                        {category.name}
-                        {category.isActive === false
-                          ? ' (غیرفعال؛ دسته‌بندی فعلی)'
-                          : ''}
-                      </option>
-                    ))}
-                  </select>
+                      {categories.map((category) => (
+                        <option
+                          key={category.id}
+                          value={category.id}
+                        >
+                          {category.name}
+                          {category.isActive === false
+                            ? ' (غیرفعال؛ دسته‌بندی فعلی)'
+                            : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
                 </label>
               </div>
 
@@ -465,9 +474,10 @@ function ProductFormModal({
               </div>
 
               <div className="product-form-grid">
-                <label className="product-form-field">
-                  <span>واحد پایه *</span>
-
+                <FormField
+                  className="product-form-field"
+                  label="واحد پایه *"
+                >
                   <select
                     value={baseUnitId}
                     onChange={(event) =>
@@ -485,7 +495,7 @@ function ProductFormModal({
                         </option>
                       ))}
                   </select>
-                </label>
+                </FormField>
               </div>
 
               <p className="product-form-help">
@@ -579,9 +589,10 @@ function ProductFormModal({
                     </div>
 
                     <div className="product-form-grid">
-                      <label className="product-form-field">
-                        <span>انتخاب واحد *</span>
-
+                      <FormField
+                        className="product-form-field"
+                        label="انتخاب واحد *"
+                      >
                         <select
                           value={option.unitId}
                           onChange={(event) =>
@@ -599,7 +610,7 @@ function ProductFormModal({
                             </option>
                           ))}
                         </select>
-                      </label>
+                      </FormField>
                     </div>
 
                     {selectedUnit?.unitKind === 'package' && (
@@ -611,9 +622,10 @@ function ProductFormModal({
                         </p>
 
                         <div className="product-form-ratio">
-                          <label className="product-form-field">
-                            <span>صورت ضریب تبدیل *</span>
-
+                          <FormField
+                            className="product-form-field"
+                            label="صورت ضریب تبدیل *"
+                          >
                             <input
                               type="number"
                               min="1"
@@ -624,16 +636,18 @@ function ProductFormModal({
                                   conversionNum: event.target.value,
                                 })
                               }
+                              required
                             />
-                          </label>
+                          </FormField>
 
                           <span className="product-form-ratio-divider">
                             /
                           </span>
 
-                          <label className="product-form-field">
-                            <span>مخرج ضریب تبدیل *</span>
-
+                          <FormField
+                            className="product-form-field"
+                            label="مخرج ضریب تبدیل *"
+                          >
                             <input
                               type="number"
                               min="1"
@@ -644,8 +658,9 @@ function ProductFormModal({
                                   conversionDen: event.target.value,
                                 })
                               }
+                              required
                             />
-                          </label>
+                          </FormField>
                         </div>
                       </>
                     )}

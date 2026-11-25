@@ -892,7 +892,7 @@ async function authenticateUser(
   const method = input.method ?? 'password';
 
   if (
-    !/^[a-z0-9._-]{3,32}$/.test(username) ||
+    !/^[a-z0-9._-]{2,32}$/.test(username) ||
     !['password', 'pin'].includes(method)
   ) {
     return {
@@ -1256,7 +1256,7 @@ function changeUsername(database, actor, input) {
       ? input.newUsername.trim().toLowerCase()
       : '';
 
-  if (!/^[a-z0-9._-]{3,32}$/.test(newUsername)) {
+  if (!/^[a-z0-9._-]{2,32}$/.test(newUsername)) {
     throw new Error(
       'نام کاربری باید بین ۳ تا ۳۲ نویسه و شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.'
     );

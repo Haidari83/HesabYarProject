@@ -7,6 +7,7 @@ import {
 
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import FormField from '../../components/ui/FormField';
 
 import './inventory-entry.css';
 
@@ -1439,18 +1440,16 @@ function InventoryEntry() {
 
         <div className="entry-form-grid">
 
-          <label className="entry-field">
-
-            <span>شماره سند</span>
-
+          <FormField
+            className="ui-field"
+            label="شماره سند"
+          >
             <input
               type="text"
               value="خودکار هنگام ذخیره"
               disabled
             />
-
-          </label>
-
+          </FormField>
 
           <div className="entry-field">
 
@@ -1559,11 +1558,11 @@ function InventoryEntry() {
 
         </div>
 
-      </section>
+      </section >
 
 
       {/* اطلاعات منبع ورود */}
-      <section className="entry-section">
+      < section className="entry-section" >
 
         <div className="entry-section-header">
 
@@ -1583,15 +1582,14 @@ function InventoryEntry() {
             entryType === 'sales-return') && (
 
               <>
-
-                <label className="entry-field">
-
-                  <span>
-                    {entryType === 'purchase'
+                <FormField
+                  className="ui-field"
+                  label={
+                    entryType === 'purchase'
                       ? 'تأمین‌کننده'
-                      : 'مشتری'}
-                  </span>
-
+                      : 'مشتری'
+                  }
+                >
                   <input
                     type="text"
                     value={sourcePartyName}
@@ -1604,18 +1602,17 @@ function InventoryEntry() {
                         : 'نام مشتری...'
                     }
                   />
+                </FormField>
 
-                </label>
 
-
-                <label className="entry-field">
-
-                  <span>
-                    {entryType === 'purchase'
+                <FormField
+                  className="ui-field"
+                  label={
+                    entryType === 'purchase'
                       ? 'شماره فاکتور خرید'
-                      : 'شماره فاکتور فروش'}
-                  </span>
-
+                      : 'شماره فاکتور فروش'
+                  }
+                >
                   <input
                     type="text"
                     value={sourceInvoiceNumber}
@@ -1624,8 +1621,7 @@ function InventoryEntry() {
                     }
                     placeholder="شماره فاکتور (اختیاری)"
                   />
-
-                </label>
+                </FormField>
 
               </>
 
@@ -1634,10 +1630,10 @@ function InventoryEntry() {
 
           {entryType === 'other' && (
 
-            <label className="entry-field entry-field-full">
-
-              <span>علت ورود کالا</span>
-
+            <FormField
+              className="ui-field entry-field-full"
+              label="علت ورود کالا"
+            >
               <input
                 type="text"
                 value={reason}
@@ -1646,18 +1642,17 @@ function InventoryEntry() {
                 }
                 placeholder="علت ورود کالا را بنویس..."
               />
-
-            </label>
+            </FormField>
 
           )}
 
         </div>
 
-      </section>
+      </section >
 
 
       {/* جدول اقلام ورودی */}
-      <section className="entry-section">
+      < section className="entry-section" >
 
         <div className="entry-section-header">
 
@@ -1694,381 +1689,383 @@ function InventoryEntry() {
         </div>
 
 
-        {items.length === 0 ? (
+        {
+          items.length === 0 ? (
 
-          <div className="entry-empty-items">
+            <div className="entry-empty-items">
 
-            <div className="entry-empty-icon">＋</div>
+              <div className="entry-empty-icon">＋</div>
 
-            <strong>
-              هنوز کالایی به سند اضافه نشده است.
-            </strong>
+              <strong>
+                هنوز کالایی به سند اضافه نشده است.
+              </strong>
 
-            <p>
-              برای شروع، کالاهای موردنظر را به سند ورود اضافه کن.
-            </p>
+              <p>
+                برای شروع، کالاهای موردنظر را به سند ورود اضافه کن.
+              </p>
 
-            <Button
-              type="button"
-              variant="primary"
-              onClick={addItemRow}
-            >
-              افزودن اولین کالا
-            </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={addItemRow}
+              >
+                افزودن اولین کالا
+              </Button>
 
-          </div>
+            </div>
 
-        ) : (
+          ) : (
 
-          <>
+            <>
 
-            <div className="entry-items-table-scroll">
+              <div className="entry-items-table-scroll">
 
-              <table className="entry-items-table">
+                <table className="entry-items-table">
 
-                <thead>
+                  <thead>
 
-                  <tr>
-                    <th>ردیف</th>
-                    <th>کالا</th>
-                    <th>واحد</th>
-                    <th>مقدار ورودی</th>
-                    <th>قیمت واحد</th>
-                    <th>مبلغ ردیف</th>
-                    <th>عملیات</th>
-                  </tr>
+                    <tr>
+                      <th>ردیف</th>
+                      <th>کالا</th>
+                      <th>واحد</th>
+                      <th>مقدار ورودی</th>
+                      <th>قیمت واحد</th>
+                      <th>مبلغ ردیف</th>
+                      <th>عملیات</th>
+                    </tr>
 
-                </thead>
-
-
-                <tbody>
-
-                  {items.map((item, index) => {
-
-                    const product = getItemProduct(item);
-
-                    const selectedUnit = getItemUnit(
-                      item,
-                      product
-                    );
-
-                    const baseQuantity = getBaseQuantity(
-                      item,
-                      product,
-                      selectedUnit
-                    );
-
-                    const lineAmount = getLineAmount(item);
-
-                    const currency = currencies.find(
-                      (currentCurrency) =>
-                        currentCurrency.code === item.currencyCode
-                    );
-
-                    const duplicateProduct = Boolean(
-                      item.productId &&
-                      items.some(
-                        (otherItem) =>
-                          otherItem.id !== item.id &&
-                          otherItem.productId === item.productId
-                      )
-                    );
+                  </thead>
 
 
-                    return (
+                  <tbody>
 
-                      <tr key={item.id}>
+                    {items.map((item, index) => {
 
-                        {/* شماره ردیف */}
-                        <td data-label="ردیف">
-                          {formatNumber(
-                            index + 1,
-                            INVENTORY_NUMBER_OPTIONS
-                          )}
-                        </td>
+                      const product = getItemProduct(item);
 
+                      const selectedUnit = getItemUnit(
+                        item,
+                        product
+                      );
 
-                        {/* انتخاب کالا */}
-                        <td data-label="کالا">
+                      const baseQuantity = getBaseQuantity(
+                        item,
+                        product,
+                        selectedUnit
+                      );
 
-                          <EntryProductPicker
-                            value={item.productSearch}
-                            products={activeProducts}
-                            onQueryChange={(value) =>
-                              handleProductSearch(item.id, value)
-                            }
-                            onSelect={(selectedProduct) =>
-                              handleProductSelect(
-                                item.id,
-                                selectedProduct
-                              )
-                            }
-                          />
+                      const lineAmount = getLineAmount(item);
 
+                      const currency = currencies.find(
+                        (currentCurrency) =>
+                          currentCurrency.code === item.currencyCode
+                      );
 
-                          {duplicateProduct && (
-
-                            <small className="entry-item-warning">
-                              این کالا در ردیف دیگری نیز ثبت شده است.
-                              این دو ردیف جداگانه محاسبه می‌شوند.
-                            </small>
-
-                          )}
-
-                        </td>
+                      const duplicateProduct = Boolean(
+                        item.productId &&
+                        items.some(
+                          (otherItem) =>
+                            otherItem.id !== item.id &&
+                            otherItem.productId === item.productId
+                        )
+                      );
 
 
-                        {/* انتخاب واحد اختصاصی محصول */}
-                        <td data-label="واحد">
+                      return (
 
-                          <select
-                            value={item.productUnitId}
-                            onChange={(event) =>
-                              handleUnitChange(
-                                item.id,
-                                event.target.value
-                              )
-                            }
-                            disabled={!product}
-                          >
+                        <tr key={item.id}>
 
-                            {!product && (
-                              <option value="">
-                                ابتدا کالا را انتخاب کن
-                              </option>
+                          {/* شماره ردیف */}
+                          <td data-label="ردیف">
+                            {formatNumber(
+                              index + 1,
+                              INVENTORY_NUMBER_OPTIONS
+                            )}
+                          </td>
+
+
+                          {/* انتخاب کالا */}
+                          <td data-label="کالا">
+
+                            <EntryProductPicker
+                              value={item.productSearch}
+                              products={activeProducts}
+                              onQueryChange={(value) =>
+                                handleProductSearch(item.id, value)
+                              }
+                              onSelect={(selectedProduct) =>
+                                handleProductSelect(
+                                  item.id,
+                                  selectedProduct
+                                )
+                              }
+                            />
+
+
+                            {duplicateProduct && (
+
+                              <small className="entry-item-warning">
+                                این کالا در ردیف دیگری نیز ثبت شده است.
+                                این دو ردیف جداگانه محاسبه می‌شوند.
+                              </small>
+
                             )}
 
-                            {product?.productUnits.map((unit) => (
-
-                              <option
-                                key={unit.productUnitId}
-                                value={unit.productUnitId}
-                              >
-
-                                {unit.name}
-                                {' ('}
-                                {unit.symbol}
-                                {')'}
-
-                                {unit.isBaseUnit
-                                  ? ' - واحد اصلی'
-                                  : ''}
-
-                              </option>
-
-                            ))}
-
-                          </select>
+                          </td>
 
 
-                          {selectedUnit && !selectedUnit.isBaseUnit && (
+                          {/* انتخاب واحد اختصاصی محصول */}
+                          <td data-label="واحد">
 
-                            <small className="entry-unit-hint">
-
-                              هر ۱ {selectedUnit.name}
-                              {' = '}
-                              {formatNumber(
-                                selectedUnit.conversionNum /
-                                selectedUnit.conversionDen,
-                                {
-                                  ...INVENTORY_NUMBER_OPTIONS,
-                                  maximumFractionDigits: 6,
-                                }
-                              )}
-                              {' '}
-                              {product.baseUnitName}
-
-                            </small>
-
-                          )}
-
-                        </td>
-
-
-                        {/* مقدار ورودی */}
-                        <td data-label="مقدار ورودی">
-
-                          <input
-                            type="number"
-                            min="0"
-                            step={
-                              selectedUnit
-                                ? String(
-                                  1 / (
-                                    10 ** selectedUnit.inputDecimalPlaces
-                                  )
+                            <select
+                              value={item.productUnitId}
+                              onChange={(event) =>
+                                handleUnitChange(
+                                  item.id,
+                                  event.target.value
                                 )
-                                : '1'
-                            }
-                            value={item.quantity}
-                            onChange={(event) =>
-                              updateItem(item.id, {
-                                quantity: event.target.value,
-                              })
-                            }
-                            disabled={!selectedUnit}
-                            placeholder="مقدار"
-                            className="entry-number-input"
-                          />
+                              }
+                              disabled={!product}
+                            >
+
+                              {!product && (
+                                <option value="">
+                                  ابتدا کالا را انتخاب کن
+                                </option>
+                              )}
+
+                              {product?.productUnits.map((unit) => (
+
+                                <option
+                                  key={unit.productUnitId}
+                                  value={unit.productUnitId}
+                                >
+
+                                  {unit.name}
+                                  {' ('}
+                                  {unit.symbol}
+                                  {')'}
+
+                                  {unit.isBaseUnit
+                                    ? ' - واحد اصلی'
+                                    : ''}
+
+                                </option>
+
+                              ))}
+
+                            </select>
 
 
-                          {baseQuantity !== null &&
-                            selectedUnit &&
-                            !selectedUnit.isBaseUnit && (
+                            {selectedUnit && !selectedUnit.isBaseUnit && (
 
                               <small className="entry-unit-hint">
 
-                                معادل پایه:
-                                {' '}
+                                هر ۱ {selectedUnit.name}
+                                {' = '}
                                 {formatNumber(
-                                  baseQuantity,
+                                  selectedUnit.conversionNum /
+                                  selectedUnit.conversionDen,
                                   {
                                     ...INVENTORY_NUMBER_OPTIONS,
-                                    maximumFractionDigits:
-                                      product.baseQuantityDecimalPlaces ?? 2,
+                                    maximumFractionDigits: 6,
                                   }
                                 )}
                                 {' '}
-                                {product.baseUnitSymbol}
+                                {product.baseUnitName}
 
                               </small>
 
                             )}
 
-                        </td>
+                          </td>
 
 
-                        {/* قیمت واحد و ارز */}
-                        <td data-label="قیمت واحد">
+                          {/* مقدار ورودی */}
+                          <td data-label="مقدار ورودی">
 
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.000001"
-                            value={item.unitPrice}
-                            onChange={(event) =>
-                              updateItem(item.id, {
-                                unitPrice: event.target.value,
-                              })
-                            }
-                            disabled={!selectedUnit}
-                            placeholder="قیمت واحد"
-                            className="entry-number-input"
-                          />
-
-
-                          <select
-                            value={item.currencyCode}
-                            onChange={(event) =>
-                              updateItem(item.id, {
-                                currencyCode: event.target.value,
-                              })
-                            }
-                            disabled={!selectedUnit}
-                            aria-label="ارز قیمت واحد"
-                          >
-
-                            {currencies.map((currencyOption) => (
-
-                              <option
-                                key={currencyOption.code}
-                                value={currencyOption.code}
-                              >
-
-                                {currencyOption.code}
-                                {' - '}
-                                {currencyOption.name}
-
-                              </option>
-
-                            ))}
-
-                          </select>
+                            <input
+                              type="number"
+                              min="0"
+                              step={
+                                selectedUnit
+                                  ? String(
+                                    1 / (
+                                      10 ** selectedUnit.inputDecimalPlaces
+                                    )
+                                  )
+                                  : '1'
+                              }
+                              value={item.quantity}
+                              onChange={(event) =>
+                                updateItem(item.id, {
+                                  quantity: event.target.value,
+                                })
+                              }
+                              disabled={!selectedUnit}
+                              placeholder="مقدار"
+                              className="entry-number-input"
+                            />
 
 
-                          {selectedUnit && (
+                            {baseQuantity !== null &&
+                              selectedUnit &&
+                              !selectedUnit.isBaseUnit && (
 
-                            <small className="entry-unit-hint">
-                              قیمت به ازای هر {selectedUnit.name}
-                            </small>
+                                <small className="entry-unit-hint">
 
-                          )}
+                                  معادل پایه:
+                                  {' '}
+                                  {formatNumber(
+                                    baseQuantity,
+                                    {
+                                      ...INVENTORY_NUMBER_OPTIONS,
+                                      maximumFractionDigits:
+                                        product.baseQuantityDecimalPlaces ?? 2,
+                                    }
+                                  )}
+                                  {' '}
+                                  {product.baseUnitSymbol}
 
-                        </td>
+                                </small>
 
+                              )}
 
-                        {/* مبلغ ردیف */}
-                        <td data-label="مبلغ ردیف">
-
-                          <strong className="entry-line-amount">
-
-                            {lineAmount !== null
-                              ? formatCurrency(lineAmount, currency)
-                              : '—'}
-
-                          </strong>
-
-                        </td>
-
-
-                        {/* حذف ردیف */}
-                        <td data-label="عملیات">
-
-                          <Button
-                            type="button"
-                            variant="danger"
-                            size="small"
-                            iconOnly
-                            className="entry-remove-item-button"
-                            onClick={() => removeItemRow(item.id)}
-                            title="حذف این ردیف"
-                            aria-label={`حذف ردیف $DIL3`}
-                          >
-                            ×
-                          </Button>
-
-                        </td>
-
-                      </tr>
-
-                    );
-
-                  })}
-
-                </tbody>
-
-              </table>
-
-            </div>
+                          </td>
 
 
-            {/* دکمه دوم افزودن کالا در انتهای فهرست */}
-            <div className="entry-add-item-footer">
+                          {/* قیمت واحد و ارز */}
+                          <td data-label="قیمت واحد">
 
-              <p>
-                برای افزودن ردیف دیگری، از دکمه زیر استفاده کن.
-              </p>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.000001"
+                              value={item.unitPrice}
+                              onChange={(event) =>
+                                updateItem(item.id, {
+                                  unitPrice: event.target.value,
+                                })
+                              }
+                              disabled={!selectedUnit}
+                              placeholder="قیمت واحد"
+                              className="entry-number-input"
+                            />
 
-              <Button
-                type="button"
-                variant="secondary"
-                startIcon="＋"
-                onClick={addItemRow}
-              >
-                افزودن کالای دیگر
-              </Button>
 
-            </div>
+                            <select
+                              value={item.currencyCode}
+                              onChange={(event) =>
+                                updateItem(item.id, {
+                                  currencyCode: event.target.value,
+                                })
+                              }
+                              disabled={!selectedUnit}
+                              aria-label="ارز قیمت واحد"
+                            >
 
-          </>
+                              {currencies.map((currencyOption) => (
 
-        )}
+                                <option
+                                  key={currencyOption.code}
+                                  value={currencyOption.code}
+                                >
 
-      </section>
+                                  {currencyOption.code}
+                                  {' - '}
+                                  {currencyOption.name}
+
+                                </option>
+
+                              ))}
+
+                            </select>
+
+
+                            {selectedUnit && (
+
+                              <small className="entry-unit-hint">
+                                قیمت به ازای هر {selectedUnit.name}
+                              </small>
+
+                            )}
+
+                          </td>
+
+
+                          {/* مبلغ ردیف */}
+                          <td data-label="مبلغ ردیف">
+
+                            <strong className="entry-line-amount">
+
+                              {lineAmount !== null
+                                ? formatCurrency(lineAmount, currency)
+                                : '—'}
+
+                            </strong>
+
+                          </td>
+
+
+                          {/* حذف ردیف */}
+                          <td data-label="عملیات">
+
+                            <Button
+                              type="button"
+                              variant="danger"
+                              size="small"
+                              iconOnly
+                              className="entry-remove-item-button"
+                              onClick={() => removeItemRow(item.id)}
+                              title="حذف این ردیف"
+                              aria-label={`حذف ردیف $DIL3`}
+                            >
+                              ×
+                            </Button>
+
+                          </td>
+
+                        </tr>
+
+                      );
+
+                    })}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+
+              {/* دکمه دوم افزودن کالا در انتهای فهرست */}
+              <div className="entry-add-item-footer">
+
+                <p>
+                  برای افزودن ردیف دیگری، از دکمه زیر استفاده کن.
+                </p>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  startIcon="＋"
+                  onClick={addItemRow}
+                >
+                  افزودن کالای دیگر
+                </Button>
+
+              </div>
+
+            </>
+
+          )
+        }
+
+      </section >
 
 
       {/* خلاصه سند */}
-      <section className="entry-section">
+      < section className="entry-section" >
 
         <div className="entry-section-header">
 
@@ -2137,22 +2134,24 @@ function InventoryEntry() {
         </div>
 
 
-        {!allItemsComplete && items.length > 0 && (
+        {
+          !allItemsComplete && items.length > 0 && (
 
-          <p className="entry-summary-note">
+            <p className="entry-summary-note">
 
-            برای محاسبه مبلغ کل و ذخیره سند، کالا، واحد، مقدار،
-            قیمت و ارز تمام ردیف‌ها باید تکمیل شوند.
+              برای محاسبه مبلغ کل و ذخیره سند، کالا، واحد، مقدار،
+              قیمت و ارز تمام ردیف‌ها باید تکمیل شوند.
 
-          </p>
+            </p>
 
-        )}
+          )
+        }
 
-      </section>
+      </section >
 
 
       {/* توضیحات و عملیات */}
-      <section className="entry-section">
+      < section className="entry-section" >
 
         <div className="entry-section-header">
 
@@ -2164,20 +2163,19 @@ function InventoryEntry() {
         </div>
 
 
-        <label className="entry-field">
-
-          <span>یادداشت</span>
-
+        <FormField
+          className="entry-field"
+          label="یادداشت"
+        >
           <textarea
-            rows="3"
+            rows={3}
             value={notes}
             onChange={(event) =>
               setNotes(event.target.value)
             }
             placeholder="توضیحات اختیاری درباره این سند..."
           />
-
-        </label>
+        </FormField>
 
 
         <div className="entry-form-actions">
@@ -2204,13 +2202,13 @@ function InventoryEntry() {
           </Button>
         </div>
 
-      </section>
+      </section >
 
 
       {/* اعلان شناور پایین چپ صفحه */}
-      <EntryToast toast={toast} />
+      < EntryToast toast={toast} />
 
-    </div>
+    </div >
 
   );
 

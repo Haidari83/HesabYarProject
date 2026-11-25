@@ -64,30 +64,9 @@
   gap: 10px;
 }
 
-.stock-filter-field {
-  display: flex;
-  flex: 1 1 160px;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 130px;
-}
-
-.stock-filter-field>span {
-  color: var(--stock-muted);
-  font-size: 11px;
-}
-
-.stock-filter-field select {
-  width: 100%;
-  height: 38px;
-  padding: 0 10px;
-  border: 1px solid var(--stock-border);
-  border-radius: 7px;
-  outline: none;
-  background: #fff;
-  color: var(--stock-text);
-  font-family: inherit;
-  font-size: 11px;
+.ui-field {
+  flex: 1 1 160px !important;
+  min-width: 130px !important;
 }
 
 .stock-filter-field select:focus {

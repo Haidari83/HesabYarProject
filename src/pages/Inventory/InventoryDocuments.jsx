@@ -12,6 +12,7 @@ import DataTableShell from '../../components/ui/DataTableShell';
 
 // نمایش یکپارچه وضعیت خالی
 import EmptyState from '../../components/ui/EmptyState';
+import FormField from '../../components/ui/FormField';
 
 import {
   getTodayGregorianDate as getLocalDate,
@@ -709,6 +710,55 @@ function InventoryDocuments() {
 
   }
 
+  // =============================================
+  // اعمال فوری فیلتر نوع سند و وضعیت سند
+  // =============================================
+
+  function handleImmediateFilterChange(key, value) {
+
+    // فقط دو فیلتر نوع سند و وضعیت اجازه اعمال فوری دارند.
+    if (
+      key !== 'documentType' &&
+      key !== 'status' &&
+      key !== 'search'
+    ) {
+      return;
+    }
+
+
+    // به‌روزرسانی مقدار انتخاب‌شده در رابط کاربری
+    setDraftFilters((previous) => ({
+      ...previous,
+      [key]: value,
+    }));
+
+
+    // اگر مقدار قبلاً اعمال شده است، درخواست تکراری ارسال نمی‌کنیم.
+    if (filters[key] === value) {
+      return;
+    }
+
+
+    // پاک‌کردن خطای درخواست قبلی
+    setLoadError('');
+
+
+    // نمایش وضعیت دریافت اطلاعات
+    setIsLoading(true);
+
+
+    // پس از تغییر فیلتر، از صفحه اول شروع می‌کنیم.
+    setCurrentPage(1);
+
+
+    // اعمال فقط همان فیلتر تغییرکرده
+    setFilters((previous) => ({
+      ...previous,
+      [key]: value,
+    }));
+
+  }
+
 
   // اعمال فیلترها
   function handleApplyFilters(event) {
@@ -840,13 +890,13 @@ function InventoryDocuments() {
 
         <div className="documents-section-heading">
 
-          <div>
-            <h2>جست‌وجو و فیلتر اسناد</h2>
 
-            <p>
-              سند موردنظر را بر اساس شماره، نوع، وضعیت یا تاریخ پیدا کن.
-            </p>
-          </div>
+          <h2>جست‌وجو و فیلتر اسناد</h2>
+
+          <p>
+            سند موردنظر را بر اساس شماره، نوع، وضعیت یا تاریخ پیدا کن.
+          </p>
+
 
         </div>
 
@@ -857,10 +907,10 @@ function InventoryDocuments() {
         >
 
           {/* جست‌وجو */}
-          <label className="documents-field documents-search-field">
-
-            <span>جست‌وجو</span>
-
+          <FormField
+            className="ui-field documents-search-field"
+            label="جست‌وجو"
+          >
             <input
               type="search"
               value={draftFilters.search}
@@ -872,41 +922,44 @@ function InventoryDocuments() {
               }
               placeholder="شماره سند، طرف حساب یا شماره فاکتور..."
             />
-
-          </label>
+          </FormField>
 
 
           {/* نوع سند */}
-          <div className="documents-field">
-
-            <span>نوع سند</span>
+          <FormField
+            className="ui-field"
+            label='نوع سند'>
 
             <DocumentFilterSelect
               value={draftFilters.documentType}
               options={DOCUMENT_TYPES}
               ariaLabel="نوع سند"
-              onChange={(value) =>
-                updateDraftFilter('documentType', value)
-              }
+              onChange={(value) => {
+                // تغییر نوع سند بلافاصله در پایگاه داده اعمال می‌شود.
+                handleImmediateFilterChange('documentType', value);
+              }}
             />
 
-          </div>
+          </FormField>
+
 
           {/* وضعیت سند */}
-          <div className="documents-field">
-
-            <span>وضعیت سند</span>
+          <FormField
+            className="ui-field"
+            label='وضعیت سند'
+          >
 
             <DocumentFilterSelect
               value={draftFilters.status}
               options={DOCUMENT_STATUSES}
               ariaLabel="وضعیت سند"
-              onChange={(value) =>
-                updateDraftFilter('status', value)
-              }
+              onChange={(value) => {
+                // تغییر وضعیت سند نیز بلافاصله اعمال می‌شود.
+                handleImmediateFilterChange('status', value);
+              }}
             />
 
-          </div>
+          </FormField>
 
 
           {/* تاریخ شروع */}

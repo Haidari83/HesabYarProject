@@ -158,29 +158,37 @@
   min-width: 0;
 }
 
-.product-form-field>span {
+/* برچسب فیلدهای اطلاعات کالا */
+.product-form-field>.ui-field__label {
   color: #334155;
   font-size: 11px;
   font-weight: 600;
 }
 
-.product-form-field input,
-.product-form-field select {
+/* کنترل‌های فرم کالا */
+.product-form-field>.ui-field__control {
+  box-sizing: border-box;
+
   width: 100%;
   min-width: 0;
-  height: 40px;
+  min-height: 40px;
+
   padding: 0 10px;
+
   border: 1px solid #e2e8f0;
   border-radius: 7px;
+
   outline: none;
+
   background: #fff;
   color: #1f2937;
+
   font: inherit;
   font-size: 11px;
 }
 
-.product-form-field input:focus,
-.product-form-field select:focus {
+/* حالت فوکوس کنترل‌های فرم کالا */
+.product-form-field>.ui-field__control:focus {
   border-color: #0f766e;
   box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
 }

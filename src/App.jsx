@@ -10,7 +10,6 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import ProductList from './pages/Products/ProductList';
 import CategoryList from './pages/Categories/CategoryList';
 import UnitList from './pages/Units/UnitList';
-import InventoryOverview from './pages/Inventory/InventoryOverview';
 import InventoryStockList from './pages/Inventory/InventoryStockList';
 import InventoryEntry from './pages/Inventory/InventoryEntry';
 import InventoryDocuments from './pages/Inventory/InventoryDocuments';
@@ -137,10 +136,6 @@ function ApplicationShell({
               <CategoryList currentUser={currentUser} />
             ) : activePageId === 'units' ? (
               <UnitList currentUser={currentUser} />
-            ) : activePageId === 'inventory' ? (<InventoryOverview
-              onNavigate={handlePageSelect}
-              currentUser={currentUser}
-            />
             ) : activePageId === 'inventory-stock-list' ? (
               <InventoryStockList />
             ) : activePageId === 'inventory-entry' ? (

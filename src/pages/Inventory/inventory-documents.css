@@ -71,20 +71,12 @@
 }
 
 
-.documents-field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-
-  min-width: 0;
-}
-
-.documents-field>span {
+/* برچسب فیلد جست‌وجو که با FormField ساخته می‌شود */
+.documents-field>.ui-field__label {
   color: var(--documents-muted);
   font-size: 11px;
   font-weight: 600;
 }
-
 
 .documents-field input,
 .documents-field select,
