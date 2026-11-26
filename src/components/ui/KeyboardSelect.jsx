@@ -82,8 +82,12 @@ function KeyboardSelect({
   options = [],
   value,
   onChange,
+  id,
   ariaLabel,
   labelledBy,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
+  required = false,
   placeholder = 'انتخاب کنید',
   disabled = false,
   className = '',
@@ -192,11 +196,17 @@ function KeyboardSelect({
     [updateOpenState]
   );
 
-  function openPicker() {
+  // بازکردن فهرست با توجه به جهت حرکت صفحه‌کلید
+  function openPicker(direction = 1) {
+    const fallbackIndex =
+      direction < 0
+        ? getLastEnabledIndex(options)
+        : getFirstEnabledIndex(options);
+
     const nextIndex =
       selectedIndex >= 0 && !options[selectedIndex]?.disabled
         ? selectedIndex
-        : getFirstEnabledIndex(options);
+        : fallbackIndex;
 
     setActiveIndex(nextIndex);
     updateOpenState(true);
@@ -351,7 +361,7 @@ function KeyboardSelect({
       event.preventDefault();
 
       if (!isOpen) {
-        openPicker();
+        openPicker(event.key === 'ArrowDown' ? 1 : -1);
       } else {
         const direction =
           event.key === 'ArrowDown' ? 1 : -1;
@@ -449,6 +459,7 @@ function KeyboardSelect({
     >
       <button
         ref={triggerRef}
+        id={id}
         type="button"
         className={joinClasses(
           'ui-keyboard-select__trigger',
@@ -457,6 +468,9 @@ function KeyboardSelect({
         disabled={disabled}
         aria-label={ariaLabel}
         aria-labelledby={labelledBy}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
+        aria-required={required || undefined}
         aria-haspopup={
           ariaHasPopup ??
           (optionsRole === 'listbox' ? 'listbox' : undefined)
@@ -496,6 +510,7 @@ function KeyboardSelect({
           )}
           role={optionsRole}
           aria-label={ariaLabel}
+          aria-labelledby={labelledBy}
         >
           {options.length > 0 ? (
             options.map((option, index) => {
