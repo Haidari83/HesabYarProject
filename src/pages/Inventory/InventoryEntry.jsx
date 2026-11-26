@@ -1562,7 +1562,7 @@ function InventoryEntry() {
 
 
       {/* اطلاعات منبع ورود */}
-      < section className="entry-section" >
+      <section className="entry-section">
 
         <div className="entry-section-header">
 
@@ -1652,7 +1652,7 @@ function InventoryEntry() {
 
 
       {/* جدول اقلام ورودی */}
-      < section className="entry-section" >
+      <section className="entry-section">
 
         <div className="entry-section-header">
 
@@ -2065,7 +2065,7 @@ function InventoryEntry() {
 
 
       {/* خلاصه سند */}
-      < section className="entry-section" >
+      <section className="entry-section">
 
         <div className="entry-section-header">
 
@@ -2151,7 +2151,7 @@ function InventoryEntry() {
 
 
       {/* توضیحات و عملیات */}
-      < section className="entry-section" >
+      <section className="entry-section">
 
         <div className="entry-section-header">
 
@@ -2206,7 +2206,7 @@ function InventoryEntry() {
 
 
       {/* اعلان شناور پایین چپ صفحه */}
-      < EntryToast toast={toast} />
+      <EntryToast toast={toast} />
 
     </div >
 

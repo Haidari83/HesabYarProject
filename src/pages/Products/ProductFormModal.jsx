@@ -421,7 +421,6 @@ function ProductFormModal({
                 </FormField>
 
                 <label className="product-form-field">
-                  <span>دسته‌بندی *</span>
 
                   <FormField
                     className="product-form-field"

@@ -64,11 +64,6 @@
   gap: 10px;
 }
 
-.ui-field {
-  flex: 1 1 160px !important;
-  min-width: 130px !important;
-}
-
 .stock-filter-field select:focus {
   border-color: #93c5fd;
 }

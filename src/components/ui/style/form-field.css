@@ -5,8 +5,7 @@
 .ui-field {
   display: flex;
   flex-direction: column;
-  /* gap: var(--spacing-2); */
-  gap: 9px;
+  gap: var(--spacing-2);
 
   width: 100%;
   min-width: 0;

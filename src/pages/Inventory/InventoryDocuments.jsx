@@ -891,9 +891,9 @@ function InventoryDocuments() {
         <div className="documents-section-heading">
 
 
-          <h2>جست‌وجو و فیلتر اسناد</h2>
+          <h2 className='ui-data-table-card__title'>جست‌وجو و فیلتر اسناد</h2>
 
-          <p>
+          <p className='ui-data-table-card__description'>
             سند موردنظر را بر اساس شماره، نوع، وضعیت یا تاریخ پیدا کن.
           </p>
 

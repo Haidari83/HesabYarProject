@@ -305,7 +305,7 @@ function InventoryStockList() {
         <div className="stock-filter-row">
 
           <FormField
-            className="ui-field"
+            className="ui-field stock-filter-field"
             label="دسته‌بندی"
           >
             <select
