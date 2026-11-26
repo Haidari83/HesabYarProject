@@ -922,10 +922,10 @@ function UnitList({ currentUser }) {
           </section>
 
           {/* نوار جست‌وجو، فیلتر و عملیات */}
-          <section className="unit-toolbar">
+          <section className="unit-toolbar toolbar">
 
-            <div className="unit-search">
-              <span>⌕</span>
+            <div className="unit-search search">
+              <span className='search-icon'>⌕</span>
 
               <input
                 type="search"
@@ -934,49 +934,50 @@ function UnitList({ currentUser }) {
                 placeholder="جست‌وجوی نام، نماد یا کد واحد..."
               />
             </div>
+            <div className='filters'>
+              <KeyboardSelect
+                value={kindFilter}
+                options={[
+                  {
+                    value: 'all',
+                    label: 'همه انواع',
+                  },
+                  {
+                    value: 'standard',
+                    label: 'استاندارد',
+                  },
+                  {
+                    value: 'package',
+                    label: 'بسته‌بندی',
+                  },
+                ]}
+                onChange={setKindFilter}
+                ariaLabel="فیلتر نوع واحد"
+              />
 
-            <KeyboardSelect
-              value={kindFilter}
-              options={[
-                {
-                  value: 'all',
-                  label: 'همه انواع',
-                },
-                {
-                  value: 'standard',
-                  label: 'استاندارد',
-                },
-                {
-                  value: 'package',
-                  label: 'بسته‌بندی',
-                },
-              ]}
-              onChange={setKindFilter}
-              ariaLabel="فیلتر نوع واحد"
-            />
-
-            <KeyboardSelect
-              value={statusFilter}
-              options={[
-                {
-                  value: 'all',
-                  label: 'همه وضعیت‌ها',
-                },
-                {
-                  value: 'active',
-                  label: 'فعال',
-                },
-                {
-                  value: 'inactive',
-                  label: 'غیرفعال',
-                },
-              ]}
-              onChange={setStatusFilter}
-              ariaLabel="فیلتر وضعیت واحد"
-            />
+              <KeyboardSelect
+                value={statusFilter}
+                options={[
+                  {
+                    value: 'all',
+                    label: 'همه وضعیت‌ها',
+                  },
+                  {
+                    value: 'active',
+                    label: 'فعال',
+                  },
+                  {
+                    value: 'inactive',
+                    label: 'غیرفعال',
+                  },
+                ]}
+                onChange={setStatusFilter}
+                ariaLabel="فیلتر وضعیت واحد"
+              />
+            </div>
 
             {canManageUnits && (
-              <div className="unit-add-actions">
+              <div className="unit-add-actions toolbar__add-action">
                 <Button
                   type="button"
                   variant="secondary"

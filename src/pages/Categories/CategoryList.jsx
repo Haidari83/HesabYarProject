@@ -998,10 +998,10 @@ function CategoryList({ currentUser }) {
       </section>
 
       {/* جست‌وجو و دکمه‌های افزودن */}
-      <section className="category-toolbar">
+      <section className="category-toolbar toolbar">
 
-        <div className="category-search">
-          <span>⌕</span>
+        <div className="category-search search">
+          <span className='search-icon'>⌕</span>
 
           <input
             type="search"
@@ -1035,7 +1035,7 @@ function CategoryList({ currentUser }) {
         {/* دکمه‌های افزودن فقط برای کاربران دارای مجوز مدیریت */}
         {canManageCategories && (
 
-          <div className="category-add-actions">
+          <div className="category-add-actions toolbar__add-action">
 
             <Button
               type="button"

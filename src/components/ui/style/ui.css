@@ -1,3 +1,117 @@
+/* استایل باکس های عمومی حساب یار */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  background-color: #fff;
+  flex-wrap: wrap;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filters>.ui-keyboard-select {
+  flex: 0 0 150px;
+}
+
+.search-icon {
+  margin-left: 8px;
+  color: #64748b;
+  font-size: 23px;
+}
+
+.search input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1f2937;
+  font: inherit;
+  font-size: 12px;
+}
+
+.search:focus-within {
+  border-color: var(--category-accent);
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 8%);
+}
+
+.search input::placeholder {
+  color: #94a3b8;
+}
+
+.toolbar__add-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+/* اندازه نماد + در دکمه‌های افزودن */
+.category-add-actions>.ui-button>span {
+  font-size: 18px;
+}
+
+@media (max-width: 650px) {
+  .filters {
+    flex-basis: 100%;
+  }
+
+  .toolbar__add-action {
+    flex-basis: 100%;
+  }
+
+  .filters>.ui-keyboard-select {
+    flex: 1;
+  }
+
+  .toolbar__add-action>.ui-button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 540px) {
+  .filters {
+    flex-wrap: wrap;
+  }
+
+  .filters>.ui-keyboard-select {
+    min-width: 130px;
+  }
+}
+
+@media (max-width: 420px) {
+  .filters {
+    display: inline-block;
+  }
+
+  .filters>.ui-keyboard-select {
+    margin-top: 4px;
+    width: 100%;
+  }
+}
+
 /* =============================================
    ۱. دکمه‌های عمومی حساب‌یار
 ============================================= */
@@ -748,7 +862,9 @@
 .ui-keyboard-select__value {
   flex: 1 1 auto;
   min-width: 0;
-  overflow-wrap: anywhere;
+  /* overflow-wrap: anywhere; */
+  word-spacing: no-warp;
+  word-wrap: no-wrap;
 }
 
 .ui-keyboard-select__arrow {

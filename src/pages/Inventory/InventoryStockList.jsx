@@ -302,10 +302,10 @@ function InventoryStockList() {
           )}
         </div>
 
-        <div className="stock-filter-row">
+        <div className="stock-filter-row toolbar">
 
           <FormField
-            className="ui-field stock-filter-field"
+            className="ui-field stock-filter-field filters"
             label="دسته‌بندی"
           >
             <KeyboardSelect

@@ -4,6 +4,7 @@ import {
   useRef,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { joinClasses } from '../../utils/joinClasses';
 
 import Button from './Button';
 
@@ -63,7 +64,6 @@ function acquireBodyScrollLock() {
   };
 }
 
-import { joinClasses } from '../../utils/joinClasses';
 
 
 function assignRef(ref, value) {

@@ -543,10 +543,10 @@ function ProductList({ currentUser }) {
           </section>
 
           {/* جست‌وجو و فیلتر محصولات */}
-          <section className="product-toolbar">
+          <section className="product-toolbar toolbar">
 
-            <div className="product-search">
-              <span className="product-search-icon">⌕</span>
+            <div className="product-search search">
+              <span className="product-search-icon search-icon">⌕</span>
 
               <input
                 type="search"
@@ -556,69 +556,65 @@ function ProductList({ currentUser }) {
               />
             </div>
 
-            <div className="product-filters">
+            <div className="product-filters filters">
 
-              <div className="product-filters">
+              <KeyboardSelect
+                value={categoryFilter}
+                options={[
+                  {
+                    value: 'all',
+                    label: 'همه دسته‌بندی‌ها',
+                  },
+                  ...categories.map((category) => ({
+                    value: String(category.id),
+                    label: category.name,
+                  })),
+                ]}
+                onChange={setCategoryFilter}
+                ariaLabel="فیلتر دسته‌بندی"
+              />
 
-                <KeyboardSelect
-                  value={categoryFilter}
-                  options={[
-                    {
-                      value: 'all',
-                      label: 'همه دسته‌بندی‌ها',
-                    },
-                    ...categories.map((category) => ({
-                      value: String(category.id),
-                      label: category.name,
-                    })),
-                  ]}
-                  onChange={setCategoryFilter}
-                  ariaLabel="فیلتر دسته‌بندی"
-                />
+              <KeyboardSelect
+                value={unitFilter}
+                options={[
+                  {
+                    value: 'all',
+                    label: 'همه واحدها',
+                  },
+                  ...units.map((unit) => ({
+                    value: String(unit.id),
+                    label: unit.name,
+                  })),
+                ]}
+                onChange={setUnitFilter}
+                ariaLabel="فیلتر واحد"
+              />
 
-                <KeyboardSelect
-                  value={unitFilter}
-                  options={[
-                    {
-                      value: 'all',
-                      label: 'همه واحدها',
-                    },
-                    ...units.map((unit) => ({
-                      value: String(unit.id),
-                      label: unit.name,
-                    })),
-                  ]}
-                  onChange={setUnitFilter}
-                  ariaLabel="فیلتر واحد"
-                />
-
-                <KeyboardSelect
-                  value={statusFilter}
-                  options={[
-                    {
-                      value: 'all',
-                      label: 'همه وضعیت‌ها',
-                    },
-                    {
-                      value: 'active',
-                      label: 'فعال',
-                    },
-                    {
-                      value: 'inactive',
-                      label: 'غیرفعال',
-                    },
-                  ]}
-                  onChange={setStatusFilter}
-                  ariaLabel="فیلتر وضعیت محصول"
-                />
-
-              </div>
+              <KeyboardSelect
+                value={statusFilter}
+                options={[
+                  {
+                    value: 'all',
+                    label: 'همه وضعیت‌ها',
+                  },
+                  {
+                    value: 'active',
+                    label: 'فعال',
+                  },
+                  {
+                    value: 'inactive',
+                    label: 'غیرفعال',
+                  },
+                ]}
+                onChange={setStatusFilter}
+                ariaLabel="فیلتر وضعیت محصول"
+              />
 
             </div>
 
             {/* عملیات ثبت دستی و ورود گروهی محصولات */}
             {canCreateProducts && (
-              <>
+              <div className='toolbar__add-action'>
 
                 {/* دکمه ورود محصولات از Excel */}
                 <Button
@@ -648,7 +644,7 @@ function ProductList({ currentUser }) {
                   ثبت کالای جدید
                 </Button>
 
-              </>
+              </div>
             )}
 
           </section>
