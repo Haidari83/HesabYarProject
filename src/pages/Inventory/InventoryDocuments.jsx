@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+// انتخاب‌گر عمومی و مشترک پروژه
+import KeyboardSelect from '../../components/ui/KeyboardSelect';
 
 import DatePickerModule from 'react-multi-date-picker';
 import persianCalendar from 'react-date-object/calendars/persian';
@@ -131,302 +133,6 @@ function DocumentDatePickerActions({
       >
         تأیید
       </Button>
-
-    </div>
-
-  );
-
-}
-
-// انتخاب‌گر سفارشی با پشتیبانی از صفحه‌کلید
-function DocumentFilterSelect({
-  value,
-  options,
-  ariaLabel,
-  onChange,
-}) {
-
-  const [isOpen, setIsOpen] = useState(false);
-
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const containerRef = useRef(null);
-
-  const triggerRef = useRef(null);
-
-  const optionRefs = useRef([]);
-
-
-  // پیدا کردن گزینه انتخاب‌شده فعلی
-  const selectedIndex = Math.max(
-    0,
-    options.findIndex((option) => option.value === value)
-  );
-
-
-  // انتقال فوکوس به گزینه فعال پس از بازشدن فهرست
-  useEffect(() => {
-
-    if (isOpen) {
-      optionRefs.current[activeIndex]?.focus();
-    }
-
-  }, [isOpen, activeIndex]);
-
-
-  // بستن فهرست با کلیک بیرون از آن
-  useEffect(() => {
-
-    if (!isOpen) {
-      return undefined;
-    }
-
-
-    function handleOutsideClick(event) {
-
-      if (!containerRef.current?.contains(event.target)) {
-        setIsOpen(false);
-      }
-
-    }
-
-
-    document.addEventListener(
-      'mousedown',
-      handleOutsideClick
-    );
-
-
-    return () => {
-
-      document.removeEventListener(
-        'mousedown',
-        handleOutsideClick
-      );
-
-    };
-
-  }, [isOpen]);
-
-
-  // بازکردن فهرست از گزینه انتخاب‌شده فعلی
-  function openPicker() {
-
-    setActiveIndex(selectedIndex);
-
-    setIsOpen(true);
-
-  }
-
-
-  // انتخاب گزینه
-  function handleSelectOption(option, index) {
-
-    onChange(option.value);
-
-    setActiveIndex(index);
-
-    setIsOpen(false);
-
-    // بازگشت فوکوس به دکمه اصلی
-    triggerRef.current?.focus();
-
-  }
-
-
-  // مدیریت کلیدهای صفحه‌کلید
-  function handleOptionKeyDown(event, index) {
-
-    const lastIndex = options.length - 1;
-
-    let nextIndex;
-
-
-    switch (event.key) {
-
-      case 'ArrowDown':
-
-        event.preventDefault();
-
-        nextIndex = index === lastIndex
-          ? 0
-          : index + 1;
-
-        break;
-
-
-      case 'ArrowUp':
-
-        event.preventDefault();
-
-        nextIndex = index === 0
-          ? lastIndex
-          : index - 1;
-
-        break;
-
-
-      case 'Home':
-
-        event.preventDefault();
-
-        nextIndex = 0;
-
-        break;
-
-
-      case 'End':
-
-        event.preventDefault();
-
-        nextIndex = lastIndex;
-
-        break;
-
-
-      case 'Escape':
-
-        event.preventDefault();
-
-        setIsOpen(false);
-
-        triggerRef.current?.focus();
-
-        return;
-
-
-      case ' ':
-      case 'Enter':
-
-        // Space و Enter گزینه دارای فوکوس را انتخاب می‌کنند.
-        event.preventDefault();
-
-        handleSelectOption(
-          options[index],
-          index
-        );
-
-        return;
-
-
-      default:
-
-        return;
-
-    }
-
-
-    setActiveIndex(nextIndex);
-
-  }
-
-
-  return (
-
-    <div
-      className="documents-filter-select"
-      ref={containerRef}
-      onBlur={(event) => {
-
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setIsOpen(false);
-        }
-
-      }}
-    >
-
-      {/* دکمه اصلی انتخاب‌گر */}
-      <button
-        type="button"
-        ref={triggerRef}
-        className="documents-filter-select-trigger"
-        aria-label={ariaLabel}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        onClick={() => {
-
-          if (isOpen) {
-            setIsOpen(false);
-          } else {
-            openPicker();
-          }
-
-        }}
-        onKeyDown={(event) => {
-
-          if (
-            event.key === 'ArrowDown' ||
-            event.key === 'ArrowUp'
-          ) {
-
-            event.preventDefault();
-
-            openPicker();
-
-          }
-
-          if (event.key === 'Escape') {
-            setIsOpen(false);
-          }
-
-        }}
-      >
-
-        <span>
-          {options[selectedIndex]?.label}
-        </span>
-
-        <span
-          className="documents-filter-select-arrow"
-          aria-hidden="true"
-        >
-          {isOpen ? '⌃' : '⌄'}
-        </span>
-
-      </button>
-
-
-      {/* فهرست گزینه‌ها */}
-      {isOpen && (
-
-        <div
-          className="documents-filter-select-options"
-          role="listbox"
-          aria-label={ariaLabel}
-        >
-
-          {options.map((option, index) => (
-
-            <button
-              key={option.value}
-              type="button"
-              role="option"
-              ref={(element) => {
-                optionRefs.current[index] = element;
-              }}
-              className="documents-filter-select-option"
-              aria-selected={value === option.value}
-              onClick={() =>
-                handleSelectOption(option, index)
-              }
-              onKeyDown={(event) =>
-                handleOptionKeyDown(event, index)
-              }
-            >
-
-              <span>{option.label}</span>
-
-              {value === option.value && (
-                <span aria-hidden="true">✓</span>
-              )}
-
-            </button>
-
-          ))}
-
-        </div>
-
-      )}
 
     </div>
 
@@ -930,15 +636,22 @@ function InventoryDocuments() {
             className="ui-field"
             label='نوع سند'>
 
-            <DocumentFilterSelect
+            <KeyboardSelect
               value={draftFilters.documentType}
               options={DOCUMENT_TYPES}
               ariaLabel="نوع سند"
-              onChange={(value) => {
-                // تغییر نوع سند بلافاصله در پایگاه داده اعمال می‌شود.
-                handleImmediateFilterChange('documentType', value);
-              }}
+              onChange={(value) =>
+                updateDraftFilter('documentType', value)
+              }
+              // کلاس‌های اختصاصی برای حفظ ظاهر فعلی فیلتر اسناد
+              className="documents-filter-select"
+              triggerClassName="documents-filter-select-trigger"
+              arrowClassName="documents-filter-select-arrow"
+              optionsClassName="documents-filter-select-options"
+              optionClassName="documents-filter-select-option"
+
             />
+
 
           </FormField>
 
@@ -949,14 +662,20 @@ function InventoryDocuments() {
             label='وضعیت سند'
           >
 
-            <DocumentFilterSelect
+            <KeyboardSelect
               value={draftFilters.status}
               options={DOCUMENT_STATUSES}
               ariaLabel="وضعیت سند"
-              onChange={(value) => {
-                // تغییر وضعیت سند نیز بلافاصله اعمال می‌شود.
-                handleImmediateFilterChange('status', value);
-              }}
+              onChange={(value) =>
+                updateDraftFilter('status', value)
+              }
+
+              // کلاس‌های اختصاصی برای حفظ ظاهر فعلی فیلتر اسناد
+              className="documents-filter-select"
+              triggerClassName="documents-filter-select-trigger"
+              arrowClassName="documents-filter-select-arrow"
+              optionsClassName="documents-filter-select-options"
+              optionClassName="documents-filter-select-option"
             />
 
           </FormField>

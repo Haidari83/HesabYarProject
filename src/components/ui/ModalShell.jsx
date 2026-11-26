@@ -63,9 +63,8 @@ function acquireBodyScrollLock() {
   };
 }
 
-function joinClasses(...values) {
-  return values.filter(Boolean).join(' ');
-}
+import { joinClasses } from '../../utils/joinClasses';
+
 
 function assignRef(ref, value) {
   if (typeof ref === 'function') {

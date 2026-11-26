@@ -1,7 +1,5 @@
 // برچسب عمومی نمایش وضعیت‌ها
-function joinClasses(...values) {
-  return values.filter(Boolean).join(' ');
-}
+import { joinClasses } from '../../utils/joinClasses';
 
 function StatusBadge({
   variant = 'neutral',

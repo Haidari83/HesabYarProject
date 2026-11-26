@@ -2,9 +2,8 @@ import { useId } from 'react';
 
 
 // ترکیب کلاس‌های CSS و حذف مقدارهای خالی
-function joinClasses(...values) {
-  return values.filter(Boolean).join(' ');
-}
+import { joinClasses } from '../../utils/joinClasses';
+
 
 
 // بررسی اینکه یک مقدار واقعاً محتوای قابل نمایش دارد یا خیر

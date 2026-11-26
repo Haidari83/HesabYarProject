@@ -7,9 +7,8 @@ import { forwardRef } from 'react';
 
 
 // ترکیب چند کلاس CSS و حذف مقدارهای خالی
-function joinClasses(...values) {
-  return values.filter(Boolean).join(' ');
-}
+import { joinClasses } from '../../utils/joinClasses';
+
 
 
 /**

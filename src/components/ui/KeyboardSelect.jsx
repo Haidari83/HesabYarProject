@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
+import { normalizePersianText } from '../../utils/persianText';
+import { joinClasses } from '../../utils/joinClasses';
 // مقدار و عنوان پیش‌فرض هر گزینه از ویژگی‌های value و label خوانده می‌شود.
 const defaultGetOptionValue = (option) => option?.value;
 const defaultGetOptionLabel = (option) => option?.label ?? '';
-
-function joinClasses(...values) {
-  return values.filter(Boolean).join(' ');
-}
 
 function getFirstEnabledIndex(options) {
   return options.findIndex((option) => !option?.disabled);
@@ -15,6 +13,46 @@ function getFirstEnabledIndex(options) {
 function getLastEnabledIndex(options) {
   for (let index = options.length - 1; index >= 0; index -= 1) {
     if (!options[index]?.disabled) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+// پیدا کردن گزینه‌ای که عنوان آن با عبارت تایپ‌شده شروع می‌شود
+function findTypeaheadIndex(
+  options,
+  query,
+  currentIndex,
+  getOptionLabel,
+  startAfterCurrent
+) {
+  if (!query || options.length === 0) {
+    return -1;
+  }
+
+  const startIndex = currentIndex >= 0
+    ? (
+      startAfterCurrent
+        ? (currentIndex + 1) % options.length
+        : currentIndex
+    )
+    : 0;
+
+  for (let step = 0; step < options.length; step += 1) {
+    const index = (startIndex + step) % options.length;
+    const option = options[index];
+
+    if (option?.disabled) {
+      continue;
+    }
+
+    const label = normalizePersianText(
+      getOptionLabel(option)
+    );
+
+    if (label.startsWith(query)) {
       return index;
     }
   }
@@ -80,6 +118,21 @@ function KeyboardSelect({
   const triggerRef = useRef(null);
   const optionRefs = useRef([]);
 
+  // نگهداری حروفی که کاربر برای جست‌وجو تایپ می‌کند
+  const typeaheadBufferRef = useRef('');
+
+  // نگهداری تایمر پاک‌شدن عبارت جست‌وجو
+  const typeaheadTimerRef = useRef(null);
+
+  // پاک‌سازی تایمر هنگام حذف کامپوننت
+  useEffect(() => {
+    return () => {
+      if (typeaheadTimerRef.current !== null) {
+        clearTimeout(typeaheadTimerRef.current);
+      }
+    };
+  }, []);
+
   // این دو ref برای تشخیص بسته‌شدن انتخاب‌گر استفاده می‌شوند.
   const previousDisabledRef = useRef(disabled);
   const wasOpenRef = useRef(false);
@@ -118,7 +171,36 @@ function KeyboardSelect({
     onOpenChange?.(nextOpenState);
   }, [disabled, onOpenChange]);
 
+  const closePicker = useCallback(
+    ({ restoreFocus = false } = {}) => {
+      updateOpenState(false);
 
+      // پاک‌کردن عبارت جست‌وجوی قبلی
+      typeaheadBufferRef.current = '';
+
+      // توقف تایمر قبلی
+      if (typeaheadTimerRef.current !== null) {
+        clearTimeout(typeaheadTimerRef.current);
+        typeaheadTimerRef.current = null;
+      }
+
+      // بازگرداندن فوکوس به دکمه اصلی
+      if (restoreFocus) {
+        triggerRef.current?.focus();
+      }
+    },
+    [updateOpenState]
+  );
+
+  function openPicker() {
+    const nextIndex =
+      selectedIndex >= 0 && !options[selectedIndex]?.disabled
+        ? selectedIndex
+        : getFirstEnabledIndex(options);
+
+    setActiveIndex(nextIndex);
+    updateOpenState(true);
+  }
   // پس از بازشدن فهرست، گزینه فعال دریافت‌کننده فوکوس می‌شود.
   useEffect(() => {
     if (isOpen && activeIndex >= 0) {
@@ -134,7 +216,7 @@ function KeyboardSelect({
 
     function handleOutsideMouseDown(event) {
       if (!containerRef.current?.contains(event.target)) {
-        updateOpenState(false);
+        closePicker();
       }
     }
 
@@ -143,7 +225,7 @@ function KeyboardSelect({
     return () => {
       document.removeEventListener('mousedown', handleOutsideMouseDown);
     };
-  }, [isOpen, updateOpenState]);
+  }, [isOpen, closePicker]);
 
 
   // هماهنگ‌سازی تغییر disabled با وضعیت داخلی انتخاب‌گر
@@ -164,25 +246,6 @@ function KeyboardSelect({
     previousDisabledRef.current = disabled;
   }, [disabled, onOpenChange]);
 
-
-  function openPicker() {
-    const nextIndex =
-      selectedIndex >= 0 && !options[selectedIndex]?.disabled
-        ? selectedIndex
-        : getFirstEnabledIndex(options);
-
-    setActiveIndex(nextIndex);
-    updateOpenState(true);
-  }
-
-  function closePicker({ restoreFocus = false } = {}) {
-    updateOpenState(false);
-
-    if (restoreFocus) {
-      triggerRef.current?.focus();
-    }
-  }
-
   function selectOption(option, index) {
     if (!option || option.disabled) {
       return;
@@ -196,18 +259,103 @@ function KeyboardSelect({
     }
   }
 
+  function getTypeaheadMatch(event, currentIndex) {
+    const key = event.key;
+
+    // کلیدهای ترکیبی و کلیدهای غیرقابل چاپ را نادیده بگیر
+    if (
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey ||
+      key.length !== 1
+    ) {
+      return null;
+    }
+
+    // اگر فاصله اولین کلید باشد، رفتار انتخاب با Space حفظ شود.
+    if (key === ' ' && !typeaheadBufferRef.current) {
+      return null;
+    }
+
+    event.preventDefault();
+
+    const normalizedKey = normalizePersianText(key);
+
+    if (!normalizedKey) {
+      return { index: -1 };
+    }
+
+    const previousBuffer = typeaheadBufferRef.current;
+
+    // تشخیص تکرار یک حرف برای جابه‌جایی میان گزینه‌های مشابه
+    const isRepeatedCharacter =
+      previousBuffer.length > 0 &&
+      Array.from(previousBuffer).every(
+        (character) => character === normalizedKey
+      );
+
+    // اگر همان حرف تکرار شد، جست‌وجو از گزینه بعدی آغاز شود.
+    // در غیر این صورت، حرف جدید به عبارت قبلی اضافه شود.
+    const query = isRepeatedCharacter
+      ? normalizedKey
+      : previousBuffer + normalizedKey;
+
+    typeaheadBufferRef.current = query;
+
+    // تایمر قبلی را پاک کن
+    if (typeaheadTimerRef.current !== null) {
+      clearTimeout(typeaheadTimerRef.current);
+    }
+
+    // پس از ۷۰۰ میلی‌ثانیه عبارت جست‌وجو پاک شود
+    typeaheadTimerRef.current = setTimeout(() => {
+      typeaheadBufferRef.current = '';
+      typeaheadTimerRef.current = null;
+    }, 700);
+
+    const matchedIndex = findTypeaheadIndex(
+      options,
+      query,
+      currentIndex,
+      getOptionLabel,
+      previousBuffer.length === 0 || isRepeatedCharacter
+    );
+
+    return { index: matchedIndex };
+  }
+
   function handleTriggerKeyDown(event) {
     if (disabled) {
       return;
     }
 
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    // بررسی تایپ حروف برای جست‌وجوی سریع
+    const typeaheadResult = getTypeaheadMatch(
+      event,
+      selectedIndex
+    );
+
+    if (typeaheadResult !== null) {
+      if (typeaheadResult.index >= 0) {
+        setActiveIndex(typeaheadResult.index);
+        updateOpenState(true);
+      }
+
+      return;
+    }
+
+    if (
+      event.key === 'ArrowDown' ||
+      event.key === 'ArrowUp'
+    ) {
       event.preventDefault();
 
       if (!isOpen) {
         openPicker();
       } else {
-        const direction = event.key === 'ArrowDown' ? 1 : -1;
+        const direction =
+          event.key === 'ArrowDown' ? 1 : -1;
+
         const nextIndex = getNextEnabledIndex(
           options,
           activeIndex,
@@ -226,15 +374,34 @@ function KeyboardSelect({
 
 
   function handleOptionKeyDown(event, index) {
+
+    // بررسی تایپ حروف برای جست‌وجوی سریع
+    const typeaheadResult = getTypeaheadMatch(
+      event,
+      index
+    );
+
+    if (typeaheadResult !== null) {
+      if (typeaheadResult.index >= 0) {
+        setActiveIndex(typeaheadResult.index);
+      }
+
+      return;
+    }
+
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
-        setActiveIndex(getNextEnabledIndex(options, index, 1));
+        setActiveIndex(
+          getNextEnabledIndex(options, index, 1)
+        );
         return;
 
       case 'ArrowUp':
         event.preventDefault();
-        setActiveIndex(getNextEnabledIndex(options, index, -1));
+        setActiveIndex(
+          getNextEnabledIndex(options, index, -1)
+        );
         return;
 
       case 'Home':
@@ -276,7 +443,7 @@ function KeyboardSelect({
       className={joinClasses('ui-keyboard-select', className)}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
-          updateOpenState(false);
+          closePicker();
         }
       }}
     >

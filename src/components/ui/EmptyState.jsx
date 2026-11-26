@@ -1,7 +1,6 @@
 // نمایش یکپارچه وضعیت خالی فهرست‌ها و جدول‌ها
-function joinClasses(...values) {
-  return values.filter(Boolean).join(' ');
-}
+import { joinClasses } from '../../utils/joinClasses';
+
 
 function EmptyState({
   icon,

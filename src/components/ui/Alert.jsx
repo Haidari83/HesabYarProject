@@ -7,9 +7,8 @@ const DEFAULT_ICONS = {
   info: 'i',
 };
 
-function joinClasses(...values) {
-  return values.filter(Boolean).join(' ');
-}
+import { joinClasses } from '../../utils/joinClasses';
+
 
 function Alert({
   variant = 'info',
