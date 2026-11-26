@@ -8,6 +8,7 @@ import {
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
 import FormField from '../../components/ui/FormField';
+import KeyboardSelect from '../../components/ui/KeyboardSelect';
 
 import './inventory-entry.css';
 
@@ -288,291 +289,6 @@ const INVENTORY_ENTRY_TYPE_OPTIONS = [
     label: 'سایر',
   },
 ];
-
-
-// انتخاب‌گر نوع ورود کالا با پشتیبانی از صفحه‌کلید
-function EntryTypePicker({ value, onChange }) {
-
-  const [isOpen, setIsOpen] = useState(false);
-
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const containerRef = useRef(null);
-
-  const triggerRef = useRef(null);
-
-  const optionRefs = useRef([]);
-
-
-  // پیدا کردن گزینه انتخاب‌شده فعلی
-  const selectedIndex = INVENTORY_ENTRY_TYPE_OPTIONS.findIndex(
-    (option) => option.value === value
-  );
-
-  const selectedOption =
-    INVENTORY_ENTRY_TYPE_OPTIONS[selectedIndex] ||
-    INVENTORY_ENTRY_TYPE_OPTIONS[0];
-
-
-  // پس از بازشدن فهرست، فوکوس روی گزینه فعال قرار می‌گیرد.
-  useEffect(() => {
-
-    if (isOpen) {
-      optionRefs.current[activeIndex]?.focus();
-    }
-
-  }, [isOpen, activeIndex]);
-
-
-  // بستن فهرست با کلیک خارج از آن
-  useEffect(() => {
-
-    if (!isOpen) {
-      return undefined;
-    }
-
-
-    function handleOutsideClick(event) {
-
-      if (!containerRef.current?.contains(event.target)) {
-        setIsOpen(false);
-      }
-
-    }
-
-
-    document.addEventListener(
-      'mousedown',
-      handleOutsideClick
-    );
-
-
-    return () => {
-
-      document.removeEventListener(
-        'mousedown',
-        handleOutsideClick
-      );
-
-    };
-
-  }, [isOpen]);
-
-
-  // بازکردن فهرست با تمرکز روی گزینه فعلی
-  function openPicker() {
-
-    setActiveIndex(
-      selectedIndex >= 0 ? selectedIndex : 0
-    );
-
-    setIsOpen(true);
-
-  }
-
-
-  // انتخاب گزینه
-  function handleSelectOption(option, index) {
-
-    onChange(option.value);
-
-    setActiveIndex(index);
-
-    setIsOpen(false);
-
-    // پس از انتخاب، فوکوس به دکمه اصلی برمی‌گردد.
-    triggerRef.current?.focus();
-
-  }
-
-
-  // مدیریت کلیدهای صفحه‌کلید
-  function handleOptionKeyDown(event, index) {
-
-    const lastIndex = INVENTORY_ENTRY_TYPE_OPTIONS.length - 1;
-
-    let nextIndex;
-
-
-    switch (event.key) {
-
-      case 'ArrowDown':
-
-        event.preventDefault();
-
-        nextIndex = index === lastIndex ? 0 : index + 1;
-
-        break;
-
-
-      case 'ArrowUp':
-
-        event.preventDefault();
-
-        nextIndex = index === 0 ? lastIndex : index - 1;
-
-        break;
-
-
-      case 'Home':
-
-        event.preventDefault();
-
-        nextIndex = 0;
-
-        break;
-
-
-      case 'End':
-
-        event.preventDefault();
-
-        nextIndex = lastIndex;
-
-        break;
-
-
-      case 'Escape':
-
-        event.preventDefault();
-
-        setIsOpen(false);
-
-        triggerRef.current?.focus();
-
-        return;
-
-
-      case ' ':
-      case 'Enter':
-
-        // انتخاب مستقیم گزینه فعال با Space یا Enter
-        event.preventDefault();
-
-        handleSelectOption(
-          INVENTORY_ENTRY_TYPE_OPTIONS[index],
-          index
-        );
-
-        return;
-
-      default:
-        return;
-
-    }
-
-
-    setActiveIndex(nextIndex);
-
-  }
-
-
-  return (
-
-    <div
-      className="entry-type-picker"
-      ref={containerRef}
-      onBlur={(event) => {
-
-        // با خروج فوکوس از کل انتخاب‌گر، فهرست بسته می‌شود.
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setIsOpen(false);
-        }
-
-      }}
-    >
-
-      {/* دکمه اصلی انتخاب نوع ورود */}
-      <button
-        type="button"
-        ref={triggerRef}
-        className="entry-type-trigger"
-        aria-label="نوع ورود کالا"
-        aria-expanded={isOpen}
-        onClick={() => {
-
-          if (isOpen) {
-            setIsOpen(false);
-          } else {
-            openPicker();
-          }
-
-        }}
-        onKeyDown={(event) => {
-
-          if (
-            event.key === 'ArrowDown' ||
-            event.key === 'ArrowUp'
-          ) {
-
-            event.preventDefault();
-
-            openPicker();
-
-          }
-
-          if (event.key === 'Escape') {
-            setIsOpen(false);
-          }
-
-        }}
-      >
-
-        <span>{selectedOption.label}</span>
-
-        <span className="entry-type-picker-arrow" aria-hidden="true">
-          {isOpen ? '⌃' : '⌄'}
-        </span>
-
-      </button>
-
-
-      {/* فهرست گزینه‌ها */}
-      {isOpen && (
-
-        <div
-          className="entry-type-options"
-          role="group"
-          aria-label="گزینه‌های نوع ورود کالا"
-        >
-
-          {INVENTORY_ENTRY_TYPE_OPTIONS.map((option, index) => (
-
-            <button
-              key={option.value}
-              type="button"
-              ref={(element) => {
-                optionRefs.current[index] = element;
-              }}
-              className="entry-type-option"
-              aria-pressed={value === option.value}
-              onClick={() =>
-                handleSelectOption(option, index)
-              }
-              onKeyDown={(event) =>
-                handleOptionKeyDown(event, index)
-              }
-            >
-
-              <span>{option.label}</span>
-
-              {value === option.value && (
-                <span aria-hidden="true">✓</span>
-              )}
-
-            </button>
-
-          ))}
-
-        </div>
-
-      )}
-
-    </div>
-
-  );
-
-}
 
 function InventoryEntry() {
 
@@ -1547,15 +1263,17 @@ function InventoryEntry() {
 
           <div className="entry-field entry-field-full">
 
-            <span>نوع ورود کالا</span>
+            <span id="entry-type-label">نوع ورود کالا</span>
 
-            <EntryTypePicker
+            <KeyboardSelect
+              id="entry-type-select"
               value={entryType}
+              options={INVENTORY_ENTRY_TYPE_OPTIONS}
               onChange={handleEntryTypeChange}
+              labelledBy="entry-type-label"
             />
 
           </div>
-
         </div>
 
       </section >

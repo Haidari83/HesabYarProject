@@ -64,10 +64,6 @@
   gap: 10px;
 }
 
-.stock-filter-field select:focus {
-  border-color: #93c5fd;
-}
-
 /* فیلتر وضعیت موجودی */
 .stock-status-filters {
   display: flex;

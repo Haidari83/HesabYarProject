@@ -1,3 +1,6 @@
+
+import KeyboardSelect from './KeyboardSelect';
+
 import {
   Children,
   Fragment,
@@ -35,17 +38,21 @@ const UNSUPPORTED_INPUT_TYPES = new Set([
 ]);
 
 
-// تشخیص کنترل استاندارد و قابل پشتیبانی فرم
+// تشخیص کنترل‌های استاندارد و کامپوننت‌های سفارشی پشتیبانی‌شده
 function isSupportedControl(element) {
 
-  // فقط عناصر HTML را بررسی می‌کنیم، نه کامپوننت‌های React.
-  if (
-    !isValidElement(element) ||
-    typeof element.type !== 'string'
-  ) {
+  if (!isValidElement(element)) {
     return false;
   }
+  // پشتیبانی از انتخاب‌گر عمومی پروژه
+  if (element.type === KeyboardSelect) {
+    return true;
+  }
 
+  // سایر کنترل‌های پشتیبانی‌شده باید عناصر HTML باشند.
+  if (typeof element.type !== 'string') {
+    return false;
+  }
 
   // ورودی، فهرست انتخابی یا فیلد چندخطی
   if (
@@ -295,6 +302,9 @@ function FormField({
     label !== undefined &&
     label !== '';
 
+  const labelId = hasLabel
+    ? `${containerId}-label`
+    : undefined
 
   // شناسه راهنما
   const hintId = hasHint
@@ -321,46 +331,71 @@ function FormField({
         errorId
       );
 
+      // تشخیص انتخاب‌گر عمومی
+      const isKeyboardSelect = child.type === KeyboardSelect;
 
-      // کلاس‌های کنترل واقعی
-      const controlClasses = joinClasses(
-        child.props.className,
-        'ui-field__control',
+      // انتخاب کلاس مناسب برای کنترل واقعی
+      const controlClasses = isKeyboardSelect
+        ? joinClasses(
+          child.props.triggerClassName,
+          controlClassName
+        )
+        : joinClasses(
+          child.props.className,
+          'ui-field__control',
 
-        // فیلد چندخطی به padding و ارتفاع جداگانه نیاز دارد.
-        child.type === 'textarea' &&
-        'ui-field__control--textarea',
+          child.type === 'textarea' &&
+          'ui-field__control--textarea',
 
-        controlClassName
-      );
+          controlClassName
+        );
 
-
-      return {
+      // ویژگی‌های مشترک کنترل‌ها
+      const commonControlProps = {
 
         // شناسه کنترل واقعی
         id: controlId,
-
-        // حفظ کلاس‌های قبلی و افزودن کلاس مشترک
-        className: controlClasses,
 
         // ضروری بودن ورودی
         required: Boolean(
           required || child.props.required
         ),
 
-        // نمایش وضعیت خطا برای فناوری‌های کمکی
+        // وضعیت اعتبارسنجی
         'aria-invalid': hasError
           ? true
           : child.props['aria-invalid'],
 
-        // اتصال راهنما و پیام خطا به ورودی
+        // اتصال راهنما و خطا
         'aria-describedby': describedBy,
 
-        // معرفی مستقل عنصر حاوی خطا
+        // شناسه مستقل پیام خطا
         'aria-errormessage': hasError
           ? errorId
           : child.props['aria-errormessage'],
 
+      };
+
+      // انتخاب‌گر سفارشی باید ویژگی‌ها را به دکمه اصلی منتقل کند.
+      if (isKeyboardSelect) {
+
+        return {
+          ...commonControlProps,
+
+          triggerClassName: controlClasses,
+
+          labelledBy: mergeIdReferences(
+            child.props.labelledBy,
+            labelId
+          ),
+        };
+
+      }
+
+      // سایر کنترل‌های بومی HTML
+      return {
+        ...commonControlProps,
+        className: controlClasses,
       };
 
     }
@@ -395,11 +430,11 @@ function FormField({
       {hasLabel && (
 
         <label
+          id={labelId}
           className={joinClasses(
             'ui-field__label',
             labelClassName
           )}
-
           // اتصال برچسب به ورودی واقعی
           htmlFor={firstControl ? controlId : undefined}
         >

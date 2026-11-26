@@ -4,6 +4,7 @@ import { normalizePersianText as normalizeName } from '../../utils/persianText';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
 import FormField from '../../components/ui/FormField';
+import KeyboardSelect from '../../components/ui/KeyboardSelect';
 
 // قاب مشترک جدول‌ها
 import DataTableShell from '../../components/ui/DataTableShell';
@@ -934,25 +935,45 @@ function UnitList({ currentUser }) {
               />
             </div>
 
-            <select
+            <KeyboardSelect
               value={kindFilter}
-              onChange={(event) => setKindFilter(event.target.value)}
-              aria-label="فیلتر نوع واحد"
-            >
-              <option value="all">همه انواع</option>
-              <option value="standard">استاندارد</option>
-              <option value="package">بسته‌بندی</option>
-            </select>
+              options={[
+                {
+                  value: 'all',
+                  label: 'همه انواع',
+                },
+                {
+                  value: 'standard',
+                  label: 'استاندارد',
+                },
+                {
+                  value: 'package',
+                  label: 'بسته‌بندی',
+                },
+              ]}
+              onChange={setKindFilter}
+              ariaLabel="فیلتر نوع واحد"
+            />
 
-            <select
+            <KeyboardSelect
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              aria-label="فیلتر وضعیت واحد"
-            >
-              <option value="all">همه وضعیت‌ها</option>
-              <option value="active">فعال</option>
-              <option value="inactive">غیرفعال</option>
-            </select>
+              options={[
+                {
+                  value: 'all',
+                  label: 'همه وضعیت‌ها',
+                },
+                {
+                  value: 'active',
+                  label: 'فعال',
+                },
+                {
+                  value: 'inactive',
+                  label: 'غیرفعال',
+                },
+              ]}
+              onChange={setStatusFilter}
+              ariaLabel="فیلتر وضعیت واحد"
+            />
 
             {canManageUnits && (
               <div className="unit-add-actions">

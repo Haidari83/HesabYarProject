@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from 'react';
 import { useBusinessData } from '../../context/BusinessDataContext';
 
@@ -9,6 +8,7 @@ import EmptyState from '../../components/ui/EmptyState';
 
 // import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import KeyboardSelect from '../../components/ui/KeyboardSelect';
 
 import FormField from '../../components/ui/FormField';
 
@@ -308,57 +308,80 @@ function InventoryStockList() {
             className="ui-field stock-filter-field"
             label="دسته‌بندی"
           >
-            <select
+            <KeyboardSelect
               value={categoryFilter}
-              onChange={(event) => {
+              options={[
+                {
+                  value: 'all',
+                  label: 'همه دسته‌بندی‌ها',
+                },
+                ...categories.map((category) => ({
+                  value: String(category.id),
+                  label: category.name,
+                })),
+              ]}
+              onChange={(value) => {
                 // به‌روزرسانی دسته‌بندی و بازگشت به صفحه اول
-                setCategoryFilter(event.target.value);
+                setCategoryFilter(value);
                 setCurrentPage(1);
               }}
-            >
-              <option value="all">همه دسته‌بندی‌ها</option>
-
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+            />
           </FormField>
 
           <FormField
             className="ui-field"
             label="وضعیت کالا"
           >
-            <select
+            <KeyboardSelect
               value={activityFilter}
-              onChange={(event) => {
+              options={[
+                {
+                  value: 'all',
+                  label: 'فعال و غیرفعال',
+                },
+                {
+                  value: 'active',
+                  label: 'فعال',
+                },
+                {
+                  value: 'inactive',
+                  label: 'غیرفعال',
+                },
+              ]}
+              onChange={(value) => {
                 // تغییر وضعیت کالا و بازگشت به صفحه اول
-                setActivityFilter(event.target.value);
+                setActivityFilter(value);
                 setCurrentPage(1);
               }}
-            >
-              <option value="all">فعال و غیرفعال</option>
-              <option value="active">فقط فعال</option>
-              <option value="inactive">فقط غیرفعال</option>
-            </select>
+            />
           </FormField>
 
           <FormField
             className="ui-field"
             label="مرتب‌سازی"
           >
-            <select
+            <KeyboardSelect
               value={sortBy}
-              onChange={(event) =>
-                handleSortChange(event.target.value)
-              }
-            >
-              <option value="name">نام کالا</option>
-              <option value="stock">موجودی فعلی</option>
-              <option value="minStock">حداقل موجودی</option>
-              <option value="purchasePrice">قیمت خرید</option>
-            </select>
+              options={[
+                {
+                  value: 'name',
+                  label: 'نام کالا',
+                },
+                {
+                  value: 'stock',
+                  label: 'موجودی فعلی',
+                },
+                {
+                  value: 'minStock',
+                  label: 'حداقل موجودی',
+                },
+                {
+                  value: 'purchasePrice',
+                  label: 'قیمت خرید',
+                },
+              ]}
+              onChange={handleSortChange}
+            />
           </FormField>
 
           <Button

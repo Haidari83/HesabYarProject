@@ -87,6 +87,7 @@ function KeyboardSelect({
   labelledBy,
   'aria-describedby': ariaDescribedBy,
   'aria-invalid': ariaInvalid,
+  'aria-errormessage': ariaErrorMessage,
   required = false,
   placeholder = 'انتخاب کنید',
   disabled = false,
@@ -470,6 +471,7 @@ function KeyboardSelect({
         aria-labelledby={labelledBy}
         aria-describedby={ariaDescribedBy}
         aria-invalid={ariaInvalid}
+        aria-errormessage={ariaErrorMessage}
         aria-required={required || undefined}
         aria-haspopup={
           ariaHasPopup ??

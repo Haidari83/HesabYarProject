@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 // انتخاب‌گر عمومی و مشترک پروژه
 import KeyboardSelect from '../../components/ui/KeyboardSelect';
 
@@ -420,50 +420,50 @@ function InventoryDocuments() {
   // اعمال فوری فیلتر نوع سند و وضعیت سند
   // =============================================
 
-  function handleImmediateFilterChange(key, value) {
+  // function handleImmediateFilterChange(key, value) {
 
-    // فقط دو فیلتر نوع سند و وضعیت اجازه اعمال فوری دارند.
-    if (
-      key !== 'documentType' &&
-      key !== 'status' &&
-      key !== 'search'
-    ) {
-      return;
-    }
-
-
-    // به‌روزرسانی مقدار انتخاب‌شده در رابط کاربری
-    setDraftFilters((previous) => ({
-      ...previous,
-      [key]: value,
-    }));
+  //   // فقط دو فیلتر نوع سند و وضعیت اجازه اعمال فوری دارند.
+  //   if (
+  //     key !== 'documentType' &&
+  //     key !== 'status' &&
+  //     key !== 'search'
+  //   ) {
+  //     return;
+  //   }
 
 
-    // اگر مقدار قبلاً اعمال شده است، درخواست تکراری ارسال نمی‌کنیم.
-    if (filters[key] === value) {
-      return;
-    }
+  //   // به‌روزرسانی مقدار انتخاب‌شده در رابط کاربری
+  //   setDraftFilters((previous) => ({
+  //     ...previous,
+  //     [key]: value,
+  //   }));
 
 
-    // پاک‌کردن خطای درخواست قبلی
-    setLoadError('');
+  //   // اگر مقدار قبلاً اعمال شده است، درخواست تکراری ارسال نمی‌کنیم.
+  //   if (filters[key] === value) {
+  //     return;
+  //   }
 
 
-    // نمایش وضعیت دریافت اطلاعات
-    setIsLoading(true);
+  //   // پاک‌کردن خطای درخواست قبلی
+  //   setLoadError('');
 
 
-    // پس از تغییر فیلتر، از صفحه اول شروع می‌کنیم.
-    setCurrentPage(1);
+  //   // نمایش وضعیت دریافت اطلاعات
+  //   setIsLoading(true);
 
 
-    // اعمال فقط همان فیلتر تغییرکرده
-    setFilters((previous) => ({
-      ...previous,
-      [key]: value,
-    }));
+  //   // پس از تغییر فیلتر، از صفحه اول شروع می‌کنیم.
+  //   setCurrentPage(1);
 
-  }
+
+  //   // اعمال فقط همان فیلتر تغییرکرده
+  //   setFilters((previous) => ({
+  //     ...previous,
+  //     [key]: value,
+  //   }));
+
+  // }
 
 
   // اعمال فیلترها
@@ -639,17 +639,9 @@ function InventoryDocuments() {
             <KeyboardSelect
               value={draftFilters.documentType}
               options={DOCUMENT_TYPES}
-              ariaLabel="نوع سند"
               onChange={(value) =>
                 updateDraftFilter('documentType', value)
               }
-              // کلاس‌های اختصاصی برای حفظ ظاهر فعلی فیلتر اسناد
-              className="documents-filter-select"
-              triggerClassName="documents-filter-select-trigger"
-              arrowClassName="documents-filter-select-arrow"
-              optionsClassName="documents-filter-select-options"
-              optionClassName="documents-filter-select-option"
-
             />
 
 
@@ -665,17 +657,9 @@ function InventoryDocuments() {
             <KeyboardSelect
               value={draftFilters.status}
               options={DOCUMENT_STATUSES}
-              ariaLabel="وضعیت سند"
               onChange={(value) =>
                 updateDraftFilter('status', value)
               }
-
-              // کلاس‌های اختصاصی برای حفظ ظاهر فعلی فیلتر اسناد
-              className="documents-filter-select"
-              triggerClassName="documents-filter-select-trigger"
-              arrowClassName="documents-filter-select-arrow"
-              optionsClassName="documents-filter-select-options"
-              optionClassName="documents-filter-select-option"
             />
 
           </FormField>

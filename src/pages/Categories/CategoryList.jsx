@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from 'react';
 import { useBusinessData } from '../../context/BusinessDataContext';
 
@@ -8,6 +7,7 @@ import { createRows } from '../../utils/listHelpers';
 
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import KeyboardSelect from '../../components/ui/KeyboardSelect';
 import FormField from '../../components/ui/FormField';
 
 // قاب مشترک جدول‌ها
@@ -1011,15 +1011,25 @@ function CategoryList({ currentUser }) {
           />
         </div>
 
-        <select
+        <KeyboardSelect
           value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
-          aria-label="فیلتر وضعیت دسته‌بندی"
-        >
-          <option value="all">همه وضعیت‌ها</option>
-          <option value="active">فعال</option>
-          <option value="inactive">غیرفعال</option>
-        </select>
+          options={[
+            {
+              value: 'all',
+              label: 'همه وضعیت‌ها',
+            },
+            {
+              value: 'active',
+              label: 'فعال',
+            },
+            {
+              value: 'inactive',
+              label: 'غیرفعال',
+            },
+          ]}
+          onChange={setStatusFilter}
+          ariaLabel="فیلتر وضعیت دسته‌بندی"
+        />
 
 
         {/* دکمه‌های افزودن فقط برای کاربران دارای مجوز مدیریت */}

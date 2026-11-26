@@ -6,6 +6,7 @@ import { normalizePersianText as normalizeSearch, } from '../../utils/persianTex
 
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+import KeyboardSelect from '../../components/ui/KeyboardSelect';
 
 // قاب مشترک جدول‌ها
 import DataTableShell from '../../components/ui/DataTableShell';
@@ -557,55 +558,61 @@ function ProductList({ currentUser }) {
 
             <div className="product-filters">
 
-              <select
-                value={categoryFilter}
-                onChange={(event) =>
-                  setCategoryFilter(event.target.value)
-                }
-                aria-label="فیلتر دسته‌بندی"
-              >
-                <option value="all">همه دسته‌بندی‌ها</option>
+              <div className="product-filters">
 
-                {categories.map((category) => (
-                  <option
-                    key={category.id}
-                    value={category.id}
-                  >
-                    {category.name}
-                  </option>
-                ))}
-              </select>
+                <KeyboardSelect
+                  value={categoryFilter}
+                  options={[
+                    {
+                      value: 'all',
+                      label: 'همه دسته‌بندی‌ها',
+                    },
+                    ...categories.map((category) => ({
+                      value: String(category.id),
+                      label: category.name,
+                    })),
+                  ]}
+                  onChange={setCategoryFilter}
+                  ariaLabel="فیلتر دسته‌بندی"
+                />
 
-              <select
-                value={unitFilter}
-                onChange={(event) =>
-                  setUnitFilter(event.target.value)
-                }
-                aria-label="فیلتر واحد"
-              >
-                <option value="all">همه واحدها</option>
+                <KeyboardSelect
+                  value={unitFilter}
+                  options={[
+                    {
+                      value: 'all',
+                      label: 'همه واحدها',
+                    },
+                    ...units.map((unit) => ({
+                      value: String(unit.id),
+                      label: unit.name,
+                    })),
+                  ]}
+                  onChange={setUnitFilter}
+                  ariaLabel="فیلتر واحد"
+                />
 
-                {units.map((unit) => (
-                  <option
-                    key={unit.id}
-                    value={unit.id}
-                  >
-                    {unit.name}
-                  </option>
-                ))}
-              </select>
+                <KeyboardSelect
+                  value={statusFilter}
+                  options={[
+                    {
+                      value: 'all',
+                      label: 'همه وضعیت‌ها',
+                    },
+                    {
+                      value: 'active',
+                      label: 'فعال',
+                    },
+                    {
+                      value: 'inactive',
+                      label: 'غیرفعال',
+                    },
+                  ]}
+                  onChange={setStatusFilter}
+                  ariaLabel="فیلتر وضعیت محصول"
+                />
 
-              <select
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value)
-                }
-                aria-label="فیلتر وضعیت محصول"
-              >
-                <option value="all">همه وضعیت‌ها</option>
-                <option value="active">فعال</option>
-                <option value="inactive">غیرفعال</option>
-              </select>
+              </div>
 
             </div>
 

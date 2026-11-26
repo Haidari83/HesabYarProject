@@ -135,21 +135,9 @@
   color: #94a3b8;
 }
 
-.category-toolbar>select {
+.category-toolbar>.ui-keyboard-select {
+  flex: 0 0 145px;
   width: 145px;
-  height: 42px;
-  padding: 0 10px;
-  border: 1px solid var(--category-border);
-  border-radius: 8px;
-  outline: none;
-  background-color: #fff;
-  color: var(--category-text);
-  font: inherit;
-  font-size: 12px;
-}
-
-.category-toolbar>select:focus {
-  border-color: var(--category-accent);
 }
 
 /* دکمه‌های افزودن تکی و گروهی */
@@ -593,7 +581,7 @@
     font-size: 17px;
   }
 
-  .category-toolbar>select {
+  .category-toolbar>.ui-keyboard-select {
     flex: 1;
     width: auto;
   }

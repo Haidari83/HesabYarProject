@@ -720,6 +720,8 @@
   line-height: var(--line-height-normal);
   text-align: start;
 
+  cursor: pointer;
+
   transition:
     border-color var(--transition-fast),
     background-color var(--transition-fast),
@@ -775,7 +777,7 @@
 
   background-color: var(--color-surface);
   box-shadow: var(--shadow-md);
-
+  cursor: pointer;
   overscroll-behavior: contain;
 }
 
@@ -808,6 +810,15 @@
 .ui-keyboard-select__option:focus-visible {
   outline: none;
   background-color: var(--color-surface-muted);
+}
+
+.ui-keyboard-select__trigger[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.ui-keyboard-select__trigger[aria-invalid="true"]:focus-visible {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgb(220 38 38 / 9%);
 }
 
 .ui-keyboard-select__option[aria-selected="true"],
