@@ -87,6 +87,31 @@ const { openDatabase } = require('./database.cjs');
 // نام برنامه
 app.setName('HesabYar');
 
+// حالت آزمون: جداسازی کامل دیتابیس آزمون از اطلاعات عادی کاربر.
+// این قطعه را بلافاصله پس از app.setName('HesabYar'); قرار بده.
+if (
+  !app.isPackaged &&
+  process.env.HESABYAR_TEST_MODE === '1'
+) {
+  const testUserDataPath = process.env.HESABYAR_TEST_USER_DATA;
+
+  if (
+    typeof testUserDataPath !== 'string' ||
+    !path.isAbsolute(testUserDataPath)
+  ) {
+    throw new Error(
+      'برای اجرای آزمون Electron باید HESABYAR_TEST_USER_DATA یک مسیر مطلق باشد.'
+    );
+  }
+
+  fs.mkdirSync(testUserDataPath, {
+    recursive: true,
+  });
+
+  app.setPath('userData', testUserDataPath);
+}
+
+
 // آدرس سرور Vite در زمان توسعه
 const DEV_SERVER_URL = 'http://localhost:5173';
 

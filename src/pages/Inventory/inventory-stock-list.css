@@ -58,8 +58,10 @@
 }
 
 .stock-filter-row {
-  flex-wrap: nowrap !important;
-  align-items: flex-end !important;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 /* فیلتر وضعیت موجودی */
@@ -72,7 +74,9 @@
 }
 
 .stock-reset-button {
-  min-width: 150px !important;
+  width: 280px;
+  white-space: nowrap;
+  word-wrap: nowrap;
 }
 
 .stock-status-filters button {
@@ -356,9 +360,16 @@
   border-top: 1px solid var(--stock-border);
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 855px) {
   .stock-filter-row {
-    flex-wrap: wrap !important;
+    flex-wrap: wrap;
+    flex-basis: 100%;
+    /* align-items: stretch; */
+  }
+
+  .stock-reset-button {
+    flex: 1;
+    margin-top: 4px;
   }
 }
 
@@ -374,17 +385,6 @@
     display: flex;
   }
 
-  .stock-filter-row {
-    align-items: stretch;
-  }
-
-  .stock-filter-field {
-    flex-basis: calc(50% - 10px);
-  }
-
-  .stock-reset-button {
-    flex: 1;
-  }
 }
 
 @media (max-width: 420px) {
