@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, configDefaults } from 'vitest/config';
 
 
 // سیاست امنیت محتوای برنامه
@@ -69,4 +69,11 @@ export default defineConfig({
     strictPort: true,
   },
 
+  test: {
+    setupFiles: ['./tests/setup.js'],
+    exclude: [
+      ...configDefaults.exclude,
+      'tests/e2e/**',
+    ],
+  },
 });

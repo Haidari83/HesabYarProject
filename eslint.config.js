@@ -27,4 +27,19 @@ export default defineConfig([
       globals: globals.node,
     },
   },
+  // محیط Node.js برای تنظیمات و آزمون‌های Playwright
+  {
+    files: [
+      'playwright.config.js',
+      'tests/**/*.{js,jsx}',
+    ],
+
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
 ])
+
