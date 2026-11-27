@@ -129,12 +129,20 @@ describe('آزمون اولیه بارگذاری صفحات حساب‌یار', 
 
     await user.click(await screen.findByRole('button', { name: /افزودن تکی/ }))
 
-    screen.getByRole('textbox', {
+    const nameInput = screen.getByRole('textbox', {
       name: /نام دسته‌بندی/,
     })
-    await user.type(screen.getByLabelText('توضیحات'), 'دسته آزمایشی')
-    await user.click(screen.getByRole('button', { name: 'ثبت دسته‌بندی' }))
 
+    await user.type(nameInput, 'نوشیدنی‌ها')
+
+    await user.type(
+      screen.getByLabelText('توضیحات'),
+      'دسته آزمایشی'
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'ثبت دسته‌بندی' })
+    )
     await waitFor(() => {
       expect(bridge.categories.create).toHaveBeenCalledWith({
         name: 'نوشیدنی‌ها',

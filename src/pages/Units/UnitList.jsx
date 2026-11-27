@@ -1146,11 +1146,13 @@ function UnitList({ currentUser }) {
 
                 {filteredUnits.length === 0 && (
                   <tr>
-                    <EmptyState
-                      variant="table-compact"
-                      title="واحدی پیدا نشد"
-                      description="عبارت جست‌وجو یا فیلترها را تغییر بده."
-                    />
+                    <td>
+                      <EmptyState
+                        variant="table-compact"
+                        title="واحدی پیدا نشد"
+                        description="عبارت جست‌وجو یا فیلترها را تغییر بده."
+                      />
+                    </td>
                   </tr>
                 )}
 
