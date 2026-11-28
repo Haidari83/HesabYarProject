@@ -299,5 +299,10 @@ contextBridge.exposeInMainWorld('hesabyar', {
         filters
       ),
 
+    // دریافت فهرست موجودی کالاها
+    listStock: () =>
+      ipcRenderer.invoke(
+        'inventory:stock:list'
+      ),
   },
 });

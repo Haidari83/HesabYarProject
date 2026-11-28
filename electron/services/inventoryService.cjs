@@ -1780,6 +1780,245 @@ function postInventoryDocument(
   }
 
 }
+// دریافت فهرست موجودی واقعی کالاها از گردش‌های ثبت‌شده انبار
+function getInventoryStockList(database, actor) {
+
+  // فقط کاربری که مجوز مشاهده فهرست موجودی دارد، مجاز به دریافت آن است.
+  assertPermission(
+    database,
+    actor,
+    'inventory.stock_list.view'
+  );
+
+
+  // دریافت ارز مبنای ارزش‌گذاری
+  const baseCurrencySetting = database.prepare(`
+    SELECT
+      setting_value
+    FROM app_settings
+    WHERE setting_key = ?
+  `).get('base_currency_code');
+
+
+  if (
+    !baseCurrencySetting ||
+    !baseCurrencySetting.setting_value
+  ) {
+    throw new Error(
+      'ارز مبنای ارزش‌گذاری در تنظیمات مشخص نشده است.'
+    );
+  }
+
+
+  const baseCurrencyCode =
+    baseCurrencySetting.setting_value.toUpperCase();
+
+
+  // محاسبه موجودی هر کالا از مجموع گردش‌های اسناد ثبت‌نهایی‌شده
+  const rows = database.prepare(`
+    WITH stock_totals AS (
+
+      SELECT
+
+        movement.product_id,
+
+        SUM(
+          CASE
+
+            WHEN movement.movement_direction = 'in'
+              THEN movement.base_quantity_scaled
+
+            WHEN movement.movement_direction = 'out'
+              THEN -movement.base_quantity_scaled
+
+            ELSE 0
+
+          END
+        ) AS stock_scaled
+
+      FROM inventory_movements AS movement
+
+      JOIN inventory_documents AS document
+        ON document.id = movement.document_id
+
+      WHERE document.status = 'posted'
+
+      GROUP BY movement.product_id
+
+    )
+
+    SELECT
+
+      product.id,
+      product.code,
+      product.name,
+
+      product.category_id,
+      category.name AS category_name,
+
+      product.base_unit_id,
+      base_unit.name AS base_unit_name,
+      base_unit.symbol AS base_unit_symbol,
+
+      product.base_quantity_decimal_places,
+
+      product.is_active,
+
+      COALESCE(
+        stock_totals.stock_scaled,
+        0
+      ) AS stock_scaled,
+
+
+      purchase_price.unit_price_scaled
+        AS purchase_price_scaled,
+
+      purchase_price.currency_code
+        AS purchase_price_currency_code,
+
+      purchase_currency.symbol
+        AS purchase_price_currency_symbol
+
+
+    FROM products AS product
+
+
+    JOIN categories AS category
+      ON category.id = product.category_id
+
+
+    JOIN units AS base_unit
+      ON base_unit.id = product.base_unit_id
+
+
+    LEFT JOIN stock_totals
+      ON stock_totals.product_id = product.id
+
+
+    /* دریافت قیمت خرید جاریِ واحد پایه، فقط در ارز مبنا */
+    LEFT JOIN product_prices AS purchase_price
+
+      ON purchase_price.id = (
+
+        SELECT
+          candidate.id
+
+        FROM product_prices AS candidate
+
+        JOIN product_units AS product_unit
+          ON product_unit.id = candidate.product_unit_id
+
+        WHERE candidate.product_id = product.id
+
+          AND candidate.price_type = 'purchase'
+
+          AND candidate.is_current = 1
+
+          AND candidate.currency_code = ?
+
+          AND product_unit.is_active = 1
+
+          AND product_unit.is_base_unit = 1
+
+        ORDER BY
+          candidate.created_at DESC,
+          candidate.id DESC
+
+        LIMIT 1
+
+      )
+
+
+    LEFT JOIN currencies AS purchase_currency
+      ON purchase_currency.code = purchase_price.currency_code
+
+
+    ORDER BY
+      product.name COLLATE NOCASE ASC,
+      product.code ASC
+
+  `).all(baseCurrencyCode);
+
+
+  // تبدیل نتیجه SQLite به ساختار قابل استفاده در رابط React
+  const products = rows.map((row) => {
+
+    const stockScaled = Number(
+      row.stock_scaled ?? 0
+    );
+
+
+    // جلوگیری از تحویل عددی که دقت آن در JavaScript قابل اطمینان نیست
+    if (!Number.isSafeInteger(stockScaled)) {
+      throw new Error(
+        `مقدار موجودی کالای «${row.name}» خارج از محدوده مجاز است.`
+      );
+    }
+
+
+    const purchasePriceScaled =
+      row.purchase_price_scaled === null
+        ? null
+        : Number(row.purchase_price_scaled);
+
+
+    if (
+      purchasePriceScaled !== null &&
+      !Number.isSafeInteger(purchasePriceScaled)
+    ) {
+      throw new Error(
+        `قیمت خرید کالای «${row.name}» خارج از محدوده مجاز است.`
+      );
+    }
+
+
+    return {
+
+      id: row.id,
+      code: row.code,
+      name: row.name,
+
+      categoryId: row.category_id,
+      categoryName: row.category_name || '',
+
+      // موجودی همیشه در واحد پایه خود کالا گزارش می‌شود.
+      unitId: row.base_unit_id,
+      unitName: row.base_unit_name,
+      unitSymbol: row.base_unit_symbol || '',
+
+      baseQuantityDecimalPlaces: Number(
+        row.base_quantity_decimal_places
+      ),
+
+      // مقدار اصلی در SQLite با مقیاس یک میلیون ذخیره می‌شود.
+      stockScaled,
+      stock: stockScaled / 1_000_000,
+
+      isActive: Boolean(row.is_active),
+
+      // قیمت خرید فقط در صورت وجود قیمت جاری در ارز مبنا ارسال می‌شود.
+      purchasePrice:
+        purchasePriceScaled === null
+          ? null
+          : purchasePriceScaled / 1_000_000,
+
+      purchasePriceCurrencyCode:
+        row.purchase_price_currency_code || null,
+
+      purchasePriceCurrencySymbol:
+        row.purchase_price_currency_symbol || '',
+
+    };
+
+  });
+
+
+  return {
+    baseCurrencyCode,
+    products,
+  };
+
+}
 
 // دریافت فهرست اسناد انبار با فیلتر و صفحه‌بندی
 function getInventoryDocuments(
@@ -2179,4 +2418,5 @@ module.exports = {
   createInventoryEntryDraft,
   postInventoryDocument,
   getInventoryDocuments,
+  getInventoryStockList,
 };

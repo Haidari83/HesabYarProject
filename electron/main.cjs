@@ -72,6 +72,7 @@ const {
   createInventoryEntryDraft,
   postInventoryDocument,
   getInventoryDocuments,
+  getInventoryStockList,
 } = require('./services/inventoryService.cjs');
 
 const fs = require('node:fs');
@@ -1008,6 +1009,23 @@ function registerIpcHandlers() {
         database,
         actor,
         documentId
+      );
+
+    }
+  );
+  // دریافت فهرست موجودی واقعی کالاها
+  ipcMain.handle(
+    'inventory:stock:list',
+    (event) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+
+      // دریافت موجودی از SQLite با بررسی مجوز اختصاصی فهرست موجودی
+      return getInventoryStockList(
+        database,
+        actor
       );
 
     }
