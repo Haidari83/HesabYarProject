@@ -290,6 +290,20 @@ contextBridge.exposeInMainWorld('hesabyar', {
         'sales:document:post',
         documentId
       ),
+    // دریافت فهرست فاکتورهای فروش
+    listDocuments: (filters) =>
+      ipcRenderer.invoke(
+        'sales:documents:list',
+        filters
+      ),
+
+
+    // دریافت جزئیات یک فاکتور فروش
+    getDocumentDetails: (documentId) =>
+      ipcRenderer.invoke(
+        'sales:document:details',
+        documentId
+      ),
 
   },
   // API مدیریت موجودی انبار

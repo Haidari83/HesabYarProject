@@ -2185,8 +2185,1051 @@ function postSalesDocument(
   }
 
 }
+// بررسی عدد صحیح امن برای محاسبات و نمایش اطلاعات فاکتور
+function getSalesSafeInteger(value, label) {
+
+  const number = Number(value);
+
+  if (
+    !Number.isSafeInteger(number) ||
+    number < 0
+  ) {
+    throw new Error(
+      `${label} خارج از محدوده مجاز است.`
+    );
+  }
+
+  return number;
+
+}
+
+
+// محاسبه مبلغ یک ردیف فاکتور با مقیاس یک میلیون
+function calculateSalesLineTotalScaled(
+  quantityValue,
+  unitPriceValue,
+  lineLabel
+) {
+
+  // مقدار و قیمت باید عدد صحیح امن باشند.
+  const quantityScaled = getSalesSafeInteger(
+    quantityValue,
+    `مقدار ${lineLabel}`
+  );
+
+  const unitPriceScaled = getSalesSafeInteger(
+    unitPriceValue,
+    `قیمت واحد ${lineLabel}`
+  );
+
+
+  if (quantityScaled <= 0) {
+    throw new Error(
+      `مقدار ${lineLabel} معتبر نیست.`
+    );
+  }
+
+
+  // محاسبه مبلغ با BigInt و گردکردن به نزدیک‌ترین واحد مقیاس
+  const lineTotalScaled = (
+    BigInt(quantityScaled) *
+    BigInt(unitPriceScaled) +
+    VALUE_SCALE / 2n
+  ) / VALUE_SCALE;
+
+
+  if (
+    lineTotalScaled < 0n ||
+    lineTotalScaled > BigInt(Number.MAX_SAFE_INTEGER)
+  ) {
+    throw new Error(
+      `مبلغ ${lineLabel} خارج از محدوده مجاز است.`
+    );
+  }
+
+
+  return Number(lineTotalScaled);
+
+}
+
+
+// افزودن مبلغ یک ردیف به جمع مبالغ همان ارز
+function addSalesCurrencyTotal(
+  totalsByCurrency,
+  row,
+  lineTotalScaled
+) {
+
+  const currencyCode = row.currency_code;
+
+  const currencyName = row.currency_name;
+
+  const minorUnitDigits = Number(
+    row.currency_minor_unit_digits
+  );
+
+
+  // هر ردیف مالی باید ارز معتبر داشته باشد.
+  if (
+    typeof currencyCode !== 'string' ||
+    !currencyCode.trim() ||
+    typeof currencyName !== 'string' ||
+    !currencyName.trim() ||
+    !Number.isSafeInteger(minorUnitDigits) ||
+    minorUnitDigits < 0
+  ) {
+    throw new Error(
+      'اطلاعات ارز یکی از ردیف‌های فاکتور معتبر نیست.'
+    );
+  }
+
+
+  // ایجاد جمع اولیه برای ارز در اولین مواجهه
+  const current = totalsByCurrency.get(currencyCode) || {
+
+    currencyCode,
+
+    currencyName,
+
+    currencySymbol: row.currency_symbol || '',
+
+    minorUnitDigits,
+
+    totalScaled: 0n,
+
+  };
+
+
+  // جمع مبالغ با BigInt انجام می‌شود.
+  current.totalScaled += BigInt(lineTotalScaled);
+
+
+  totalsByCurrency.set(
+    currencyCode,
+    current
+  );
+
+}
+
+
+// تبدیل جمع مبالغ ارزها به ساختار قابل ارسال به رابط کاربری
+function getSalesCurrencyTotals(
+  totalsByCurrency
+) {
+
+  return Array.from(
+    totalsByCurrency.values()
+  )
+    .sort((first, second) =>
+      first.currencyCode.localeCompare(
+        second.currencyCode
+      )
+    )
+    .map((item) => {
+
+      if (
+        item.totalScaled < 0n ||
+        item.totalScaled > BigInt(Number.MAX_SAFE_INTEGER)
+      ) {
+        throw new Error(
+          `جمع مبلغ با ارز ${item.currencyCode} خارج از محدوده مجاز است.`
+        );
+      }
+
+
+      const totalAmountScaled = Number(
+        item.totalScaled
+      );
+
+
+      return {
+
+        currencyCode: item.currencyCode,
+
+        currencyName: item.currencyName,
+
+        currencySymbol: item.currencySymbol,
+
+        minorUnitDigits: item.minorUnitDigits,
+
+        totalAmountScaled,
+
+        totalAmount:
+          totalAmountScaled / Number(VALUE_SCALE),
+
+      };
+
+    });
+
+}
+
+
+// دریافت فهرست اختصاصی فاکتورهای فروش
+function getSalesDocuments(
+  database,
+  actor,
+  filters = {}
+) {
+
+  // مشاهده فاکتورهای فروش مجوز مستقل دارد.
+  assertPermission(
+    database,
+    actor,
+    'sales.documents.view'
+  );
+
+
+  // اعتبارسنجی فیلترهای دریافتی
+  if (
+    !filters ||
+    typeof filters !== 'object' ||
+    Array.isArray(filters)
+  ) {
+    throw new Error(
+      'فیلترهای فهرست فاکتورهای فروش معتبر نیستند.'
+    );
+  }
+
+
+  // وضعیت‌های مجاز فاکتور
+  const allowedStatuses = [
+    'draft',
+    'posted',
+    'cancelled',
+  ];
+
+  const status = filters.status ?? 'all';
+
+
+  if (
+    status !== 'all' &&
+    !allowedStatuses.includes(status)
+  ) {
+    throw new Error(
+      'وضعیت انتخاب‌شده معتبر نیست.'
+    );
+  }
+
+
+  // عبارت جست‌وجو
+  const search =
+    typeof filters.search === 'string'
+      ? filters.search.trim()
+      : '';
+
+
+  if (search.length > 100) {
+    throw new Error(
+      'عبارت جست‌وجو نمی‌تواند بیشتر از ۱۰۰ نویسه باشد.'
+    );
+  }
+
+
+  // اعتبارسنجی تاریخ شروع
+  const fromDate = filters.fromDate
+    ? validateSalesDate(filters.fromDate)
+    : null;
+
+
+  // اعتبارسنجی تاریخ پایان
+  const toDate = filters.toDate
+    ? validateSalesDate(filters.toDate)
+    : null;
+
+
+  if (
+    fromDate &&
+    toDate &&
+    fromDate > toDate
+  ) {
+    throw new Error(
+      'تاریخ شروع نمی‌تواند بعد از تاریخ پایان باشد.'
+    );
+  }
+
+
+  // تعداد فاکتورها در هر صفحه
+  const limit = filters.limit ?? 50;
+
+
+  if (
+    !Number.isInteger(limit) ||
+    limit < 1 ||
+    limit > 100
+  ) {
+    throw new Error(
+      'تعداد فاکتورهای درخواستی معتبر نیست.'
+    );
+  }
+
+
+  // موقعیت شروع صفحه
+  const offset = filters.offset ?? 0;
+
+
+  if (
+    !Number.isSafeInteger(offset) ||
+    offset < 0
+  ) {
+    throw new Error(
+      'موقعیت صفحه‌بندی معتبر نیست.'
+    );
+  }
+
+
+  // ساخت شرط‌های جست‌وجو و فیلتر
+  const conditions = [
+    "d.document_type = 'sale'",
+  ];
+
+  const parameters = [];
+
+
+  // فیلتر وضعیت
+  if (status !== 'all') {
+
+    conditions.push(
+      'd.status = ?'
+    );
+
+    parameters.push(status);
+
+  }
+
+
+  // فیلتر تاریخ شروع
+  if (fromDate) {
+
+    conditions.push(
+      'd.document_date >= ?'
+    );
+
+    parameters.push(fromDate);
+
+  }
+
+
+  // فیلتر تاریخ پایان
+  if (toDate) {
+
+    conditions.push(
+      'd.document_date <= ?'
+    );
+
+    parameters.push(toDate);
+
+  }
+
+
+  // جست‌وجو در شماره فاکتور، نام مشتری و شماره مرجع
+  if (search) {
+
+    conditions.push(`
+      (
+        d.document_number LIKE ?
+        OR COALESCE(d.source_party_name, '') LIKE ?
+        OR COALESCE(d.source_invoice_number, '') LIKE ?
+      )
+    `);
+
+    const searchPattern = `%${search}%`;
+
+    parameters.push(
+      searchPattern,
+      searchPattern,
+      searchPattern
+    );
+
+  }
+
+
+  const whereClause =
+    `WHERE ${conditions.join(' AND ')}`;
+
+
+  // دریافت تعداد کل فاکتورهای مطابق فیلترها
+  const countResult = database.prepare(`
+    SELECT
+      COUNT(*) AS total_count
+
+    FROM inventory_documents AS d
+
+    ${whereClause}
+
+  `).get(...parameters);
+
+
+  // دریافت اطلاعات فاکتورهای صفحه جاری
+  const rows = database.prepare(`
+    SELECT
+
+      d.id,
+
+      d.document_number,
+
+      d.document_date,
+
+      d.status,
+
+      d.source_party_name,
+
+      d.source_invoice_number,
+
+      d.notes,
+
+      d.created_at,
+
+      d.updated_at,
+
+      d.posted_at,
+
+      d.cancelled_at,
+
+
+      creator.id AS created_by_user_id,
+
+      creator.username AS created_by_username,
+
+      creator.display_name AS created_by_display_name,
+
+
+      updater.display_name AS updated_by_display_name,
+
+      poster.display_name AS posted_by_display_name,
+
+      canceller.display_name AS cancelled_by_display_name,
+
+
+      (
+        SELECT COUNT(*)
+
+        FROM inventory_document_items AS item
+
+        WHERE item.document_id = d.id
+
+      ) AS item_count
+
+
+    FROM inventory_documents AS d
+
+
+    LEFT JOIN users AS creator
+      ON creator.id = d.created_by_user_id
+
+
+    LEFT JOIN users AS updater
+      ON updater.id = d.updated_by_user_id
+
+
+    LEFT JOIN users AS poster
+      ON poster.id = d.posted_by_user_id
+
+
+    LEFT JOIN users AS canceller
+      ON canceller.id = d.cancelled_by_user_id
+
+
+    ${whereClause}
+
+
+    ORDER BY
+
+      d.document_date DESC,
+
+      d.created_at DESC,
+
+      d.document_number DESC
+
+
+    LIMIT ?
+
+    OFFSET ?
+
+  `).all(
+    ...parameters,
+    limit,
+    offset
+  );
+
+
+  // آماده‌سازی جمع مبالغ هر فاکتور
+  const totalsByDocument = new Map();
+
+
+  for (const row of rows) {
+
+    totalsByDocument.set(
+      row.id,
+      new Map()
+    );
+
+  }
+
+
+  // دریافت مبالغ ردیف‌های فاکتورهای همین صفحه
+  if (rows.length > 0) {
+
+    const documentIds = rows.map(
+      (row) => row.id
+    );
+
+
+    const placeholders = documentIds
+      .map(() => '?')
+      .join(', ');
+
+
+    const itemRows = database.prepare(`
+      SELECT
+
+        item.document_id,
+
+        item.quantity_scaled,
+
+        item.unit_price_scaled,
+
+        item.currency_code,
+
+        currency.name AS currency_name,
+
+        currency.symbol AS currency_symbol,
+
+        currency.minor_unit_digits
+          AS currency_minor_unit_digits
+
+
+      FROM inventory_document_items AS item
+
+
+      LEFT JOIN currencies AS currency
+        ON currency.code = item.currency_code
+
+
+      WHERE item.document_id IN (${placeholders})
+
+
+      ORDER BY
+        item.document_id ASC,
+        item.line_number ASC
+
+    `).all(...documentIds);
+
+
+    // جمع مبلغ ردیف‌ها به تفکیک فاکتور و ارز
+    for (const item of itemRows) {
+
+      if (
+        item.unit_price_scaled === null ||
+        !item.currency_code
+      ) {
+        throw new Error(
+          'اطلاعات قیمت یکی از ردیف‌های فاکتور فروش ناقص است.'
+        );
+      }
+
+
+      const lineTotalScaled =
+        calculateSalesLineTotalScaled(
+          item.quantity_scaled,
+          item.unit_price_scaled,
+          'فاکتور فروش'
+        );
+
+
+      addSalesCurrencyTotal(
+        totalsByDocument.get(item.document_id),
+        item,
+        lineTotalScaled
+      );
+
+    }
+
+  }
+
+
+  // تبدیل نتیجه به ساختار مناسب رابط کاربری
+  const documents = rows.map((row) => ({
+
+    id: row.id,
+
+    documentNumber: row.document_number,
+
+    documentType: 'sale',
+
+    documentDate: row.document_date,
+
+    status: row.status,
+
+
+    customerName: row.source_party_name,
+
+    sourceInvoiceNumber: row.source_invoice_number,
+
+    notes: row.notes,
+
+
+    itemCount: Number(row.item_count),
+
+
+    totalsByCurrency: getSalesCurrencyTotals(
+      totalsByDocument.get(row.id)
+    ),
+
+
+    createdAt: row.created_at,
+
+    updatedAt: row.updated_at,
+
+    postedAt: row.posted_at,
+
+    cancelledAt: row.cancelled_at,
+
+
+    createdBy: {
+
+      id: row.created_by_user_id,
+
+      username: row.created_by_username,
+
+      displayName: row.created_by_display_name,
+
+    },
+
+
+    updatedByDisplayName: row.updated_by_display_name,
+
+    postedByDisplayName: row.posted_by_display_name,
+
+    cancelledByDisplayName: row.cancelled_by_display_name,
+
+  }));
+
+
+  return {
+
+    documents,
+
+    totalCount: Number(countResult.total_count),
+
+    limit,
+
+    offset,
+
+  };
+
+}
+
+
+// دریافت جزئیات یک فاکتور فروش
+function getSalesDocumentDetails(
+  database,
+  actor,
+  documentId
+) {
+
+  // بررسی مجوز مشاهده فاکتور
+  assertPermission(
+    database,
+    actor,
+    'sales.documents.view'
+  );
+
+
+  // اعتبارسنجی شناسه فاکتور
+  if (
+    typeof documentId !== 'string' ||
+    !documentId.trim() ||
+    documentId.trim().length > 100
+  ) {
+    throw new Error(
+      'شناسه فاکتور فروش معتبر نیست.'
+    );
+  }
+
+
+  const normalizedDocumentId =
+    documentId.trim();
+
+
+  // دریافت اطلاعات اصلی فاکتور و کاربران مرتبط
+  const document = database.prepare(`
+    SELECT
+
+      d.id,
+
+      d.document_number,
+
+      d.document_type,
+
+      d.document_date,
+
+      d.status,
+
+      d.source_party_type,
+
+      d.source_party_name,
+
+      d.source_invoice_number,
+
+      d.notes,
+
+      d.created_at,
+
+      d.updated_at,
+
+      d.posted_at,
+
+      d.cancelled_at,
+
+
+      creator.id AS created_by_user_id,
+
+      creator.username AS created_by_username,
+
+      creator.display_name AS created_by_display_name,
+
+
+      updater.display_name AS updated_by_display_name,
+
+      poster.display_name AS posted_by_display_name,
+
+      canceller.display_name AS cancelled_by_display_name
+
+
+    FROM inventory_documents AS d
+
+
+    LEFT JOIN users AS creator
+      ON creator.id = d.created_by_user_id
+
+
+    LEFT JOIN users AS updater
+      ON updater.id = d.updated_by_user_id
+
+
+    LEFT JOIN users AS poster
+      ON poster.id = d.posted_by_user_id
+
+
+    LEFT JOIN users AS canceller
+      ON canceller.id = d.cancelled_by_user_id
+
+
+    WHERE d.id = ?
+      AND d.document_type = 'sale'
+
+    LIMIT 1
+
+  `).get(normalizedDocumentId);
+
+
+  if (!document) {
+    throw new Error(
+      'فاکتور فروش موردنظر پیدا نشد.'
+    );
+  }
+
+
+  // دریافت ردیف‌های فاکتور همراه با اطلاعات ارز
+  const itemRows = database.prepare(`
+    SELECT
+
+      item.id,
+
+      item.line_number,
+
+      item.product_id,
+
+      item.product_unit_id,
+
+      item.product_code_snapshot,
+
+      item.product_name_snapshot,
+
+      item.unit_name_snapshot,
+
+      item.unit_symbol_snapshot,
+
+      item.conversion_num,
+
+      item.conversion_den,
+
+      item.quantity_scaled,
+
+      item.unit_price_scaled,
+
+      item.currency_code,
+
+      item.valuation_currency_code,
+
+      item.exchange_rate_num,
+
+      item.exchange_rate_den,
+
+      item.notes,
+
+
+      currency.name AS currency_name,
+
+      currency.symbol AS currency_symbol,
+
+      currency.minor_unit_digits
+        AS currency_minor_unit_digits
+
+
+    FROM inventory_document_items AS item
+
+
+    LEFT JOIN currencies AS currency
+      ON currency.code = item.currency_code
+
+
+    WHERE item.document_id = ?
+
+
+    ORDER BY item.line_number ASC
+
+  `).all(normalizedDocumentId);
+
+
+  // فاکتور فروش معتبر باید حداقل یک ردیف داشته باشد.
+  if (!itemRows.length) {
+    throw new Error(
+      'فاکتور فروش فاقد ردیف کالا است.'
+    );
+  }
+
+
+  const totalsByCurrency = new Map();
+
+
+  // تبدیل ردیف‌های پایگاه داده به ساختار مناسب رابط کاربری
+  const items = itemRows.map((row) => {
+
+    if (
+      row.unit_price_scaled === null ||
+      !row.currency_code
+    ) {
+      throw new Error(
+        `اطلاعات قیمت ردیف ${row.line_number} فاکتور ناقص است.`
+      );
+    }
+
+
+    const quantityScaled = getSalesSafeInteger(
+      row.quantity_scaled,
+      `مقدار ردیف ${row.line_number}`
+    );
+
+
+    const unitPriceScaled = getSalesSafeInteger(
+      row.unit_price_scaled,
+      `قیمت ردیف ${row.line_number}`
+    );
+
+
+    const lineTotalScaled =
+      calculateSalesLineTotalScaled(
+        quantityScaled,
+        unitPriceScaled,
+        `ردیف ${row.line_number}`
+      );
+
+
+    // کنترل نسبت تبدیل واحد
+    const conversionNum = getSalesSafeInteger(
+      row.conversion_num,
+      `صورت ضریب تبدیل ردیف ${row.line_number}`
+    );
+
+    const conversionDen = getSalesSafeInteger(
+      row.conversion_den,
+      `مخرج ضریب تبدیل ردیف ${row.line_number}`
+    );
+
+
+    if (
+      conversionNum <= 0 ||
+      conversionDen <= 0
+    ) {
+      throw new Error(
+        `نسبت تبدیل واحد ردیف ${row.line_number} معتبر نیست.`
+      );
+    }
+
+
+    // کنترل نرخ تبدیل ارز ثبت‌شده در زمان ایجاد فاکتور
+    const exchangeRateNum = getSalesSafeInteger(
+      row.exchange_rate_num,
+      `صورت نرخ ارز ردیف ${row.line_number}`
+    );
+
+    const exchangeRateDen = getSalesSafeInteger(
+      row.exchange_rate_den,
+      `مخرج نرخ ارز ردیف ${row.line_number}`
+    );
+
+
+    if (
+      exchangeRateNum <= 0 ||
+      exchangeRateDen <= 0
+    ) {
+      throw new Error(
+        `نرخ ارز ردیف ${row.line_number} معتبر نیست.`
+      );
+    }
+
+
+    // افزودن مبلغ این ردیف به جمع ارز مربوط
+    addSalesCurrencyTotal(
+      totalsByCurrency,
+      row,
+      lineTotalScaled
+    );
+
+
+    return {
+
+      id: row.id,
+
+      lineNumber: Number(row.line_number),
+
+      productId: row.product_id,
+
+      productUnitId: row.product_unit_id,
+
+      productCode: row.product_code_snapshot,
+
+      productName: row.product_name_snapshot,
+
+      unitName: row.unit_name_snapshot,
+
+      unitSymbol: row.unit_symbol_snapshot || '',
+
+
+      conversionNum,
+
+      conversionDen,
+
+
+      quantityScaled,
+
+      quantity:
+        quantityScaled / Number(VALUE_SCALE),
+
+
+      unitPriceScaled,
+
+      unitPrice:
+        unitPriceScaled / Number(VALUE_SCALE),
+
+
+      currency: {
+
+        code: row.currency_code,
+
+        name: row.currency_name,
+
+        symbol: row.currency_symbol || '',
+
+        minorUnitDigits: Number(
+          row.currency_minor_unit_digits
+        ),
+
+      },
+
+
+      lineTotalScaled,
+
+      lineTotal:
+        lineTotalScaled / Number(VALUE_SCALE),
+
+
+      valuationCurrencyCode:
+        row.valuation_currency_code,
+
+
+      exchangeRateNum,
+
+      exchangeRateDen,
+
+
+      notes: row.notes,
+
+    };
+
+  });
+
+
+  // تحویل اطلاعات کامل فاکتور
+  return {
+
+    id: document.id,
+
+    documentNumber: document.document_number,
+
+    documentType: 'sale',
+
+    documentDate: document.document_date,
+
+    status: document.status,
+
+
+    sourcePartyType: document.source_party_type,
+
+    customerName: document.source_party_name,
+
+    sourceInvoiceNumber: document.source_invoice_number,
+
+    notes: document.notes,
+
+
+    itemCount: items.length,
+
+    items,
+
+
+    totalsByCurrency: getSalesCurrencyTotals(
+      totalsByCurrency
+    ),
+
+
+    createdAt: document.created_at,
+
+    updatedAt: document.updated_at,
+
+    postedAt: document.posted_at,
+
+    cancelledAt: document.cancelled_at,
+
+
+    createdBy: {
+
+      id: document.created_by_user_id,
+
+      username: document.created_by_username,
+
+      displayName: document.created_by_display_name,
+
+    },
+
+
+    updatedByDisplayName:
+      document.updated_by_display_name,
+
+    postedByDisplayName:
+      document.posted_by_display_name,
+
+    cancelledByDisplayName:
+      document.cancelled_by_display_name,
+
+  };
+
+}
 module.exports = {
   getSalesFormOptions,
   createSalesDraft,
   postSalesDocument,
+  getSalesDocuments,
+  getSalesDocumentDetails,
 };

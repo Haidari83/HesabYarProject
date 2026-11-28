@@ -39,6 +39,8 @@ const {
   getSalesFormOptions,
   createSalesDraft,
   postSalesDocument,
+  getSalesDocuments,
+  getSalesDocumentDetails,
 } = salesService;
 
 const adminInput = {
@@ -1095,6 +1097,403 @@ describe('سرویس فروش حساب‌یار', () => {
 
 
       expect(Number(movementCount.total)).toBe(0);
+
+    }
+  );
+  it(
+    'فهرست فاکتورهای فروش و جزئیات آن‌ها را با مبالغ صحیح دریافت می‌کند',
+    () => {
+
+      // ایجاد مدیر آزمایشی
+      const setup = createInitialAdmin(
+        database,
+        adminInput
+      );
+
+      const admin = setup.user;
+
+
+      // ایجاد دسته‌بندی
+      const category = createCategory(
+        database,
+        admin,
+        {
+          name: 'کالاهای آزمون فهرست فروش',
+          description: 'آزمون دریافت فهرست و جزئیات فاکتور',
+        }
+      );
+
+
+      // دریافت واحد پایه کیلوگرم
+      const unit = database.prepare(`
+        SELECT id
+        FROM units
+        WHERE code = ?
+          AND is_active = 1
+        LIMIT 1
+      `).get('KG');
+
+      expect(unit).toBeDefined();
+
+
+      // ایجاد کالا با قیمت خرید و فروش
+      const product = createProduct(
+        database,
+        admin,
+        {
+          name: 'کالای آزمون فهرست فروش',
+          categoryId: category.id,
+          baseUnitId: unit.id,
+          unitOptions: [],
+
+          prices: [
+            {
+              unitId: unit.id,
+              currencyCode: 'AFN',
+              priceType: 'purchase',
+              unitPrice: '10',
+            },
+            {
+              unitId: unit.id,
+              currencyCode: 'AFN',
+              priceType: 'sale',
+              unitPrice: '65',
+            },
+          ],
+        }
+      );
+
+
+      const baseProductUnit = product.units.find(
+        (item) => item.isBaseUnit
+      );
+
+      expect(baseProductUnit).toBeDefined();
+
+
+      // ایجاد موجودی واقعی برای فروش
+      const entryDraft = createInventoryEntryDraft(
+        database,
+        admin,
+        {
+          documentType: 'purchase',
+          documentDate: '2026-11-26',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '30',
+              unitPrice: '10',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      postInventoryDocument(
+        database,
+        admin,
+        entryDraft.id
+      );
+
+
+      // ایجاد فاکتور اول با دو ردیف کالا
+      const firstSalesDraft = createSalesDraft(
+        database,
+        admin,
+        {
+          documentDate: '2026-11-27',
+
+          customerName: 'مشتری اول',
+
+          sourceInvoiceNumber: 'EXTERNAL-001',
+
+          notes: 'فاکتور آزمون دریافت جزئیات',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '2',
+              unitPrice: '65',
+              currencyCode: 'AFN',
+            },
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '3',
+              unitPrice: '70',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      // ایجاد فاکتور دوم برای آزمون فهرست و صفحه‌بندی
+      const secondSalesDraft = createSalesDraft(
+        database,
+        admin,
+        {
+          documentDate: '2026-11-28',
+
+          customerName: 'مشتری دوم',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '1',
+              unitPrice: '65',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      // ثبت نهایی فاکتور اول
+      const postedSale = postSalesDocument(
+        database,
+        admin,
+        firstSalesDraft.id
+      );
+
+      expect(postedSale.status).toBe('posted');
+
+
+      // دریافت فهرست تمام فاکتورهای فروش
+      const allSales = getSalesDocuments(
+        database,
+        admin,
+        {
+          status: 'all',
+          limit: 10,
+          offset: 0,
+        }
+      );
+
+
+      expect(allSales.totalCount).toBe(2);
+
+      expect(allSales.documents).toHaveLength(2);
+      // اطمینان از اینکه فاکتور دوم نیز در فهرست فروش وجود دارد.
+      expect(
+        allSales.documents.some(
+          (item) => item.id === secondSalesDraft.id
+        )
+      ).toBe(true);
+
+      expect(allSales.limit).toBe(10);
+
+      expect(allSales.offset).toBe(0);
+
+
+      // سند خرید نباید وارد فهرست فروش شود.
+      expect(
+        allSales.documents.some(
+          (item) => item.id === entryDraft.id
+        )
+      ).toBe(false);
+
+
+      // بررسی فیلتر وضعیت، جست‌وجو و بازه تاریخ
+      const filteredSales = getSalesDocuments(
+        database,
+        admin,
+        {
+          status: 'posted',
+          search: 'EXTERNAL-001',
+          fromDate: '2026-11-27',
+          toDate: '2026-11-27',
+          limit: 10,
+          offset: 0,
+        }
+      );
+
+
+      expect(filteredSales.totalCount).toBe(1);
+
+      expect(filteredSales.documents).toHaveLength(1);
+
+
+      const listedInvoice =
+        filteredSales.documents[0];
+
+
+      expect(listedInvoice).toMatchObject({
+
+        id: firstSalesDraft.id,
+
+        documentNumber: firstSalesDraft.documentNumber,
+
+        documentType: 'sale',
+
+        documentDate: '2026-11-27',
+
+        status: 'posted',
+
+        customerName: 'مشتری اول',
+
+        sourceInvoiceNumber: 'EXTERNAL-001',
+
+        itemCount: 2,
+
+      });
+
+
+      // دو ردیف: ۲ × ۶۵ + ۳ × ۷۰ = ۳۴۰ افغانی
+      expect(listedInvoice.totalsByCurrency).toEqual([
+        expect.objectContaining({
+          currencyCode: 'AFN',
+          totalAmountScaled: 340_000_000,
+          totalAmount: 340,
+        }),
+      ]);
+
+
+      // بررسی صفحه‌بندی
+      const secondPage = getSalesDocuments(
+        database,
+        admin,
+        {
+          status: 'all',
+          limit: 1,
+          offset: 1,
+        }
+      );
+
+
+      expect(secondPage.documents).toHaveLength(1);
+
+      expect(
+        secondPage.documents[0].id
+      ).toBe(firstSalesDraft.id);
+
+
+      // دریافت جزئیات فاکتور اول
+      const details = getSalesDocumentDetails(
+        database,
+        admin,
+        firstSalesDraft.id
+      );
+
+
+      expect(details).toMatchObject({
+
+        id: firstSalesDraft.id,
+
+        documentNumber: firstSalesDraft.documentNumber,
+
+        documentType: 'sale',
+
+        documentDate: '2026-11-27',
+
+        status: 'posted',
+
+        customerName: 'مشتری اول',
+
+        sourceInvoiceNumber: 'EXTERNAL-001',
+
+        itemCount: 2,
+
+      });
+
+
+      // بررسی اطلاعات کاربر ایجادکننده و ثبت‌کننده
+      expect(details.createdBy).toMatchObject({
+
+        id: admin.id,
+
+        username: admin.username,
+
+        displayName: admin.displayName,
+
+      });
+
+
+      expect(
+        details.postedByDisplayName
+      ).toBe(admin.displayName);
+
+
+      // بررسی مقادیر و مبالغ هر ردیف
+      expect(
+        details.items.map((item) => ({
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          lineTotal: item.lineTotal,
+          currencyCode: item.currency.code,
+        }))
+      ).toEqual([
+        {
+          quantity: 2,
+          unitPrice: 65,
+          lineTotal: 130,
+          currencyCode: 'AFN',
+        },
+        {
+          quantity: 3,
+          unitPrice: 70,
+          lineTotal: 210,
+          currencyCode: 'AFN',
+        },
+      ]);
+
+
+      // جمع کل فاکتور در جزئیات نیز باید ۳۴۰ افغانی باشد.
+      expect(details.totalsByCurrency).toEqual([
+        expect.objectContaining({
+          currencyCode: 'AFN',
+          totalAmountScaled: 340_000_000,
+          totalAmount: 340,
+        }),
+      ]);
+
+
+      // کاربر فاقد مجوز نباید بتواند فهرست فروش را مشاهده کند.
+      const restrictedUser = {
+        id: 'restricted-sales-view-user',
+        username: 'restricted',
+        displayName: 'کاربر محدود',
+        role: 'user',
+      };
+
+
+      expect(() =>
+        getSalesDocuments(
+          database,
+          restrictedUser
+        )
+      ).toThrow(
+        'برای انجام این عملیات مجوز لازم را نداری.'
+      );
+
+
+      // کاربر فاقد مجوز نباید بتواند جزئیات فاکتور را دریافت کند.
+      expect(() =>
+        getSalesDocumentDetails(
+          database,
+          restrictedUser,
+          firstSalesDraft.id
+        )
+      ).toThrow(
+        'برای انجام این عملیات مجوز لازم را نداری.'
+      );
+
+
+      // شناسه یک سند خرید نباید به‌عنوان فاکتور فروش پذیرفته شود.
+      expect(() =>
+        getSalesDocumentDetails(
+          database,
+          admin,
+          entryDraft.id
+        )
+      ).toThrow(
+        'فاکتور فروش موردنظر پیدا نشد.'
+      );
 
     }
   );

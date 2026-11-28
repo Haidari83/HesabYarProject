@@ -80,6 +80,8 @@ const {
   getSalesFormOptions,
   createSalesDraft,
   postSalesDocument,
+  getSalesDocuments,
+  getSalesDocumentDetails,
 } = require('./services/salesService.cjs');
 
 const fs = require('node:fs');
@@ -1010,6 +1012,43 @@ function registerIpcHandlers() {
 
       // ثبت نهایی فاکتور و تخصیص بهای تمام‌شده FIFO
       return postSalesDocument(
+        database,
+        actor,
+        documentId
+      );
+
+    }
+  );
+
+  // دریافت فهرست فاکتورهای فروش
+  ipcMain.handle(
+    'sales:documents:list',
+    (event, filters) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      // دریافت فهرست فاکتورها با بررسی مجوز مشاهده فروش
+      return getSalesDocuments(
+        database,
+        actor,
+        filters
+      );
+
+    }
+  );
+
+
+  // دریافت جزئیات یک فاکتور فروش
+  ipcMain.handle(
+    'sales:document:details',
+    (event, documentId) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      // دریافت جزئیات فاکتور با بررسی مجوز مشاهده فروش
+      return getSalesDocumentDetails(
         database,
         actor,
         documentId
