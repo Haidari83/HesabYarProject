@@ -349,6 +349,11 @@ function InventoryEntry() {
   // وضعیت ذخیره سند
   const [isSaving, setIsSaving] = useState(false);
 
+  // نگهداری اطلاعات پیش‌نویس ذخیره‌شده برای ثبت نهایی
+  const [savedDraft, setSavedDraft] = useState(null);
+
+  // وضعیت اجرای ثبت نهایی سند
+  const [isPosting, setIsPosting] = useState(false);
 
   // وضعیت اعلان شناور
   const [toast, setToast] = useState(null);
@@ -895,6 +900,10 @@ function InventoryEntry() {
 
     !isSaving &&
 
+    !savedDraft &&
+
+    !isPosting &&
+
     documentDate &&
 
     allItemsComplete &&
@@ -905,6 +914,58 @@ function InventoryEntry() {
     )
 
   );
+
+  // ثبت نهایی فقط برای پیش‌نویسی مجاز است
+  // که با موفقیت در پایگاه داده ذخیره شده باشد.
+  const canPostDocument = Boolean(
+
+    savedDraft?.id &&
+
+    !isLoadingOptions &&
+
+    !isCheckingEntryType &&
+
+    !loadError &&
+
+    !isSaving &&
+
+    !isPosting
+
+  );
+  // آماده‌سازی اطلاعات سند برای ارسال به سرویس موجودی
+  function buildInventoryEntryInput() {
+
+    return {
+
+      documentType: entryType,
+
+      documentDate,
+
+      sourcePartyName,
+
+      sourceInvoiceNumber,
+
+      reason,
+
+      notes,
+
+      items: items.map((item) => ({
+
+        productId: item.productId,
+
+        productUnitId: item.productUnitId,
+
+        quantity: item.quantity,
+
+        unitPrice: item.unitPrice,
+
+        currencyCode: item.currencyCode,
+
+      })),
+
+    };
+
+  }
 
 
   // ثبت پیش‌نویس در SQLite
@@ -930,37 +991,8 @@ function InventoryEntry() {
         );
       }
 
-
-      // آماده‌سازی اطلاعات برای ارسال به Main Process
-      const input = {
-
-        documentType: entryType,
-
-        documentDate,
-
-        sourcePartyName,
-
-        sourceInvoiceNumber,
-
-        reason,
-
-        notes,
-
-        items: items.map((item) => ({
-
-          productId: item.productId,
-
-          productUnitId: item.productUnitId,
-
-          quantity: item.quantity,
-
-          unitPrice: item.unitPrice,
-
-          currencyCode: item.currencyCode,
-
-        })),
-
-      };
+      // دریافت اطلاعات آماده‌شده از فرم
+      const input = buildInventoryEntryInput();
 
 
       // درخواست ثبت اطلاعات در پایگاه داده
@@ -972,6 +1004,8 @@ function InventoryEntry() {
           'پاسخ ثبت پیش‌نویس معتبر نیست.'
         );
       }
+      // نگهداری شناسه و شماره پیش‌نویس برای ثبت نهایی
+      setSavedDraft(result);
 
 
       // نمایش پیام موفقیت پس از تأیید ذخیره در SQLite
@@ -979,28 +1013,6 @@ function InventoryEntry() {
         'success',
         `پیش‌نویس سند ${result.documentNumber} با موفقیت ذخیره شد.`
       );
-
-
-      // پاک کردن اطلاعات سند ذخیره‌شده
-      // فرم برای ثبت سند جدید آماده می‌شود.
-      setItems([]);
-
-      const today = getLocalDate();
-
-      setDocumentDate(today);
-
-      setDraftDocumentDate(today);
-
-      setSourcePartyName('');
-
-      setSourceInvoiceNumber('');
-
-      setReason('');
-
-      setNotes('');
-
-      nextItemId.current = 1;
-
 
     } catch (error) {
 
@@ -1036,6 +1048,97 @@ function InventoryEntry() {
     }
 
     setReloadToken((previous) => previous + 1);
+
+  }
+
+  // ثبت نهایی پیش‌نویس ذخیره‌شده
+  async function handlePostDocument() {
+
+    // بدون پیش‌نویس ذخیره‌شده، ثبت نهایی مجاز نیست.
+    if (!canPostDocument) {
+      return;
+    }
+
+
+    setIsPosting(true);
+
+
+    try {
+
+      // دریافت سرویس ثبت نهایی از Preload
+      const postDocument =
+        window.hesabyar?.inventory?.postDocument;
+
+
+      if (typeof postDocument !== 'function') {
+        throw new Error(
+          'سرویس ثبت نهایی سند در دسترس نیست.'
+        );
+      }
+
+
+      // ارسال شناسه پیش‌نویس به Main Process
+      const result = await postDocument(
+        savedDraft.id
+      );
+
+
+      // بررسی نتیجه ثبت نهایی
+      if (
+        !result?.id ||
+        result.status !== 'posted'
+      ) {
+        throw new Error(
+          'پاسخ ثبت نهایی سند معتبر نیست.'
+        );
+      }
+
+
+      // نمایش موفقیت پس از تأیید ثبت در SQLite
+      showToast(
+        'success',
+        `سند ${result.documentNumber} با موفقیت ثبت نهایی شد.`
+      );
+
+
+      // پاک‌کردن شناسه پیش‌نویس ذخیره‌شده
+      setSavedDraft(null);
+
+
+      // آماده‌سازی فرم برای سند جدید
+      setItems([]);
+
+      const today = getLocalDate();
+
+      setDocumentDate(today);
+
+      setDraftDocumentDate(today);
+
+      setSourcePartyName('');
+
+      setSourceInvoiceNumber('');
+
+      setReason('');
+
+      setNotes('');
+
+      nextItemId.current = 1;
+
+
+    } catch (error) {
+
+      // در صورت شکست، پیش‌نویس حذف نمی‌شود.
+      // کاربر می‌تواند پس از رفع مشکل دوباره ثبت نهایی را انجام دهد.
+      showToast(
+        'error',
+        getInventoryErrorMessage(error)
+      );
+
+    } finally {
+
+      setIsPosting(false);
+
+    }
 
   }
 
@@ -1137,6 +1240,28 @@ function InventoryEntry() {
 
       )}
 
+      {savedDraft && (
+        <Alert
+          variant="info"
+          title={`پیش‌نویس سند ${savedDraft.documentNumber} ذخیره شد.`}
+        >
+          اطلاعات سند ذخیره شده‌اند. برای جلوگیری از اختلاف
+          اطلاعات صفحه با پایگاه داده، فرم تا زمان ثبت نهایی
+          قفل است.
+        </Alert>
+      )}
+
+      {/* قفل کردن فیلدهای سند در زمان ذخیره و ثبت نهایی */}
+      <fieldset
+        className="entry-form-fields"
+        disabled={
+          Boolean(savedDraft) ||
+          isSaving ||
+          isPosting
+        }
+      >
+      </fieldset>
+
       {/* اطلاعات عمومی سند */}
       <section className="entry-section">
 
@@ -1148,7 +1273,9 @@ function InventoryEntry() {
           </div>
 
           <span className="entry-status">
-            پیش‌نویس
+            {savedDraft
+              ? 'پیش‌نویس ذخیره‌شده'
+              : 'پیش‌نویس'}
           </span>
 
         </div>
@@ -1867,8 +1994,7 @@ function InventoryEntry() {
 
       </section >
 
-
-      {/* توضیحات و عملیات */}
+      {/* توضیحات تکمیلی سند */}
       <section className="entry-section">
 
         <div className="entry-section-header">
@@ -1895,17 +2021,30 @@ function InventoryEntry() {
           />
         </FormField>
 
+      </section>
+
+      {/* عملیات پیش‌نویس و ثبت نهایی */}
+      <section className="entry-section">
 
         <div className="entry-form-actions">
 
           <Button
             type="button"
             variant="primary"
-            disabled
-            title="ثبت نهایی سند در مرحله بعد پیاده‌سازی می‌شود."
+            loading={isPosting}
+            onClick={handlePostDocument}
+            disabled={!canPostDocument}
+            title={
+              !savedDraft
+                ? 'ابتدا پیش‌نویس سند را ذخیره کن.'
+                : undefined
+            }
           >
-            ثبت نهایی سند
+            {isPosting
+              ? 'در حال ثبت نهایی...'
+              : 'ثبت نهایی سند'}
           </Button>
+
 
           <Button
             type="button"
@@ -1918,9 +2057,10 @@ function InventoryEntry() {
               ? 'در حال ذخیره...'
               : 'ذخیره پیش‌نویس'}
           </Button>
+
         </div>
 
-      </section >
+      </section>
 
 
       {/* اعلان شناور پایین چپ صفحه */}
@@ -1933,4 +2073,4 @@ function InventoryEntry() {
 }
 
 
-export default InventoryEntry;
+export default InventoryEntry

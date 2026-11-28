@@ -1,3 +1,4 @@
+
 // تولید شناسه یکتای سند و ردیف‌های آن
 const crypto = require('node:crypto');
 
@@ -1351,6 +1352,435 @@ function createInventoryEntryDraft(
 
 }
 
+// ثبت نهایی سند ورود کالا و ایجاد گردش و لایه بهای FIFO
+function postInventoryDocument(
+  database,
+  actor,
+  documentId
+) {
+
+  // اعتبارسنجی شناسه سند
+  if (
+    typeof documentId !== 'string' ||
+    !documentId.trim() ||
+    documentId.trim().length > 100
+  ) {
+    throw new Error('شناسه سند معتبر نیست.');
+  }
+
+  const normalizedDocumentId = documentId.trim();
+
+  const postedAt = new Date().toISOString();
+
+  // تمام عملیات ثبت نهایی باید یکپارچه انجام شوند.
+  // در صورت شکست هر بخش، تمام تغییرات بازگردانده می‌شوند.
+  database.exec('BEGIN IMMEDIATE');
+
+  try {
+
+    // دریافت سند از پایگاه داده
+    const document = database.prepare(`
+      SELECT
+        id,
+        document_number,
+        document_type,
+        document_date,
+        status
+      FROM inventory_documents
+      WHERE id = ?
+      LIMIT 1
+    `).get(normalizedDocumentId);
+
+
+    if (!document) {
+      throw new Error('سند موردنظر پیدا نشد.');
+    }
+
+
+    // شناسایی نوع سند و مجوز موردنیاز آن
+    const entryType = Object.values(
+      INVENTORY_ENTRY_TYPES
+    ).find(
+      (type) => type.databaseType === document.document_type
+    );
+
+
+    // در این مرحله فقط اسناد ورودی پشتیبانی می‌شوند.
+    if (!entryType) {
+      throw new Error(
+        'ثبت نهایی این نوع سند در این مرحله پشتیبانی نمی‌شود.'
+      );
+    }
+
+
+    // بررسی مجوز ثبت نهایی
+    assertPermission(
+      database,
+      actor,
+      entryType.permission
+    );
+
+
+    // فقط پیش‌نویس قابل ثبت نهایی است.
+    if (document.status !== 'draft') {
+      throw new Error(
+        'این سند پیش‌نویس نیست یا قبلاً ثبت نهایی شده است.'
+      );
+    }
+
+
+    // اعتبارسنجی دوباره تاریخ سند
+    const documentDate = validateInventoryDate(
+      document.document_date
+    );
+
+
+    // دریافت تمام اقلام سند
+    const items = database.prepare(`
+      SELECT
+        id,
+        product_id,
+        product_name_snapshot,
+
+        base_quantity_scaled,
+
+        unit_price_scaled,
+
+        conversion_num,
+        conversion_den,
+
+        exchange_rate_num,
+        exchange_rate_den,
+
+        valuation_currency_code
+
+      FROM inventory_document_items
+
+      WHERE document_id = ?
+
+      ORDER BY line_number ASC
+    `).all(normalizedDocumentId);
+
+
+    if (!items.length) {
+      throw new Error(
+        'سند بدون کالا قابل ثبت نهایی نیست.'
+      );
+    }
+
+
+    // زمان گردش بر اساس تاریخ سند تعیین می‌شود.
+    // ساعت نیمه‌شب UTC صرفاً برای استانداردسازی مقدار تاریخ است.
+    const movementAt =
+      `${documentDate}T00:00:00.000Z`;
+
+
+    // آماده‌سازی بررسی گردش‌های خروجی بعدی
+    // جلوگیری از تغییر ترتیب FIFO اسناد خروجی قبلی
+    const findLaterOutboundMovement = database.prepare(`
+      SELECT
+        document.document_number,
+        document.document_date
+
+      FROM inventory_movements AS movement
+
+      JOIN inventory_documents AS document
+        ON document.id = movement.document_id
+
+      WHERE movement.product_id = ?
+        AND movement.movement_direction = 'out'
+        AND document.status = 'posted'
+        AND date(movement.movement_at) > date(?)
+
+      ORDER BY
+        date(movement.movement_at) ASC
+
+      LIMIT 1
+    `);
+
+
+    // اعتبارسنجی اقلام و محاسبه بهای هر واحد پایه
+    const validatedItems = items.map((item, index) => {
+
+      // مقادیر عددی باید در محدوده امن JavaScript باشند.
+      if (
+        !Number.isSafeInteger(item.base_quantity_scaled) ||
+        item.base_quantity_scaled <= 0
+      ) {
+        throw new Error(
+          `مقدار پایه کالای ردیف ${index + 1} معتبر نیست.`
+        );
+      }
+
+
+      if (
+        !Number.isSafeInteger(item.unit_price_scaled) ||
+        item.unit_price_scaled <= 0
+      ) {
+        throw new Error(
+          `قیمت ثبت‌شده کالای ردیف ${index + 1} معتبر نیست.`
+        );
+      }
+
+
+      const conversionNum = item.conversion_num;
+      const conversionDen = item.conversion_den;
+
+      const exchangeRateNum = item.exchange_rate_num;
+      const exchangeRateDen = item.exchange_rate_den;
+
+
+      if (
+        !Number.isSafeInteger(conversionNum) ||
+        !Number.isSafeInteger(conversionDen) ||
+        conversionNum <= 0 ||
+        conversionDen <= 0
+      ) {
+        throw new Error(
+          `نسبت تبدیل واحد کالای ردیف ${index + 1} معتبر نیست.`
+        );
+      }
+
+
+      if (
+        !Number.isSafeInteger(exchangeRateNum) ||
+        !Number.isSafeInteger(exchangeRateDen) ||
+        exchangeRateNum <= 0 ||
+        exchangeRateDen <= 0
+      ) {
+        throw new Error(
+          `نرخ تبدیل ارز کالای ردیف ${index + 1} معتبر نیست.`
+        );
+      }
+
+
+      if (
+        typeof item.valuation_currency_code !== 'string' ||
+        !item.valuation_currency_code.trim()
+      ) {
+        throw new Error(
+          `ارز ارزش‌گذاری کالای ردیف ${index + 1} مشخص نیست.`
+        );
+      }
+
+
+      // کنترل تاریخ‌گذاری FIFO:
+      // ورود جدید با تاریخ قدیمی‌تر نباید بهای تمام‌شده
+      // خروجی‌هایی را که قبلاً ثبت شده‌اند تغییر دهد.
+      const laterOutbound = findLaterOutboundMovement.get(
+        item.product_id,
+        documentDate
+      );
+
+
+      if (laterOutbound) {
+        throw new Error(
+          `برای کالای «${item.product_name_snapshot}»، سند خروجی ` +
+          `${laterOutbound.document_number} در تاریخ ` +
+          `${laterOutbound.document_date} قبلاً ثبت شده است. ` +
+          'ثبت سند ورودی با تاریخ قدیمی‌تر می‌تواند ترتیب FIFO را تغییر دهد.'
+        );
+      }
+
+
+      /*
+        محاسبه بهای هر واحد پایه:
+
+        قیمت واحد در ارز سند
+        × نرخ تبدیل ارز
+        ÷ تعداد واحد پایه در واحد انتخاب‌شده
+
+        تمام محاسبات با BigInt انجام می‌شوند
+        تا خطای اعشاری JavaScript وارد ارزش موجودی نشود.
+      */
+
+      const numerator =
+        BigInt(item.unit_price_scaled) *
+        BigInt(exchangeRateNum) *
+        BigInt(conversionDen);
+
+      const denominator =
+        BigInt(exchangeRateDen) *
+        BigInt(conversionNum);
+
+
+      if (denominator <= 0n) {
+        throw new Error(
+          `مخرج محاسبه بهای کالای ردیف ${index + 1} معتبر نیست.`
+        );
+      }
+
+
+      // گرد کردن نیم به بالا در کوچک‌ترین واحد ذخیره‌سازی
+      const unitCostScaled =
+        (numerator + denominator / 2n) /
+        denominator;
+
+
+      if (
+        unitCostScaled < 0n ||
+        unitCostScaled > BigInt(Number.MAX_SAFE_INTEGER)
+      ) {
+        throw new Error(
+          `بهای تمام‌شده کالای ردیف ${index + 1} خارج از محدوده مجاز است.`
+        );
+      }
+
+
+      return {
+        ...item,
+        unitCostScaled: Number(unitCostScaled),
+      };
+
+    });
+
+
+    // انتقال وضعیت سند به ثبت‌شده
+    // این تغییر قبل از ثبت گردش‌ها ضروری است؛
+    // زیرا Trigger پایگاه داده فقط گردش سند ثبت‌شده را می‌پذیرد.
+    const updateDocument = database.prepare(`
+      UPDATE inventory_documents
+
+      SET
+        status = 'posted',
+        posted_at = ?,
+        posted_by_user_id = ?
+
+      WHERE id = ?
+        AND status = 'draft'
+    `).run(
+      postedAt,
+      actor.id,
+      normalizedDocumentId
+    );
+
+
+    if (updateDocument.changes !== 1) {
+      throw new Error(
+        'تغییر وضعیت سند به ثبت‌شده انجام نشد.'
+      );
+    }
+
+
+    // دستور ایجاد گردش ورودی انبار
+    const insertMovement = database.prepare(`
+      INSERT INTO inventory_movements (
+        id,
+        document_id,
+        document_item_id,
+        product_id,
+        movement_direction,
+        base_quantity_scaled,
+        movement_at,
+        created_at,
+        created_by_user_id
+      )
+
+      VALUES (?, ?, ?, ?, 'in', ?, ?, ?, ?)
+    `);
+
+
+    // دستور ایجاد لایه بهای تمام‌شده FIFO
+    const insertCostLayer = database.prepare(`
+      INSERT INTO inventory_cost_layers (
+        id,
+        source_movement_id,
+        product_id,
+        received_at,
+        original_quantity_base_scaled,
+        unit_cost_scaled,
+        valuation_currency_code,
+        created_at,
+        created_by_user_id
+      )
+
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+
+    // ثبت گردش و لایه FIFO برای تمام اقلام
+    for (const item of validatedItems) {
+
+      const movementId = crypto.randomUUID();
+
+      const costLayerId = crypto.randomUUID();
+
+
+      // ایجاد گردش ورود کالا
+      insertMovement.run(
+        movementId,
+        normalizedDocumentId,
+        item.id,
+        item.product_id,
+        item.base_quantity_scaled,
+        movementAt,
+        postedAt,
+        actor.id
+      );
+
+
+      // ایجاد لایه بهای تمام‌شده
+      insertCostLayer.run(
+        costLayerId,
+        movementId,
+        item.product_id,
+        movementAt,
+        item.base_quantity_scaled,
+        item.unitCostScaled,
+        item.valuation_currency_code,
+        postedAt,
+        actor.id
+      );
+
+    }
+
+
+    // ثبت فعالیت کاربر در تاریخچه سیستم
+    writeInventoryAudit(
+      database,
+      actor,
+      'inventory.document.posted',
+      normalizedDocumentId,
+      {
+        documentNumber: document.document_number,
+        documentType: document.document_type,
+        documentDate,
+        itemCount: validatedItems.length,
+      },
+      postedAt
+    );
+
+
+    // تأیید نهایی تمام عملیات
+    database.exec('COMMIT');
+
+
+    return {
+      id: normalizedDocumentId,
+      documentNumber: document.document_number,
+      documentType: document.document_type,
+      documentDate,
+      status: 'posted',
+      itemCount: validatedItems.length,
+      postedAt,
+      postedBy: actor.displayName,
+    };
+
+  } catch (error) {
+
+    // بازگرداندن تمام تغییرات در صورت بروز خطا
+    try {
+      database.exec('ROLLBACK');
+    } catch {
+      // اگر تراکنش قبلاً پایان یافته باشد، خطای ثانویه نادیده گرفته می‌شود.
+    }
+
+    throw error;
+
+  }
+
+}
+
 // دریافت فهرست اسناد انبار با فیلتر و صفحه‌بندی
 function getInventoryDocuments(
   database,
@@ -1747,5 +2177,6 @@ function getInventoryDocuments(
 module.exports = {
   getInventoryEntryFormOptions,
   createInventoryEntryDraft,
+  postInventoryDocument,
   getInventoryDocuments,
 };

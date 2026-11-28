@@ -208,7 +208,7 @@ function DocumentDateFilter({
 
   return (
 
-    <label className="documents-field">
+    <div className="documents-field">
 
       <span>{label}</span>
 
@@ -260,7 +260,7 @@ function DocumentDateFilter({
 
       />
 
-    </label>
+    </div>
 
   );
 

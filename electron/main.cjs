@@ -70,6 +70,7 @@ const {
 const {
   getInventoryEntryFormOptions,
   createInventoryEntryDraft,
+  postInventoryDocument,
   getInventoryDocuments,
 } = require('./services/inventoryService.cjs');
 
@@ -994,6 +995,23 @@ function registerIpcHandlers() {
     }
   );
 
+  // ثبت نهایی سند ورود کالا
+  ipcMain.handle(
+    'inventory:document:post',
+    (event, documentId) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      // ثبت نهایی سند با کنترل مجوز و تراکنش کامل
+      return postInventoryDocument(
+        database,
+        actor,
+        documentId
+      );
+
+    }
+  );
   // دریافت فهرست اسناد انبار
   ipcMain.handle(
     'inventory:documents:list',

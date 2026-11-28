@@ -286,7 +286,12 @@ contextBridge.exposeInMainWorld('hesabyar', {
         'inventory:entry:create-draft',
         input
       ),
-
+    // ثبت نهایی سند ورود کالا
+    postDocument: (documentId) =>
+      ipcRenderer.invoke(
+        'inventory:document:post',
+        documentId
+      ),
     // دریافت فهرست اسناد انبار
     listDocuments: (filters) =>
       ipcRenderer.invoke(
