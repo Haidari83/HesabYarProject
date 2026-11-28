@@ -49,28 +49,6 @@ function formatStockQuantity(product) {
 }
 
 
-// قالب‌بندی قیمت خرید همراه با نماد یا کد ارز
-function formatPurchasePrice(product) {
-  if (
-    product.purchasePrice === null ||
-    product.purchasePrice === undefined
-  ) {
-    return '—';
-  }
-
-  const formattedPrice = formatNumber(
-    product.purchasePrice
-  );
-
-  const currency =
-    product.purchasePriceCurrencySymbol ||
-    product.purchasePriceCurrencyCode;
-
-  return currency
-    ? `${formattedPrice} ${currency}`
-    : formattedPrice;
-}
-
 function InventoryStockList() {
 
   // فهرست کالاهای دریافت‌شده از پایگاه داده
@@ -422,33 +400,26 @@ function InventoryStockList() {
         <td>
           <div className="stock-product-name">
             <strong>{product.name}</strong>
-            <span>{product.code || 'بدون کد'}</span>
+            <span>{product.code}</span>
           </div>
         </td>
 
 
         <td>
           <strong>
-            {product.categoryName || 'بدون دسته‌بندی'}
+            {product.categoryName}
           </strong>
-
         </td>
 
 
         <td>
-          {product.unitSymbol || product.unitName || '—'}
+          {product.unitName}
         </td>
 
 
         <td className="stock-number">
           {formatStockQuantity(product)}
         </td>
-
-
-        <td className="stock-number">
-          {formatPurchasePrice(product)}
-        </td>
-
 
         <td>
           <div className="stock-status-group">
@@ -690,25 +661,6 @@ function InventoryStockList() {
 
           </section>
 
-          {/* خلاصه تعداد نتایج */}
-          <div className="stock-list-summary">
-            <span>
-              نمایش {formatNumber(filteredProducts.length)} کالا
-            </span>
-
-            <span>
-              از مجموع {formatNumber(products.length)} کالا
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="small"
-              onClick={handleRetry}
-            >
-              به‌روزرسانی
-            </Button>
-          </div>
-
           {/* =========================================
     قاب مشترک جدول موجودی در دسکتاپ
 ========================================= */}
@@ -731,7 +683,6 @@ function InventoryStockList() {
                     <th>دسته‌بندی</th>
                     <th>واحد</th>
                     <th>موجودی فعلی</th>
-                    <th>قیمت خرید جاری (واحد پایه)</th>
                     <th>وضعیت</th>
                     <th>عملیات</th>
                   </tr>
@@ -808,13 +759,6 @@ function InventoryStockList() {
                       <span>موجودی فعلی</span>
                       <strong>
                         {formatStockQuantity(product)}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>قیمت خرید جاری (واحد پایه)</span>
-                      <strong>
-                        {formatPurchasePrice(product)}
                       </strong>
                     </div>
 
@@ -965,14 +909,6 @@ function InventoryStockList() {
                     <span>موجودی فعلی</span>
                     <strong>
                       {formatStockQuantity(selectedProduct)}
-                    </strong>
-                  </div>
-
-
-                  <div>
-                    <span>قیمت خرید جاری (واحد پایه)</span>
-                    <strong>
-                      {formatPurchasePrice(selectedProduct)}
                     </strong>
                   </div>
 

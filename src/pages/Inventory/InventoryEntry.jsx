@@ -1789,6 +1789,7 @@ function InventoryEntry() {
                         <th>واحد</th>
                         <th>مقدار ورودی</th>
                         <th>قیمت واحد</th>
+                        <th>ارز خرید</th>
                         <th>مبلغ ردیف</th>
                         <th>عملیات</th>
                       </tr>
@@ -1946,15 +1947,6 @@ function InventoryEntry() {
                               <input
                                 type="number"
                                 min="0"
-                                step={
-                                  selectedUnit
-                                    ? String(
-                                      1 / (
-                                        10 ** selectedUnit.inputDecimalPlaces
-                                      )
-                                    )
-                                    : '1'
-                                }
                                 value={item.quantity}
                                 onChange={(event) =>
                                   updateItem(item.id, {
@@ -1999,7 +1991,6 @@ function InventoryEntry() {
                               <input
                                 type="number"
                                 min="0"
-                                step="0.000001"
                                 value={item.unitPrice}
                                 onChange={(event) =>
                                   updateItem(item.id, {
@@ -2010,8 +2001,16 @@ function InventoryEntry() {
                                 placeholder="قیمت واحد"
                                 className="entry-number-input"
                               />
+                              {selectedUnit && (
 
+                                <small className="entry-unit-hint">
+                                  قیمت به ازای هر {selectedUnit.name}
+                                </small>
 
+                              )}
+                            </td>
+
+                            <td>
                               <select
                                 value={item.currencyCode}
                                 onChange={(event) =>
@@ -2040,17 +2039,7 @@ function InventoryEntry() {
 
                               </select>
 
-
-                              {selectedUnit && (
-
-                                <small className="entry-unit-hint">
-                                  قیمت به ازای هر {selectedUnit.name}
-                                </small>
-
-                              )}
-
                             </td>
-
 
                             {/* مبلغ ردیف */}
                             <td data-label="مبلغ ردیف">
