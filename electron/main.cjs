@@ -75,6 +75,11 @@ const {
   getInventoryStockList,
 } = require('./services/inventoryService.cjs');
 
+// سرویس مدیریت عملیات فروش
+const {
+  getSalesFormOptions,
+} = require('./services/salesService.cjs');
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -957,6 +962,22 @@ function registerIpcHandlers() {
         productId,
         isActive
       );
+    }
+  );
+  // دریافت اطلاعات لازم برای فرم ثبت فروش
+  ipcMain.handle(
+    'sales:form-options',
+    (event) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      // دریافت اطلاعات فرم با بررسی مجوز ثبت فروش
+      return getSalesFormOptions(
+        database,
+        actor
+      );
+
     }
   );
 

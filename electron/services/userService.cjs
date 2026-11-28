@@ -46,6 +46,24 @@ const PERMISSION_GROUPS = [
       },
     ],
   },
+  {
+    id: 'sales',
+    label: 'فروش و فاکتورها',
+    permissions: [
+      {
+        key: 'sales.create',
+        label: 'ثبت فروش',
+      },
+      {
+        key: 'sales.documents.view',
+        label: 'مشاهده فهرست فاکتورهای فروش',
+      },
+      {
+        key: 'sales.documents.post',
+        label: 'ثبت نهایی فاکتورهای فروش',
+      },
+    ],
+  },
 
   {
     id: 'categories',

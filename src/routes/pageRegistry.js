@@ -64,17 +64,18 @@ export const navigationItems = [
     id: 'sales',
     label: 'فروش و فاکتورها',
     icon: 'sales',
-    adminOnly: true,
     children: [
       {
         id: 'sales-list',
         label: 'فهرست فاکتورهای فروش',
         description: 'مشاهده و مدیریت فاکتورهای فروش.',
+        requiredPermission: 'sales.documents.view',
       },
       {
         id: 'new-sale',
         label: 'ثبت فروش',
-        description: 'ثبت و مدیریت فروش جدید.'
+        description: 'ثبت و مدیریت فروش جدید.',
+        requiredPermission: 'sales.create',
       }
     ]
   },

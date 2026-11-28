@@ -270,6 +270,16 @@ contextBridge.exposeInMainWorld('hesabyar', {
 
   },
 
+  // API مدیریت فروش و فاکتورها
+  sales: {
+
+    // دریافت کالاها، قیمت‌های فروش، موجودی و ارزها
+    getFormOptions: () =>
+      ipcRenderer.invoke(
+        'sales:form-options'
+      ),
+
+  },
   // API مدیریت موجودی انبار
   inventory: {
 
