@@ -10,6 +10,22 @@
   --stock-primary: #172554;
 }
 
+/* وضعیت بارگذاری یا خطای دریافت اطلاعات موجودی */
+.stock-load-alert {
+  width: 100%;
+}
+
+.stock-load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.stock-load-error .ui-alert {
+  width: 100%;
+}
+
 /* نوار جست‌وجو و فیلترها */
 .stock-toolbar {
   display: flex;

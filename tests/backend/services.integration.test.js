@@ -271,6 +271,18 @@ describe('پایگاه داده و سرویس‌های اصلی', () => {
       admin
     );
 
+    // کالایی که فقط پیش‌نویس ورود دارد، هنوز وارد موجودی نشده است.
+    const draftStockResult = getInventoryStockList(
+      database,
+      admin
+    );
+
+    const draftProduct = draftStockResult.products.find(
+      (product) => product.id === createdProduct.id
+    );
+
+    expect(draftProduct).toBeUndefined();
+
 
     expect(
       stockAfterPosting.products[0].stock

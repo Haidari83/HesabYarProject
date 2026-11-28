@@ -1929,9 +1929,21 @@ function getInventoryStockList(database, actor) {
       )
 
 
-    LEFT JOIN currencies AS purchase_currency
+        LEFT JOIN currencies AS purchase_currency
       ON purchase_currency.code = purchase_price.currency_code
 
+    -- فقط کالاهایی نمایش داده می‌شوند که ورود ثبت‌نهایی‌شده دارند.
+    WHERE EXISTS (
+      SELECT 1
+      FROM inventory_movements AS entered_movement
+
+      JOIN inventory_documents AS entered_document
+        ON entered_document.id = entered_movement.document_id
+
+      WHERE entered_movement.product_id = product.id
+        AND entered_movement.movement_direction = 'in'
+        AND entered_document.status = 'posted'
+    )
 
     ORDER BY
       product.name COLLATE NOCASE ASC,
