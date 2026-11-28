@@ -13,6 +13,7 @@ import UnitList from './pages/Units/UnitList';
 import InventoryStockList from './pages/Inventory/InventoryStockList';
 import InventoryEntry from './pages/Inventory/InventoryEntry';
 import InventoryDocuments from './pages/Inventory/InventoryDocuments';
+import SalesDocuments from './pages/Sales/SalesDocuments';
 import UserManagement from './pages/Users/UserManagement';
 
 import {
@@ -142,6 +143,8 @@ function ApplicationShell({
               <InventoryEntry />
             ) : activePageId === 'inventory-documents' ? (
               <InventoryDocuments />
+            ) : activePageId === 'sales-list' ? (
+              <SalesDocuments />
             ) : activePageId === 'users' ? (
               <UserManagement />
             ) : (
