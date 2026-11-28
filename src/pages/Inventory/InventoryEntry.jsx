@@ -1051,6 +1051,46 @@ function InventoryEntry() {
 
   }
 
+  // آماده‌سازی فرم برای ایجاد یک سند جدید
+  function resetInventoryEntryForm() {
+
+    // حذف شناسه پیش‌نویس از وضعیت محلی فرم
+    // سند قبلی در SQLite حذف نمی‌شود.
+    setSavedDraft(null);
+
+    // پاک‌کردن ردیف‌های کالا
+    setItems([]);
+
+    // تنظیم تاریخ امروز
+    const today = getLocalDate();
+
+    setDocumentDate(today);
+
+    setTodayDate(today);
+
+    setDraftDocumentDate(today);
+
+    // بستن تقویم و پاک‌کردن وضعیت موقت آن
+    setIsDatePickerOpen(false);
+
+    keepCalendarOpenRef.current = false;
+
+    datePickerCloseReasonRef.current = null;
+
+    // پاک‌کردن اطلاعات منبع ورود
+    setSourcePartyName('');
+
+    setSourceInvoiceNumber('');
+
+    setReason('');
+
+    // پاک‌کردن یادداشت
+    setNotes('');
+
+    // بازنشانی شمارنده ردیف‌ها
+    nextItemId.current = 1;
+
+  }
   // ثبت نهایی پیش‌نویس ذخیره‌شده
   async function handlePostDocument() {
 
@@ -1099,31 +1139,7 @@ function InventoryEntry() {
         'success',
         `سند ${result.documentNumber} با موفقیت ثبت نهایی شد.`
       );
-
-
-      // پاک‌کردن شناسه پیش‌نویس ذخیره‌شده
-      setSavedDraft(null);
-
-
-      // آماده‌سازی فرم برای سند جدید
-      setItems([]);
-
-      const today = getLocalDate();
-
-      setDocumentDate(today);
-
-      setDraftDocumentDate(today);
-
-      setSourcePartyName('');
-
-      setSourceInvoiceNumber('');
-
-      setReason('');
-
-      setNotes('');
-
-      nextItemId.current = 1;
-
+      resetInventoryEntryForm();
 
     } catch (error) {
 
@@ -1139,6 +1155,42 @@ function InventoryEntry() {
       setIsPosting(false);
 
     }
+
+  }
+
+  // بررسی امکان ایجاد سند جدید
+  const canStartNewDocument = Boolean(
+
+    savedDraft?.id &&
+
+    !isSaving &&
+
+    !isPosting &&
+
+    !isCheckingEntryType
+
+  );
+
+
+  // شروع سند جدید بدون حذف پیش‌نویس قبلی
+  function handleStartNewDocument() {
+
+    if (!canStartNewDocument) {
+      return;
+    }
+
+    // نگهداری شماره سند قبلی برای نمایش پیام
+    const previousDocumentNumber =
+      savedDraft.documentNumber;
+
+    // آماده‌سازی فرم جدید
+    resetInventoryEntryForm();
+
+    // اطلاع‌رسانی درباره حفظ پیش‌نویس قبلی
+    showToast(
+      'success',
+      `سند جدید آماده شد. پیش‌نویس ${previousDocumentNumber} محفوظ است.`
+    );
 
   }
 
@@ -1260,791 +1312,773 @@ function InventoryEntry() {
           isPosting
         }
       >
-      </fieldset>
 
-      {/* اطلاعات عمومی سند */}
-      <section className="entry-section">
+        {/* اطلاعات عمومی سند */}
+        <section className="entry-section">
 
-        <div className="entry-section-header">
+          <div className="entry-section-header">
 
-          <div>
-            <h2>اطلاعات سند</h2>
-            <p>اطلاعات عمومی ورود کالا به انبار</p>
-          </div>
+            <div>
+              <h2>اطلاعات سند</h2>
+              <p>اطلاعات عمومی ورود کالا به انبار</p>
+            </div>
 
-          <span className="entry-status">
-            {savedDraft
-              ? 'پیش‌نویس ذخیره‌شده'
-              : 'پیش‌نویس'}
-          </span>
-
-        </div>
-
-
-        <div className="entry-form-grid">
-
-          <FormField
-            className="ui-field"
-            label="شماره سند"
-          >
-            <input
-              type="text"
-              value="خودکار هنگام ذخیره"
-              disabled
-            />
-          </FormField>
-
-          <div className="entry-field">
-
-            <span>
-              {entryType === 'opening'
-                ? 'تاریخ مبنای موجودی'
-                : 'تاریخ ورود'}
+            <span className="entry-status">
+              {savedDraft
+                ? 'پیش‌نویس ذخیره‌شده'
+                : 'پیش‌نویس'}
             </span>
 
-
-            <div className="entry-date-picker-wrapper">
-
-              <DatePicker
-
-                // تاریخ موقت به تقویم داده می‌شود، نه تاریخ اصلی سند
-                value={persianDraftDate}
-
-                // جلوگیری از انتخاب روزهای بعد از امروز
-                maxDate={persianMaxDate}
-
-                // انتخاب روز فقط تاریخ موقت را تغییر می‌دهد
-                onChange={(selectedDate) => {
-
-                  if (!selectedDate) {
-                    return;
-                  }
-
-                  keepCalendarOpenRef.current = true;
-
-                  setDraftDocumentDate(
-                    convertToGregorianDate(selectedDate)
-                  );
-
-                }}
+          </div>
 
 
-                // مدیریت باز و بسته شدن پنجره تقویم
-                onOpen={handleDatePickerOpen}
+          <div className="entry-form-grid">
 
-                onClose={handleDatePickerClose}
+            <FormField
+              className="ui-field"
+              label="شماره سند"
+            >
+              <input
+                type="text"
+                value="خودکار هنگام ذخیره"
+                disabled
+              />
+            </FormField>
 
+            <div className="entry-field">
 
-                // دکمه‌های عملیاتی داخل خود تقویم
-                plugins={[
-                  <InventoryDatePickerActions
-                    key="inventory-date-picker-actions"
-                    position="bottom"
-                    onSelectToday={handleSelectTodayInCalendar}
-                    onConfirm={handleConfirmDate}
-                  />,
-                ]}
-
-
-                calendar={persianCalendar}
-
-                locale={persianAfghanistan}
-
-                format="DD MMMM YYYY"
-
-                calendarPosition="bottom-right"
-
-                weekStartDayIndex={0}
-
-                editable={false}
+              <span>
+                {entryType === 'opening'
+                  ? 'تاریخ مبنای موجودی'
+                  : 'تاریخ ورود'}
+              </span>
 
 
-                // نمایش تاریخ تأییدشده؛ نه تاریخ موقت
-                render={(_value, openCalendar) => (
+              <div className="entry-date-picker-wrapper">
 
-                  <input
-                    id="entry-document-date"
-                    type="text"
-                    className="entry-date-picker-input"
-                    value={formattedDocumentDate}
-                    onFocus={openCalendar}
-                    readOnly
-                    autoComplete="off"
-                    placeholder="روز، ماه و سال"
-                    aria-label="انتخاب تاریخ ورود کالا"
-                    aria-haspopup="dialog"
-                    aria-expanded={isDatePickerOpen}
-                  />
+                <DatePicker
 
-                )}
+                  // تاریخ موقت به تقویم داده می‌شود، نه تاریخ اصلی سند
+                  value={persianDraftDate}
+
+                  // جلوگیری از انتخاب روزهای بعد از امروز
+                  maxDate={persianMaxDate}
+
+                  // انتخاب روز فقط تاریخ موقت را تغییر می‌دهد
+                  onChange={(selectedDate) => {
+
+                    if (!selectedDate) {
+                      return;
+                    }
+
+                    keepCalendarOpenRef.current = true;
+
+                    setDraftDocumentDate(
+                      convertToGregorianDate(selectedDate)
+                    );
+
+                  }}
 
 
-                containerClassName="entry-date-picker-container"
+                  // مدیریت باز و بسته شدن پنجره تقویم
+                  onOpen={handleDatePickerOpen}
 
+                  onClose={handleDatePickerClose}
+
+
+                  // دکمه‌های عملیاتی داخل خود تقویم
+                  plugins={[
+                    <InventoryDatePickerActions
+                      key="inventory-date-picker-actions"
+                      position="bottom"
+                      onSelectToday={handleSelectTodayInCalendar}
+                      onConfirm={handleConfirmDate}
+                    />,
+                  ]}
+
+
+                  calendar={persianCalendar}
+
+                  locale={persianAfghanistan}
+
+                  format="DD MMMM YYYY"
+
+                  calendarPosition="bottom-right"
+
+                  weekStartDayIndex={0}
+
+                  editable={false}
+
+
+                  // نمایش تاریخ تأییدشده؛ نه تاریخ موقت
+                  render={(_value, openCalendar) => (
+
+                    <input
+                      id="entry-document-date"
+                      type="text"
+                      className="entry-date-picker-input"
+                      value={formattedDocumentDate}
+                      onFocus={openCalendar}
+                      readOnly
+                      autoComplete="off"
+                      placeholder="روز، ماه و سال"
+                      aria-label="انتخاب تاریخ ورود کالا"
+                      aria-haspopup="dialog"
+                      aria-expanded={isDatePickerOpen}
+                    />
+
+                  )}
+
+
+                  containerClassName="entry-date-picker-container"
+
+                />
+
+              </div>
+
+            </div>
+
+
+            <div className="entry-field entry-field-full">
+
+              <span id="entry-type-label">نوع ورود کالا</span>
+
+              <KeyboardSelect
+                id="entry-type-select"
+                value={entryType}
+                options={INVENTORY_ENTRY_TYPE_OPTIONS}
+                onChange={handleEntryTypeChange}
+                labelledBy="entry-type-label"
               />
 
+            </div>
+          </div>
+
+        </section >
+
+
+        {/* اطلاعات منبع ورود */}
+        <section className="entry-section">
+
+          <div className="entry-section-header">
+
+            <div>
+              <h2>اطلاعات منبع ورود</h2>
+              <p>
+                اطلاعات تکمیلی درباره منشأ کالاهای ورودی
+              </p>
             </div>
 
           </div>
 
 
-          <div className="entry-field entry-field-full">
+          <div className="entry-form-grid">
 
-            <span id="entry-type-label">نوع ورود کالا</span>
+            {(entryType === 'purchase' ||
+              entryType === 'sales-return') && (
 
-            <KeyboardSelect
-              id="entry-type-select"
-              value={entryType}
-              options={INVENTORY_ENTRY_TYPE_OPTIONS}
-              onChange={handleEntryTypeChange}
-              labelledBy="entry-type-label"
-            />
-
-          </div>
-        </div>
-
-      </section >
-
-
-      {/* اطلاعات منبع ورود */}
-      <section className="entry-section">
-
-        <div className="entry-section-header">
-
-          <div>
-            <h2>اطلاعات منبع ورود</h2>
-            <p>
-              اطلاعات تکمیلی درباره منشأ کالاهای ورودی
-            </p>
-          </div>
-
-        </div>
-
-
-        <div className="entry-form-grid">
-
-          {(entryType === 'purchase' ||
-            entryType === 'sales-return') && (
-
-              <>
-                <FormField
-                  className="ui-field"
-                  label={
-                    entryType === 'purchase'
-                      ? 'تأمین‌کننده'
-                      : 'مشتری'
-                  }
-                >
-                  <input
-                    type="text"
-                    value={sourcePartyName}
-                    onChange={(event) =>
-                      setSourcePartyName(event.target.value)
-                    }
-                    placeholder={
+                <>
+                  <FormField
+                    className="ui-field"
+                    label={
                       entryType === 'purchase'
-                        ? 'نام تأمین‌کننده...'
-                        : 'نام مشتری...'
+                        ? 'تأمین‌کننده'
+                        : 'مشتری'
                     }
-                  />
-                </FormField>
+                  >
+                    <input
+                      type="text"
+                      value={sourcePartyName}
+                      onChange={(event) =>
+                        setSourcePartyName(event.target.value)
+                      }
+                      placeholder={
+                        entryType === 'purchase'
+                          ? 'نام تأمین‌کننده...'
+                          : 'نام مشتری...'
+                      }
+                    />
+                  </FormField>
 
 
-                <FormField
-                  className="ui-field"
-                  label={
-                    entryType === 'purchase'
-                      ? 'شماره فاکتور خرید'
-                      : 'شماره فاکتور فروش'
+                  <FormField
+                    className="ui-field"
+                    label={
+                      entryType === 'purchase'
+                        ? 'شماره فاکتور خرید'
+                        : 'شماره فاکتور فروش'
+                    }
+                  >
+                    <input
+                      type="text"
+                      value={sourceInvoiceNumber}
+                      onChange={(event) =>
+                        setSourceInvoiceNumber(event.target.value)
+                      }
+                      placeholder="شماره فاکتور (اختیاری)"
+                    />
+                  </FormField>
+
+                </>
+
+              )}
+
+
+            {entryType === 'other' && (
+
+              <FormField
+                className="ui-field entry-field-full"
+                label="علت ورود کالا"
+              >
+                <input
+                  type="text"
+                  value={reason}
+                  onChange={(event) =>
+                    setReason(event.target.value)
                   }
-                >
-                  <input
-                    type="text"
-                    value={sourceInvoiceNumber}
-                    onChange={(event) =>
-                      setSourceInvoiceNumber(event.target.value)
-                    }
-                    placeholder="شماره فاکتور (اختیاری)"
-                  />
-                </FormField>
-
-              </>
+                  placeholder="علت ورود کالا را بنویس..."
+                />
+              </FormField>
 
             )}
 
-
-          {entryType === 'other' && (
-
-            <FormField
-              className="ui-field entry-field-full"
-              label="علت ورود کالا"
-            >
-              <input
-                type="text"
-                value={reason}
-                onChange={(event) =>
-                  setReason(event.target.value)
-                }
-                placeholder="علت ورود کالا را بنویس..."
-              />
-            </FormField>
-
-          )}
-
-        </div>
-
-      </section >
-
-
-      {/* جدول اقلام ورودی */}
-      <section className="entry-section">
-
-        <div className="entry-section-header">
-
-          <div>
-            <h2>اقلام ورودی</h2>
-            <p>
-              کالاها، واحدها، مقادیر و قیمت‌های ورود به انبار
-            </p>
           </div>
 
-
-          <div className="entry-items-header-actions">
-
-            <span className="entry-item-count">
-              {formatNumber(
-                items.length,
-                INVENTORY_NUMBER_OPTIONS
-              )} ردیف
-            </span>
+        </section >
 
 
-            {/* دکمه افزودن کالا در بالای فهرست */}
-            <Button
-              type="button"
-              variant="secondary"
-              startIcon="＋"
-              onClick={addItemRow}
-            >
-              افزودن کالا
-            </Button>
+        {/* جدول اقلام ورودی */}
+        <section className="entry-section">
 
-          </div>
+          <div className="entry-section-header">
 
-        </div>
-
-
-        {
-          items.length === 0 ? (
-
-            <div className="entry-empty-items">
-
-              <div className="entry-empty-icon">＋</div>
-
-              <strong>
-                هنوز کالایی به سند اضافه نشده است.
-              </strong>
-
+            <div>
+              <h2>اقلام ورودی</h2>
               <p>
-                برای شروع، کالاهای موردنظر را به سند ورود اضافه کن.
+                کالاها، واحدها، مقادیر و قیمت‌های ورود به انبار
               </p>
+            </div>
 
+
+            <div className="entry-items-header-actions">
+
+              <span className="entry-item-count">
+                {formatNumber(
+                  items.length,
+                  INVENTORY_NUMBER_OPTIONS
+                )} ردیف
+              </span>
+
+
+              {/* دکمه افزودن کالا در بالای فهرست */}
               <Button
                 type="button"
-                variant="primary"
+                variant="secondary"
+                startIcon="＋"
                 onClick={addItemRow}
               >
-                افزودن اولین کالا
+                افزودن کالا
               </Button>
 
             </div>
 
-          ) : (
-
-            <>
-
-              <div className="entry-items-table-scroll">
-
-                <table className="entry-items-table">
-
-                  <thead>
-
-                    <tr>
-                      <th>ردیف</th>
-                      <th>کالا</th>
-                      <th>واحد</th>
-                      <th>مقدار ورودی</th>
-                      <th>قیمت واحد</th>
-                      <th>مبلغ ردیف</th>
-                      <th>عملیات</th>
-                    </tr>
-
-                  </thead>
+          </div>
 
 
-                  <tbody>
+          {
+            items.length === 0 ? (
 
-                    {items.map((item, index) => {
+              <div className="entry-empty-items">
 
-                      const product = getItemProduct(item);
+                <div className="entry-empty-icon">＋</div>
 
-                      const selectedUnit = getItemUnit(
-                        item,
-                        product
-                      );
+                <strong>
+                  هنوز کالایی به سند اضافه نشده است.
+                </strong>
 
-                      const baseQuantity = getBaseQuantity(
-                        item,
-                        product,
-                        selectedUnit
-                      );
+                <p>
+                  برای شروع، کالاهای موردنظر را به سند ورود اضافه کن.
+                </p>
 
-                      const lineAmount = getLineAmount(item);
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={addItemRow}
+                >
+                  افزودن اولین کالا
+                </Button>
 
-                      const currency = currencies.find(
-                        (currentCurrency) =>
-                          currentCurrency.code === item.currencyCode
-                      );
+              </div>
 
-                      const duplicateProduct = Boolean(
-                        item.productId &&
-                        items.some(
-                          (otherItem) =>
-                            otherItem.id !== item.id &&
-                            otherItem.productId === item.productId
-                        )
-                      );
+            ) : (
 
+              <>
 
-                      return (
+                <div className="entry-items-table-scroll">
 
-                        <tr key={item.id}>
+                  <table className="entry-items-table">
 
-                          {/* شماره ردیف */}
-                          <td data-label="ردیف">
-                            {formatNumber(
-                              index + 1,
-                              INVENTORY_NUMBER_OPTIONS
-                            )}
-                          </td>
+                    <thead>
 
+                      <tr>
+                        <th>ردیف</th>
+                        <th>کالا</th>
+                        <th>واحد</th>
+                        <th>مقدار ورودی</th>
+                        <th>قیمت واحد</th>
+                        <th>مبلغ ردیف</th>
+                        <th>عملیات</th>
+                      </tr>
 
-                          {/* انتخاب کالا */}
-                          <td data-label="کالا">
-
-                            <EntryProductPicker
-                              value={item.productSearch}
-                              products={activeProducts}
-                              onQueryChange={(value) =>
-                                handleProductSearch(item.id, value)
-                              }
-                              onSelect={(selectedProduct) =>
-                                handleProductSelect(
-                                  item.id,
-                                  selectedProduct
-                                )
-                              }
-                            />
+                    </thead>
 
 
-                            {duplicateProduct && (
+                    <tbody>
 
-                              <small className="entry-item-warning">
-                                این کالا در ردیف دیگری نیز ثبت شده است.
-                                این دو ردیف جداگانه محاسبه می‌شوند.
-                              </small>
+                      {items.map((item, index) => {
 
-                            )}
+                        const product = getItemProduct(item);
 
-                          </td>
+                        const selectedUnit = getItemUnit(
+                          item,
+                          product
+                        );
+
+                        const baseQuantity = getBaseQuantity(
+                          item,
+                          product,
+                          selectedUnit
+                        );
+
+                        const lineAmount = getLineAmount(item);
+
+                        const currency = currencies.find(
+                          (currentCurrency) =>
+                            currentCurrency.code === item.currencyCode
+                        );
+
+                        const duplicateProduct = Boolean(
+                          item.productId &&
+                          items.some(
+                            (otherItem) =>
+                              otherItem.id !== item.id &&
+                              otherItem.productId === item.productId
+                          )
+                        );
 
 
-                          {/* انتخاب واحد اختصاصی محصول */}
-                          <td data-label="واحد">
+                        return (
 
-                            <select
-                              value={item.productUnitId}
-                              onChange={(event) =>
-                                handleUnitChange(
-                                  item.id,
-                                  event.target.value
-                                )
-                              }
-                              disabled={!product}
-                            >
+                          <tr key={item.id}>
 
-                              {!product && (
-                                <option value="">
-                                  ابتدا کالا را انتخاب کن
-                                </option>
+                            {/* شماره ردیف */}
+                            <td data-label="ردیف">
+                              {formatNumber(
+                                index + 1,
+                                INVENTORY_NUMBER_OPTIONS
+                              )}
+                            </td>
+
+
+                            {/* انتخاب کالا */}
+                            <td data-label="کالا">
+
+                              <EntryProductPicker
+                                value={item.productSearch}
+                                products={activeProducts}
+                                onQueryChange={(value) =>
+                                  handleProductSearch(item.id, value)
+                                }
+                                onSelect={(selectedProduct) =>
+                                  handleProductSelect(
+                                    item.id,
+                                    selectedProduct
+                                  )
+                                }
+                              />
+
+
+                              {duplicateProduct && (
+
+                                <small className="entry-item-warning">
+                                  این کالا در ردیف دیگری نیز ثبت شده است.
+                                  این دو ردیف جداگانه محاسبه می‌شوند.
+                                </small>
+
                               )}
 
-                              {product?.productUnits.map((unit) => (
-
-                                <option
-                                  key={unit.productUnitId}
-                                  value={unit.productUnitId}
-                                >
-
-                                  {unit.name}
-                                  {' ('}
-                                  {unit.symbol}
-                                  {')'}
-
-                                  {unit.isBaseUnit
-                                    ? ' - واحد اصلی'
-                                    : ''}
-
-                                </option>
-
-                              ))}
-
-                            </select>
+                            </td>
 
 
-                            {selectedUnit && !selectedUnit.isBaseUnit && (
+                            {/* انتخاب واحد اختصاصی محصول */}
+                            <td data-label="واحد">
 
-                              <small className="entry-unit-hint">
-
-                                هر ۱ {selectedUnit.name}
-                                {' = '}
-                                {formatNumber(
-                                  selectedUnit.conversionNum /
-                                  selectedUnit.conversionDen,
-                                  {
-                                    ...INVENTORY_NUMBER_OPTIONS,
-                                    maximumFractionDigits: 6,
-                                  }
-                                )}
-                                {' '}
-                                {product.baseUnitName}
-
-                              </small>
-
-                            )}
-
-                          </td>
-
-
-                          {/* مقدار ورودی */}
-                          <td data-label="مقدار ورودی">
-
-                            <input
-                              type="number"
-                              min="0"
-                              step={
-                                selectedUnit
-                                  ? String(
-                                    1 / (
-                                      10 ** selectedUnit.inputDecimalPlaces
-                                    )
+                              <select
+                                value={item.productUnitId}
+                                onChange={(event) =>
+                                  handleUnitChange(
+                                    item.id,
+                                    event.target.value
                                   )
-                                  : '1'
-                              }
-                              value={item.quantity}
-                              onChange={(event) =>
-                                updateItem(item.id, {
-                                  quantity: event.target.value,
-                                })
-                              }
-                              disabled={!selectedUnit}
-                              placeholder="مقدار"
-                              className="entry-number-input"
-                            />
+                                }
+                                disabled={!product}
+                              >
+
+                                {!product && (
+                                  <option value="">
+                                    ابتدا کالا را انتخاب کن
+                                  </option>
+                                )}
+
+                                {product?.productUnits.map((unit) => (
+
+                                  <option
+                                    key={unit.productUnitId}
+                                    value={unit.productUnitId}
+                                  >
+
+                                    {unit.name}
+                                    {' ('}
+                                    {unit.symbol}
+                                    {')'}
+
+                                    {unit.isBaseUnit
+                                      ? ' - واحد اصلی'
+                                      : ''}
+
+                                  </option>
+
+                                ))}
+
+                              </select>
 
 
-                            {baseQuantity !== null &&
-                              selectedUnit &&
-                              !selectedUnit.isBaseUnit && (
+                              {selectedUnit && !selectedUnit.isBaseUnit && (
 
                                 <small className="entry-unit-hint">
 
-                                  معادل پایه:
-                                  {' '}
+                                  هر ۱ {selectedUnit.name}
+                                  {' = '}
                                   {formatNumber(
-                                    baseQuantity,
+                                    selectedUnit.conversionNum /
+                                    selectedUnit.conversionDen,
                                     {
                                       ...INVENTORY_NUMBER_OPTIONS,
-                                      maximumFractionDigits:
-                                        product.baseQuantityDecimalPlaces ?? 2,
+                                      maximumFractionDigits: 6,
                                     }
                                   )}
                                   {' '}
-                                  {product.baseUnitSymbol}
+                                  {product.baseUnitName}
 
                                 </small>
 
                               )}
 
-                          </td>
+                            </td>
 
 
-                          {/* قیمت واحد و ارز */}
-                          <td data-label="قیمت واحد">
+                            {/* مقدار ورودی */}
+                            <td data-label="مقدار ورودی">
 
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.000001"
-                              value={item.unitPrice}
-                              onChange={(event) =>
-                                updateItem(item.id, {
-                                  unitPrice: event.target.value,
-                                })
-                              }
-                              disabled={!selectedUnit}
-                              placeholder="قیمت واحد"
-                              className="entry-number-input"
-                            />
-
-
-                            <select
-                              value={item.currencyCode}
-                              onChange={(event) =>
-                                updateItem(item.id, {
-                                  currencyCode: event.target.value,
-                                })
-                              }
-                              disabled={!selectedUnit}
-                              aria-label="ارز قیمت واحد"
-                            >
-
-                              {currencies.map((currencyOption) => (
-
-                                <option
-                                  key={currencyOption.code}
-                                  value={currencyOption.code}
-                                >
-
-                                  {currencyOption.code}
-                                  {' - '}
-                                  {currencyOption.name}
-
-                                </option>
-
-                              ))}
-
-                            </select>
+                              <input
+                                type="number"
+                                min="0"
+                                step={
+                                  selectedUnit
+                                    ? String(
+                                      1 / (
+                                        10 ** selectedUnit.inputDecimalPlaces
+                                      )
+                                    )
+                                    : '1'
+                                }
+                                value={item.quantity}
+                                onChange={(event) =>
+                                  updateItem(item.id, {
+                                    quantity: event.target.value,
+                                  })
+                                }
+                                disabled={!selectedUnit}
+                                placeholder="مقدار"
+                                className="entry-number-input"
+                              />
 
 
-                            {selectedUnit && (
+                              {baseQuantity !== null &&
+                                selectedUnit &&
+                                !selectedUnit.isBaseUnit && (
 
-                              <small className="entry-unit-hint">
-                                قیمت به ازای هر {selectedUnit.name}
-                              </small>
+                                  <small className="entry-unit-hint">
 
-                            )}
+                                    معادل پایه:
+                                    {' '}
+                                    {formatNumber(
+                                      baseQuantity,
+                                      {
+                                        ...INVENTORY_NUMBER_OPTIONS,
+                                        maximumFractionDigits:
+                                          product.baseQuantityDecimalPlaces ?? 2,
+                                      }
+                                    )}
+                                    {' '}
+                                    {product.baseUnitSymbol}
 
-                          </td>
+                                  </small>
 
+                                )}
 
-                          {/* مبلغ ردیف */}
-                          <td data-label="مبلغ ردیف">
-
-                            <strong className="entry-line-amount">
-
-                              {lineAmount !== null
-                                ? formatCurrency(lineAmount, currency)
-                                : '—'}
-
-                            </strong>
-
-                          </td>
-
-
-                          {/* حذف ردیف */}
-                          <td data-label="عملیات">
-
-                            <Button
-                              type="button"
-                              variant="danger"
-                              size="small"
-                              iconOnly
-                              className="entry-remove-item-button"
-                              onClick={() => removeItemRow(item.id)}
-                              title="حذف این ردیف"
-                              aria-label={`حذف ردیف $DIL3`}
-                            >
-                              ×
-                            </Button>
-
-                          </td>
-
-                        </tr>
-
-                      );
-
-                    })}
-
-                  </tbody>
-
-                </table>
-
-              </div>
+                            </td>
 
 
-              {/* دکمه دوم افزودن کالا در انتهای فهرست */}
-              <div className="entry-add-item-footer">
+                            {/* قیمت واحد و ارز */}
+                            <td data-label="قیمت واحد">
 
-                <p>
-                  برای افزودن ردیف دیگری، از دکمه زیر استفاده کن.
-                </p>
-
-                <Button
-                  type="button"
-                  variant="secondary"
-                  startIcon="＋"
-                  onClick={addItemRow}
-                >
-                  افزودن کالای دیگر
-                </Button>
-
-              </div>
-
-            </>
-
-          )
-        }
-
-      </section >
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.000001"
+                                value={item.unitPrice}
+                                onChange={(event) =>
+                                  updateItem(item.id, {
+                                    unitPrice: event.target.value,
+                                  })
+                                }
+                                disabled={!selectedUnit}
+                                placeholder="قیمت واحد"
+                                className="entry-number-input"
+                              />
 
 
-      {/* خلاصه سند */}
-      <section className="entry-section">
+                              <select
+                                value={item.currencyCode}
+                                onChange={(event) =>
+                                  updateItem(item.id, {
+                                    currencyCode: event.target.value,
+                                  })
+                                }
+                                disabled={!selectedUnit}
+                                aria-label="ارز قیمت واحد"
+                              >
 
-        <div className="entry-section-header">
+                                {currencies.map((currencyOption) => (
 
-          <div>
-            <h2>خلاصه سند</h2>
-            <p>
-              تعداد ردیف‌ها و مجموع مبالغ به تفکیک ارز
-            </p>
+                                  <option
+                                    key={currencyOption.code}
+                                    value={currencyOption.code}
+                                  >
+
+                                    {currencyOption.code}
+                                    {' - '}
+                                    {currencyOption.name}
+
+                                  </option>
+
+                                ))}
+
+                              </select>
+
+
+                              {selectedUnit && (
+
+                                <small className="entry-unit-hint">
+                                  قیمت به ازای هر {selectedUnit.name}
+                                </small>
+
+                              )}
+
+                            </td>
+
+
+                            {/* مبلغ ردیف */}
+                            <td data-label="مبلغ ردیف">
+
+                              <strong className="entry-line-amount">
+
+                                {lineAmount !== null
+                                  ? formatCurrency(lineAmount, currency)
+                                  : '—'}
+
+                              </strong>
+
+                            </td>
+
+
+                            {/* حذف ردیف */}
+                            <td data-label="عملیات">
+
+                              <Button
+                                type="button"
+                                variant="danger"
+                                size="small"
+                                iconOnly
+                                className="entry-remove-item-button"
+                                onClick={() => removeItemRow(item.id)}
+                                title="حذف این ردیف"
+                                aria-label={`حذف ردیف $DIL3`}
+                              >
+                                ×
+                              </Button>
+
+                            </td>
+
+                          </tr>
+
+                        );
+
+                      })}
+
+                    </tbody>
+
+                  </table>
+
+                </div>
+
+
+                {/* دکمه دوم افزودن کالا در انتهای فهرست */}
+                <div className="entry-add-item-footer">
+
+                  <p>
+                    برای افزودن ردیف دیگری، از دکمه زیر استفاده کن.
+                  </p>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    startIcon="＋"
+                    onClick={addItemRow}
+                  >
+                    افزودن کالای دیگر
+                  </Button>
+
+                </div>
+
+              </>
+
+            )
+          }
+
+        </section >
+
+
+        {/* خلاصه سند */}
+        <section className="entry-section">
+
+          <div className="entry-section-header">
+
+            <div>
+              <h2>خلاصه سند</h2>
+              <p>
+                تعداد ردیف‌ها و مجموع مبالغ به تفکیک ارز
+              </p>
+            </div>
+
           </div>
 
-        </div>
 
-
-        <div className="entry-summary">
-
-          <div className="entry-summary-item">
-
-            <span>تعداد ردیف کالا</span>
-
-            <strong>
-              {formatNumber(
-                items.length,
-                INVENTORY_NUMBER_OPTIONS
-              )}
-            </strong>
-
-          </div>
-
-
-          {totalsByCurrency.length > 0 ? (
-
-            totalsByCurrency.map((total) => (
-
-              <div
-                className="entry-summary-item"
-                key={total.currencyCode}
-              >
-
-                <span>
-                  مبلغ کل به {total.currency?.name || total.currencyCode}
-                </span>
-
-                <strong>
-                  {formatCurrency(
-                    total.total,
-                    total.currency
-                  )}
-                </strong>
-
-              </div>
-
-            ))
-
-          ) : (
+          <div className="entry-summary">
 
             <div className="entry-summary-item">
 
-              <span>مبلغ کل سند</span>
+              <span>تعداد ردیف کالا</span>
 
-              <strong>—</strong>
+              <strong>
+                {formatNumber(
+                  items.length,
+                  INVENTORY_NUMBER_OPTIONS
+                )}
+              </strong>
 
             </div>
 
-          )}
 
-        </div>
+            {totalsByCurrency.length > 0 ? (
 
+              totalsByCurrency.map((total) => (
 
-        {
-          !allItemsComplete && items.length > 0 && (
+                <div
+                  className="entry-summary-item"
+                  key={total.currencyCode}
+                >
 
-            <p className="entry-summary-note">
+                  <span>
+                    مبلغ کل به {total.currency?.name || total.currencyCode}
+                  </span>
 
-              برای محاسبه مبلغ کل و ذخیره سند، کالا، واحد، مقدار،
-              قیمت و ارز تمام ردیف‌ها باید تکمیل شوند.
+                  <strong>
+                    {formatCurrency(
+                      total.total,
+                      total.currency
+                    )}
+                  </strong>
 
-            </p>
+                </div>
 
-          )
-        }
+              ))
 
-      </section >
+            ) : (
 
-      {/* توضیحات تکمیلی سند */}
-      <section className="entry-section">
+              <div className="entry-summary-item">
 
-        <div className="entry-section-header">
+                <span>مبلغ کل سند</span>
 
-          <div>
-            <h2>توضیحات</h2>
-            <p>اطلاعات تکمیلی این سند</p>
+                <strong>—</strong>
+
+              </div>
+
+            )}
+
           </div>
 
-        </div>
+
+          {
+            !allItemsComplete && items.length > 0 && (
+
+              <p className="entry-summary-note">
+
+                برای محاسبه مبلغ کل و ذخیره سند، کالا، واحد، مقدار،
+                قیمت و ارز تمام ردیف‌ها باید تکمیل شوند.
+
+              </p>
+
+            )
+          }
+
+        </section >
+
+        {/* توضیحات تکمیلی سند */}
+        <section className="entry-section">
+
+          <div className="entry-section-header">
+
+            <div>
+              <h2>توضیحات</h2>
+              <p>اطلاعات تکمیلی این سند</p>
+            </div>
+
+          </div>
 
 
-        <FormField
-          className="entry-field"
-          label="یادداشت"
-        >
-          <textarea
-            rows={3}
-            value={notes}
-            onChange={(event) =>
-              setNotes(event.target.value)
-            }
-            placeholder="توضیحات اختیاری درباره این سند..."
-          />
-        </FormField>
+          <FormField
+            className="entry-field"
+            label="یادداشت"
+          >
+            <textarea
+              rows={3}
+              value={notes}
+              onChange={(event) =>
+                setNotes(event.target.value)
+              }
+              placeholder="توضیحات اختیاری درباره این سند..."
+            />
+          </FormField>
 
-      </section>
+        </section>
 
+      </fieldset>
       {/* عملیات پیش‌نویس و ثبت نهایی */}
       <section className="entry-section">
 
         <div className="entry-form-actions">
-
-          <Button
-            type="button"
-            variant="primary"
-            loading={isPosting}
-            onClick={handlePostDocument}
-            disabled={!canPostDocument}
-            title={
-              !savedDraft
-                ? 'ابتدا پیش‌نویس سند را ذخیره کن.'
-                : undefined
-            }
-          >
-            {isPosting
-              ? 'در حال ثبت نهایی...'
-              : 'ثبت نهایی سند'}
-          </Button>
-
 
           <Button
             type="button"
@@ -2056,6 +2090,27 @@ function InventoryEntry() {
             {isSaving
               ? 'در حال ذخیره...'
               : 'ذخیره پیش‌نویس'}
+          </Button>
+
+          <Button
+            type="button"
+            variant="primary"
+            loading={isPosting}
+            onClick={handlePostDocument}
+            disabled={!canPostDocument}
+          >
+            {isPosting
+              ? 'در حال ثبت نهایی...'
+              : 'ثبت نهایی سند'}
+          </Button>
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleStartNewDocument}
+            disabled={!canStartNewDocument}
+          >
+            ایجاد سند جدید
           </Button>
 
         </div>
