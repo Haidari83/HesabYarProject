@@ -1545,8 +1545,648 @@ function createSalesDraft(
 
 }
 
+// ثبت نهایی فاکتور فروش و تخصیص بهای تمام‌شده FIFO
+function postSalesDocument(
+  database,
+  actor,
+  documentId
+) {
 
+  // اعتبارسنجی شناسه فاکتور
+  if (
+    typeof documentId !== 'string' ||
+    !documentId.trim() ||
+    documentId.trim().length > 100
+  ) {
+    throw new Error('شناسه فاکتور فروش معتبر نیست.');
+  }
+
+
+  const normalizedDocumentId = documentId.trim();
+
+  const postedAt = new Date().toISOString();
+
+
+  // تمام عملیات ثبت نهایی باید در یک تراکنش انجام شوند.
+  database.exec('BEGIN IMMEDIATE');
+
+
+  try {
+
+    // دریافت اطلاعات فاکتور
+    const document = database.prepare(`
+      SELECT
+        id,
+        document_number,
+        document_type,
+        document_date,
+        status,
+        source_party_name
+      FROM inventory_documents
+      WHERE id = ?
+      LIMIT 1
+    `).get(normalizedDocumentId);
+
+
+    if (!document) {
+      throw new Error('فاکتور فروش موردنظر پیدا نشد.');
+    }
+
+
+    // فقط سند فروش از این سرویس قابل ثبت نهایی است.
+    if (document.document_type !== 'sale') {
+      throw new Error(
+        'سند انتخاب‌شده فاکتور فروش نیست.'
+      );
+    }
+
+
+    // بررسی مجوز مستقل ثبت نهایی فروش
+    assertPermission(
+      database,
+      actor,
+      'sales.documents.post'
+    );
+
+
+    // فقط پیش‌نویس قابل ثبت نهایی است.
+    if (document.status !== 'draft') {
+      throw new Error(
+        'این فاکتور پیش‌نویس نیست یا قبلاً ثبت نهایی شده است.'
+      );
+    }
+
+
+    // اعتبارسنجی تاریخ فاکتور
+    const documentDate = validateSalesDate(
+      document.document_date
+    );
+
+
+    // زمان گردش بر اساس تاریخ فاکتور تعیین می‌شود.
+    const movementAt =
+      `${documentDate}T00:00:00.000Z`;
+
+
+    // دریافت ردیف‌های فاکتور
+    const items = database.prepare(`
+      SELECT
+        id,
+        line_number,
+        product_id,
+        product_name_snapshot,
+        base_quantity_scaled
+      FROM inventory_document_items
+      WHERE document_id = ?
+      ORDER BY line_number ASC
+    `).all(normalizedDocumentId);
+
+
+    if (!items.length) {
+      throw new Error(
+        'فاکتور بدون ردیف کالا قابل ثبت نهایی نیست.'
+      );
+    }
+
+
+    // کنترل سلامت مقادیر و گروه‌بندی مقدار موردنیاز هر کالا
+    const requiredByProduct = new Map();
+
+
+    for (const item of items) {
+
+      if (
+        !Number.isSafeInteger(item.base_quantity_scaled) ||
+        item.base_quantity_scaled <= 0
+      ) {
+        throw new Error(
+          `مقدار کالای «${item.product_name_snapshot}» معتبر نیست.`
+        );
+      }
+
+
+      const current = requiredByProduct.get(
+        item.product_id
+      ) || {
+        productName: item.product_name_snapshot,
+        quantityScaled: 0n,
+      };
+
+
+      current.quantityScaled += BigInt(
+        item.base_quantity_scaled
+      );
+
+
+      requiredByProduct.set(
+        item.product_id,
+        current
+      );
+
+    }
+
+
+    // جلوگیری از تغییر ترتیب FIFO اسناد خروجی قبلی
+    const findLaterOutboundMovement = database.prepare(`
+      SELECT
+        document.document_number,
+        document.document_date
+
+      FROM inventory_movements AS movement
+
+      JOIN inventory_documents AS document
+        ON document.id = movement.document_id
+
+      WHERE movement.product_id = ?
+        AND movement.movement_direction = 'out'
+        AND document.status = 'posted'
+        AND date(movement.movement_at) > date(?)
+
+      ORDER BY
+        date(movement.movement_at) ASC,
+        movement.created_at ASC
+
+      LIMIT 1
+    `);
+
+
+    // دریافت لایه‌های باقی‌مانده FIFO تا تاریخ فاکتور
+    const findAvailableLayers = database.prepare(`
+      SELECT
+        id,
+        product_id,
+        received_at,
+        created_at,
+        unit_cost_scaled,
+        valuation_currency_code,
+        remaining_quantity_base_scaled
+
+      FROM inventory_cost_layer_balances
+
+      WHERE product_id = ?
+        AND date(received_at) <= date(?)
+        AND remaining_quantity_base_scaled > 0
+
+      ORDER BY
+        received_at ASC,
+        created_at ASC,
+        id ASC
+    `);
+
+
+    // آماده‌سازی مانده لایه‌های FIFO برای تمام کالاها
+    const layersByProduct = new Map();
+
+
+    for (const [productId, required] of requiredByProduct) {
+
+      // اگر فروش جدید تاریخ قدیمی‌تری از خروج ثبت‌شده داشته باشد،
+      // تخصیص‌های قبلی FIFO نیازمند محاسبه مجدد خواهند بود.
+      const laterOutbound = findLaterOutboundMovement.get(
+        productId,
+        documentDate
+      );
+
+
+      if (laterOutbound) {
+        throw new Error(
+          `برای کالای «${required.productName}»، فاکتور خروجی ` +
+          `${laterOutbound.document_number} در تاریخ ` +
+          `${laterOutbound.document_date} قبلاً ثبت نهایی شده است. ` +
+          'برای حفظ ترتیب FIFO، ثبت فروش با تاریخ قدیمی‌تر مجاز نیست.'
+        );
+      }
+
+
+      const layerRows = findAvailableLayers.all(
+        productId,
+        documentDate
+      );
+
+
+      // تبدیل مقدار باقی‌مانده هر لایه به BigInt
+      const layers = layerRows.map((layer) => {
+
+        const remainingQuantity = Number(
+          layer.remaining_quantity_base_scaled
+        );
+
+        const unitCostScaled = Number(
+          layer.unit_cost_scaled
+        );
+
+
+        if (
+          !Number.isSafeInteger(remainingQuantity) ||
+          remainingQuantity <= 0
+        ) {
+          throw new Error(
+            `مانده لایه FIFO کالای «${required.productName}» معتبر نیست.`
+          );
+        }
+
+
+        if (
+          !Number.isSafeInteger(unitCostScaled) ||
+          unitCostScaled < 0
+        ) {
+          throw new Error(
+            `بهای تمام‌شده لایه FIFO کالای «${required.productName}» معتبر نیست.`
+          );
+        }
+
+
+        if (
+          typeof layer.valuation_currency_code !== 'string' ||
+          !layer.valuation_currency_code.trim()
+        ) {
+          throw new Error(
+            `ارز ارزش‌گذاری لایه FIFO کالای «${required.productName}» مشخص نیست.`
+          );
+        }
+
+
+        return {
+          id: layer.id,
+          productId: layer.product_id,
+          receivedAt: layer.received_at,
+          createdAt: layer.created_at,
+          unitCostScaled,
+          valuationCurrencyCode: layer.valuation_currency_code,
+          remainingQuantity: BigInt(remainingQuantity),
+        };
+
+      });
+
+
+      // محاسبه موجودی قابل مصرف تا تاریخ فاکتور
+      const availableQuantity = layers.reduce(
+        (total, layer) =>
+          total + layer.remainingQuantity,
+        0n
+      );
+
+
+      if (availableQuantity < required.quantityScaled) {
+        const available = Number(
+          availableQuantity
+        ) / 1_000_000;
+
+        const requested = Number(
+          required.quantityScaled
+        ) / 1_000_000;
+
+        throw new Error(
+          `موجودی قابل فروش کالای «${required.productName}» کافی نیست. ` +
+          `موجودی قابل استفاده تا تاریخ فاکتور: ${available}، ` +
+          `مقدار درخواستی: ${requested} واحد پایه.`
+        );
+      }
+
+
+      layersByProduct.set(
+        productId,
+        layers
+      );
+
+    }
+
+
+    // آماده‌سازی تخصیص FIFO برای تک‌تک ردیف‌های فاکتور
+    // ترتیب ردیف‌ها حفظ می‌شود تا مصرف لایه‌ها قابل پیش‌بینی باشد.
+    const allocationsByItem = new Map();
+
+
+    const totalCostByCurrency = new Map();
+
+
+    for (const item of items) {
+
+      let remainingToAllocate = BigInt(
+        item.base_quantity_scaled
+      );
+
+
+      const productLayers = layersByProduct.get(
+        item.product_id
+      );
+
+
+      const itemAllocations = [];
+
+
+      // مصرف لایه‌های قدیمی‌تر پیش از لایه‌های جدیدتر
+      for (const layer of productLayers) {
+
+        if (remainingToAllocate <= 0n) {
+          break;
+        }
+
+
+        if (layer.remainingQuantity <= 0n) {
+          continue;
+        }
+
+
+        // مقدار قابل مصرف از لایه جاری
+        const allocatedQuantity =
+          remainingToAllocate < layer.remainingQuantity
+            ? remainingToAllocate
+            : layer.remainingQuantity;
+
+
+        // محاسبه بهای کل تخصیص با مقیاس یک میلیون
+        const allocatedCostScaled =
+          (
+            allocatedQuantity *
+            BigInt(layer.unitCostScaled) +
+            VALUE_SCALE / 2n
+          ) / VALUE_SCALE;
+
+
+        if (
+          allocatedCostScaled < 0n ||
+          allocatedCostScaled > BigInt(Number.MAX_SAFE_INTEGER)
+        ) {
+          throw new Error(
+            `بهای تخصیص FIFO کالای «${item.product_name_snapshot}» خارج از محدوده مجاز است.`
+          );
+        }
+
+
+        // کنترل محدوده مقدار تخصیص
+        if (
+          allocatedQuantity <= 0n ||
+          allocatedQuantity > BigInt(Number.MAX_SAFE_INTEGER)
+        ) {
+          throw new Error(
+            'مقدار تخصیص FIFO خارج از محدوده مجاز است.'
+          );
+        }
+
+
+        const allocation = {
+
+          itemId: item.id,
+
+          productId: item.product_id,
+
+          costLayerId: layer.id,
+
+          allocatedQuantityBaseScaled:
+            Number(allocatedQuantity),
+
+          unitCostScaled:
+            layer.unitCostScaled,
+
+          allocatedCostScaled:
+            Number(allocatedCostScaled),
+
+          valuationCurrencyCode:
+            layer.valuationCurrencyCode,
+
+        };
+
+
+        itemAllocations.push(allocation);
+
+
+        // کاهش مانده موقت لایه برای تخصیص ردیف‌های بعدی
+        layer.remainingQuantity -= allocatedQuantity;
+
+        remainingToAllocate -= allocatedQuantity;
+
+
+        // جمع بهای تمام‌شده به تفکیک ارز
+        const currencyTotal =
+          totalCostByCurrency.get(
+            layer.valuationCurrencyCode
+          ) || 0n;
+
+
+        totalCostByCurrency.set(
+          layer.valuationCurrencyCode,
+          currencyTotal + allocatedCostScaled
+        );
+
+      }
+
+
+      // بررسی نهایی تخصیص کامل ردیف
+      if (remainingToAllocate !== 0n) {
+        throw new Error(
+          `تخصیص کامل موجودی کالا برای ردیف ${item.line_number} انجام نشد.`
+        );
+      }
+
+
+      allocationsByItem.set(
+        item.id,
+        itemAllocations
+      );
+
+    }
+
+
+    // انتقال وضعیت فاکتور به ثبت نهایی‌شده
+    // Trigger پایگاه داده پیش از ایجاد گردش، سند را ثبت‌شده می‌خواهد.
+    const updateDocument = database.prepare(`
+      UPDATE inventory_documents
+
+      SET
+        status = 'posted',
+        posted_at = ?,
+        posted_by_user_id = ?
+
+      WHERE id = ?
+        AND status = 'draft'
+    `).run(
+      postedAt,
+      actor.id,
+      normalizedDocumentId
+    );
+
+
+    if (updateDocument.changes !== 1) {
+      throw new Error(
+        'ثبت نهایی فاکتور فروش انجام نشد.'
+      );
+    }
+
+
+    // ایجاد گردش خروجی برای ردیف‌های فروش
+    const insertMovement = database.prepare(`
+      INSERT INTO inventory_movements (
+        id,
+        document_id,
+        document_item_id,
+        product_id,
+        movement_direction,
+        base_quantity_scaled,
+        movement_at,
+        created_at,
+        created_by_user_id
+      )
+
+      VALUES (?, ?, ?, ?, 'out', ?, ?, ?, ?)
+    `);
+
+
+    // ایجاد تخصیص بهای تمام‌شده از لایه‌های FIFO
+    const insertAllocation = database.prepare(`
+      INSERT INTO inventory_fifo_allocations (
+        id,
+        outbound_movement_id,
+        cost_layer_id,
+        product_id,
+        allocated_quantity_base_scaled,
+        unit_cost_scaled,
+        allocated_cost_scaled,
+        valuation_currency_code,
+        created_at,
+        created_by_user_id
+      )
+
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+
+    // ثبت گردش و تخصیص‌های FIFO هر ردیف
+    for (const item of items) {
+
+      const movementId = crypto.randomUUID();
+
+
+      // ایجاد گردش خروجی کالا
+      insertMovement.run(
+        movementId,
+        normalizedDocumentId,
+        item.id,
+        item.product_id,
+        item.base_quantity_scaled,
+        movementAt,
+        postedAt,
+        actor.id
+      );
+
+
+      // ثبت تخصیص‌های FIFO همان ردیف
+      const allocations = allocationsByItem.get(item.id) || [];
+
+
+      for (const allocation of allocations) {
+
+        insertAllocation.run(
+          crypto.randomUUID(),
+          movementId,
+          allocation.costLayerId,
+          allocation.productId,
+          allocation.allocatedQuantityBaseScaled,
+          allocation.unitCostScaled,
+          allocation.allocatedCostScaled,
+          allocation.valuationCurrencyCode,
+          postedAt,
+          actor.id
+        );
+
+      }
+
+    }
+
+
+    // تبدیل جمع بهای تمام‌شده به ساختار قابل بازگشت
+    const costSummary = Array.from(
+      totalCostByCurrency.entries()
+    ).map(([currencyCode, totalScaled]) => {
+
+      if (
+        totalScaled < 0n ||
+        totalScaled > BigInt(Number.MAX_SAFE_INTEGER)
+      ) {
+        throw new Error(
+          `جمع بهای تمام‌شده با ارز ${currencyCode} خارج از محدوده مجاز است.`
+        );
+      }
+
+
+      return {
+        currencyCode,
+        totalCostScaled: Number(totalScaled),
+        totalCost: Number(totalScaled) / Number(VALUE_SCALE),
+      };
+
+    });
+
+
+    // ثبت فعالیت کاربر
+    writeSalesAudit(
+      database,
+      actor,
+      'sales.document.posted',
+      normalizedDocumentId,
+      {
+        documentNumber: document.document_number,
+        documentDate,
+        customerName: document.source_party_name,
+        itemCount: items.length,
+        totalCostByCurrency: costSummary,
+        allocationCount: Array.from(
+          allocationsByItem.values()
+        ).reduce(
+          (total, allocations) =>
+            total + allocations.length,
+          0
+        ),
+      },
+      postedAt
+    );
+
+
+    // تأیید تمام عملیات
+    database.exec('COMMIT');
+
+
+    return {
+
+      id: normalizedDocumentId,
+
+      documentNumber: document.document_number,
+
+      documentType: 'sale',
+
+      documentDate,
+
+      customerName: document.source_party_name,
+
+      status: 'posted',
+
+      itemCount: items.length,
+
+      totalCostByCurrency: costSummary,
+
+      postedAt,
+
+      postedBy: actor.displayName,
+
+    };
+
+
+  } catch (error) {
+
+    // بازگرداندن همه تغییرات در صورت شکست یک بخش
+    try {
+      database.exec('ROLLBACK');
+    } catch {
+      // نادیده‌گرفتن خطای احتمالی بازگشت تراکنش
+    }
+
+    throw error;
+
+  }
+
+}
 module.exports = {
   getSalesFormOptions,
   createSalesDraft,
+  postSalesDocument,
 };

@@ -38,6 +38,7 @@ const {
 const {
   getSalesFormOptions,
   createSalesDraft,
+  postSalesDocument,
 } = salesService;
 
 const adminInput = {
@@ -608,4 +609,493 @@ describe('سرویس فروش حساب‌یار', () => {
     }
   );
 
+  it(
+    'فروش را ثبت نهایی می‌کند و بهای تمام‌شده را به ترتیب FIFO تخصیص می‌دهد',
+    () => {
+
+      // ایجاد مدیر آزمایشی
+      const setup = createInitialAdmin(
+        database,
+        adminInput
+      );
+
+      const admin = setup.user;
+
+
+      // ایجاد دسته‌بندی
+      const category = createCategory(
+        database,
+        admin,
+        {
+          name: 'کالاهای آزمون FIFO فروش',
+          description: 'آزمون تخصیص لایه‌های FIFO',
+        }
+      );
+
+
+      // استفاده از واحد پایه کیلوگرم
+      const unit = database.prepare(`
+      SELECT id
+      FROM units
+      WHERE code = ?
+        AND is_active = 1
+      LIMIT 1
+    `).get('KG');
+
+      expect(unit).toBeDefined();
+
+
+      // ایجاد کالا با قیمت خرید و فروش
+      const product = createProduct(
+        database,
+        admin,
+        {
+          name: 'کالای آزمون FIFO',
+          categoryId: category.id,
+          baseUnitId: unit.id,
+          unitOptions: [],
+
+          prices: [
+            {
+              unitId: unit.id,
+              currencyCode: 'AFN',
+              priceType: 'purchase',
+              unitPrice: '10',
+            },
+            {
+              unitId: unit.id,
+              currencyCode: 'AFN',
+              priceType: 'sale',
+              unitPrice: '65',
+            },
+          ],
+        }
+      );
+
+
+      // دریافت واحد پایه اختصاصی کالا
+      const baseProductUnit = product.units.find(
+        (item) => item.isBaseUnit
+      );
+
+      expect(baseProductUnit).toBeDefined();
+
+
+      // ثبت ورود اول: پنج واحد با بهای هر واحد ۱۰ افغانی
+      const firstEntryDraft = createInventoryEntryDraft(
+        database,
+        admin,
+        {
+          documentType: 'purchase',
+          documentDate: '2026-11-26',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '5',
+              unitPrice: '10',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      postInventoryDocument(
+        database,
+        admin,
+        firstEntryDraft.id
+      );
+
+
+      // ثبت ورود دوم: هفت واحد با بهای هر واحد ۲۰ افغانی
+      const secondEntryDraft = createInventoryEntryDraft(
+        database,
+        admin,
+        {
+          documentType: 'purchase',
+          documentDate: '2026-11-27',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '7',
+              unitPrice: '20',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      postInventoryDocument(
+        database,
+        admin,
+        secondEntryDraft.id
+      );
+
+
+      // ایجاد پیش‌نویس فروش اول: هشت واحد
+      const firstSalesDraft = createSalesDraft(
+        database,
+        admin,
+        {
+          documentDate: '2026-11-28',
+          customerName: 'مشتری اول',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '8',
+              unitPrice: '65',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      // ایجاد پیش‌نویس فروش دوم پیش از ثبت نهایی اول
+      // هر دو پیش‌نویس در زمان ایجاد، موجودی کافی مشاهده می‌کنند.
+      const secondSalesDraft = createSalesDraft(
+        database,
+        admin,
+        {
+          documentDate: '2026-11-28',
+          customerName: 'مشتری دوم',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '6',
+              unitPrice: '65',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      // ثبت نهایی فاکتور اول
+      const postedSale = postSalesDocument(
+        database,
+        admin,
+        firstSalesDraft.id
+      );
+
+
+      // بررسی نتیجه ثبت نهایی
+      expect(postedSale).toMatchObject({
+        id: firstSalesDraft.id,
+        documentNumber: firstSalesDraft.documentNumber,
+        documentType: 'sale',
+        documentDate: '2026-11-28',
+        customerName: 'مشتری اول',
+        status: 'posted',
+        itemCount: 1,
+      });
+
+
+      // بهای تمام‌شده FIFO:
+      // پنج واحد اول × ۱۰ = ۵۰
+      // سه واحد بعدی × ۲۰ = ۶۰
+      // جمع = ۱۱۰ افغانی
+      expect(postedSale.totalCostByCurrency).toEqual([
+        expect.objectContaining({
+          currencyCode: 'AFN',
+          totalCostScaled: 110_000_000,
+          totalCost: 110,
+        }),
+      ]);
+
+
+      // دریافت گردش خروجی فاکتور
+      const movement = database.prepare(`
+      SELECT
+        id,
+        movement_direction,
+        base_quantity_scaled
+      FROM inventory_movements
+      WHERE document_id = ?
+    `).get(firstSalesDraft.id);
+
+
+      expect(movement).toMatchObject({
+        movement_direction: 'out',
+        base_quantity_scaled: 8_000_000,
+      });
+
+
+      // بررسی تخصیص لایه‌های FIFO
+      const allocations = database.prepare(`
+      SELECT
+
+        allocation.allocated_quantity_base_scaled,
+        allocation.unit_cost_scaled,
+        allocation.allocated_cost_scaled,
+
+        allocation.valuation_currency_code,
+
+        layer.received_at
+
+      FROM inventory_fifo_allocations AS allocation
+
+      JOIN inventory_cost_layers AS layer
+        ON layer.id = allocation.cost_layer_id
+
+      WHERE allocation.outbound_movement_id = ?
+
+      ORDER BY
+        layer.received_at ASC,
+        layer.created_at ASC,
+        layer.id ASC
+    `).all(movement.id);
+
+
+      expect(allocations).toHaveLength(2);
+
+
+      // ابتدا تمام لایه قدیمی‌تر مصرف شده است.
+      expect(allocations[0]).toMatchObject({
+        allocated_quantity_base_scaled: 5_000_000,
+        unit_cost_scaled: 10_000_000,
+        allocated_cost_scaled: 50_000_000,
+        valuation_currency_code: 'AFN',
+        received_at: expect.stringContaining('2026-11-26'),
+      });
+
+
+      // سپس سه واحد از لایه دوم مصرف شده است.
+      expect(allocations[1]).toMatchObject({
+        allocated_quantity_base_scaled: 3_000_000,
+        unit_cost_scaled: 20_000_000,
+        allocated_cost_scaled: 60_000_000,
+        valuation_currency_code: 'AFN',
+        received_at: expect.stringContaining('2026-11-27'),
+      });
+
+
+      // بررسی مانده واقعی موجودی پس از فروش
+      const stock = database.prepare(`
+      SELECT
+        SUM(
+          CASE
+            WHEN movement_direction = 'in'
+              THEN base_quantity_scaled
+
+            WHEN movement_direction = 'out'
+              THEN -base_quantity_scaled
+
+            ELSE 0
+          END
+        ) AS stock_scaled
+
+      FROM inventory_movements
+
+      WHERE product_id = ?
+    `).get(product.id);
+
+
+      // از ۱۲ واحد، ۸ واحد فروخته شده و ۴ واحد باقی مانده است.
+      expect(Number(stock.stock_scaled)).toBe(4_000_000);
+
+
+      // فروش دوم اکنون موجودی کافی ندارد و نباید ثبت شود.
+      expect(() =>
+        postSalesDocument(
+          database,
+          admin,
+          secondSalesDraft.id
+        )
+      ).toThrow('موجودی قابل فروش');
+
+
+      // اطمینان از باقی‌ماندن فاکتور دوم در وضعیت پیش‌نویس
+      const secondDocument = database.prepare(`
+      SELECT status
+      FROM inventory_documents
+      WHERE id = ?
+    `).get(secondSalesDraft.id);
+
+
+      expect(secondDocument.status).toBe('draft');
+
+
+      // فاکتور دوم نباید هیچ گردش خروجی ایجاد کرده باشد.
+      const secondMovementCount = database.prepare(`
+      SELECT COUNT(*) AS total
+      FROM inventory_movements
+      WHERE document_id = ?
+    `).get(secondSalesDraft.id);
+
+
+      expect(Number(secondMovementCount.total)).toBe(0);
+
+    }
+  );
+
+  it(
+    'ثبت نهایی فاکتور را برای کاربر فاقد مجوز رد می‌کند',
+    () => {
+
+      // ایجاد مدیر آزمایشی
+      const setup = createInitialAdmin(
+        database,
+        adminInput
+      );
+
+      const admin = setup.user;
+
+
+      // ایجاد دسته‌بندی
+      const category = createCategory(
+        database,
+        admin,
+        {
+          name: 'کالاهای آزمون مجوز فروش',
+          description: 'آزمون مجوز ثبت نهایی',
+        }
+      );
+
+
+      // دریافت واحد پایه
+      const unit = database.prepare(`
+      SELECT id
+      FROM units
+      WHERE code = ?
+        AND is_active = 1
+      LIMIT 1
+    `).get('KG');
+
+
+      // ایجاد کالا
+      const product = createProduct(
+        database,
+        admin,
+        {
+          name: 'کالای آزمون مجوز',
+          categoryId: category.id,
+          baseUnitId: unit.id,
+          unitOptions: [],
+
+          prices: [
+            {
+              unitId: unit.id,
+              currencyCode: 'AFN',
+              priceType: 'purchase',
+              unitPrice: '10',
+            },
+            {
+              unitId: unit.id,
+              currencyCode: 'AFN',
+              priceType: 'sale',
+              unitPrice: '15',
+            },
+          ],
+        }
+      );
+
+
+      const baseProductUnit = product.units.find(
+        (item) => item.isBaseUnit
+      );
+
+
+      // ایجاد موجودی واقعی
+      const entryDraft = createInventoryEntryDraft(
+        database,
+        admin,
+        {
+          documentType: 'purchase',
+          documentDate: '2026-11-27',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '5',
+              unitPrice: '10',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      postInventoryDocument(
+        database,
+        admin,
+        entryDraft.id
+      );
+
+
+      // ایجاد پیش‌نویس فروش با مدیر
+      const salesDraft = createSalesDraft(
+        database,
+        admin,
+        {
+          documentDate: '2026-11-28',
+          customerName: 'مشتری آزمون',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '2',
+              unitPrice: '15',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      // کاربری که مجوز ثبت نهایی فروش ندارد
+      const restrictedUser = {
+        id: 'restricted-post-user',
+        username: 'restricted',
+        displayName: 'کاربر محدود',
+        role: 'user',
+      };
+
+
+      // درخواست ثبت نهایی باید رد شود.
+      expect(() =>
+        postSalesDocument(
+          database,
+          restrictedUser,
+          salesDraft.id
+        )
+      ).toThrow(
+        'برای انجام این عملیات مجوز لازم را نداری.'
+      );
+
+
+      // فاکتور باید پیش‌نویس باقی بماند.
+      const savedDocument = database.prepare(`
+      SELECT status
+      FROM inventory_documents
+      WHERE id = ?
+    `).get(salesDraft.id);
+
+
+      expect(savedDocument.status).toBe('draft');
+
+
+      // هیچ گردش خروجی نباید ایجاد شده باشد.
+      const movementCount = database.prepare(`
+      SELECT COUNT(*) AS total
+      FROM inventory_movements
+      WHERE document_id = ?
+    `).get(salesDraft.id);
+
+
+      expect(Number(movementCount.total)).toBe(0);
+
+    }
+  );
 });

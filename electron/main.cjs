@@ -79,7 +79,9 @@ const {
 const {
   getSalesFormOptions,
   createSalesDraft,
+  postSalesDocument,
 } = require('./services/salesService.cjs');
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -994,6 +996,23 @@ function registerIpcHandlers() {
         database,
         actor,
         input
+      );
+
+    }
+  );
+  // ثبت نهایی فاکتور فروش
+  ipcMain.handle(
+    'sales:document:post',
+    (event, documentId) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      // ثبت نهایی فاکتور و تخصیص بهای تمام‌شده FIFO
+      return postSalesDocument(
+        database,
+        actor,
+        documentId
       );
 
     }

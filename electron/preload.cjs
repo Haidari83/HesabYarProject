@@ -284,6 +284,12 @@ contextBridge.exposeInMainWorld('hesabyar', {
         'sales:create-draft',
         input
       ),
+    // ثبت نهایی فاکتور فروش
+    postDocument: (documentId) =>
+      ipcRenderer.invoke(
+        'sales:document:post',
+        documentId
+      ),
 
   },
   // API مدیریت موجودی انبار
