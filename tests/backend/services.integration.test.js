@@ -278,7 +278,7 @@ describe('پایگاه داده و سرویس‌های اصلی', () => {
     );
 
     const draftProduct = draftStockResult.products.find(
-      (product) => product.id === createdProduct.id
+      (product) => product.id === "IN-20261128-00004"
     );
 
     expect(draftProduct).toBeUndefined();

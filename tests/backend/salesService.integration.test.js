@@ -35,8 +35,10 @@ const {
   postInventoryDocument,
 } = inventoryService;
 
-const { getSalesFormOptions } = salesService;
-
+const {
+  getSalesFormOptions,
+  createSalesDraft,
+} = salesService;
 
 const adminInput = {
   displayName: 'مدیر فروش آزمایشی',
@@ -312,6 +314,298 @@ describe('سرویس فروش حساب‌یار', () => {
 
     }
   );
+  it(
+    'پیش‌نویس فروش را ذخیره می‌کند، اما موجودی انبار را تغییر نمی‌دهد',
+    () => {
 
+      // ایجاد مدیر آزمایشی
+      const setup = createInitialAdmin(
+        database,
+        adminInput
+      );
+
+      const admin = setup.user;
+
+
+      // ایجاد دسته‌بندی
+      const category = createCategory(
+        database,
+        admin,
+        {
+          name: 'کالاهای آزمون پیش‌نویس فروش',
+          description: 'آزمون ایجاد پیش‌نویس فروش',
+        }
+      );
+
+
+      // استفاده از واحد پایه کیلوگرم
+      const unit = database.prepare(`
+      SELECT id
+      FROM units
+      WHERE code = ?
+        AND is_active = 1
+      LIMIT 1
+    `).get('KG');
+
+      expect(unit).toBeDefined();
+
+
+      // ایجاد کالا با قیمت فروش
+      const product = createProduct(
+        database,
+        admin,
+        {
+          name: 'کالای پیش‌نویس فروش',
+          categoryId: category.id,
+          baseUnitId: unit.id,
+          unitOptions: [],
+
+          prices: [
+            {
+              unitId: unit.id,
+              currencyCode: 'AFN',
+              priceType: 'purchase',
+              unitPrice: '40',
+            },
+            {
+              unitId: unit.id,
+              currencyCode: 'AFN',
+              priceType: 'sale',
+              unitPrice: '65',
+            },
+          ],
+        }
+      );
+
+
+      // دریافت واحد پایه اختصاصی کالا
+      const baseProductUnit = product.units.find(
+        (item) => item.isBaseUnit
+      );
+
+      expect(baseProductUnit).toBeDefined();
+
+
+      // ثبت پیش‌نویس ورود کالا
+      const entryDraft = createInventoryEntryDraft(
+        database,
+        admin,
+        {
+          documentType: 'purchase',
+          documentDate: '2026-11-28',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '12.5',
+              unitPrice: '40',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      // ثبت نهایی ورود برای ایجاد موجودی واقعی
+      postInventoryDocument(
+        database,
+        admin,
+        entryDraft.id
+      );
+
+
+      // ایجاد پیش‌نویس فروش دو واحد از کالا
+      const salesDraft = createSalesDraft(
+        database,
+        admin,
+        {
+          documentDate: '2026-11-28',
+
+          customerName: 'مشتری آزمایشی',
+
+          sourceInvoiceNumber: 'CUSTOMER-REF-001',
+
+          notes: 'آزمون ذخیره پیش‌نویس فروش',
+
+          items: [
+            {
+              productId: product.id,
+              productUnitId: baseProductUnit.productUnitId,
+              quantity: '2',
+              unitPrice: '65',
+              currencyCode: 'AFN',
+            },
+          ],
+        }
+      );
+
+
+      // بررسی پاسخ سرویس
+      expect(salesDraft).toMatchObject({
+        documentType: 'sale',
+        documentDate: '2026-11-28',
+        customerName: 'مشتری آزمایشی',
+        status: 'draft',
+        itemCount: 1,
+      });
+
+
+      expect(salesDraft.id).toBeTruthy();
+
+      expect(salesDraft.documentNumber).toMatch(
+        /^SL-20261128-\d{5}$/
+      );
+
+
+      // بررسی اطلاعات اصلی سند در SQLite
+      const savedDocument = database.prepare(`
+      SELECT
+        document_type,
+        document_date,
+        status,
+        source_party_type,
+        source_party_name,
+        source_invoice_number,
+        notes
+      FROM inventory_documents
+      WHERE id = ?
+    `).get(salesDraft.id);
+
+
+      expect(savedDocument).toMatchObject({
+        document_type: 'sale',
+        document_date: '2026-11-28',
+        status: 'draft',
+        source_party_type: 'customer',
+        source_party_name: 'مشتری آزمایشی',
+        source_invoice_number: 'CUSTOMER-REF-001',
+        notes: 'آزمون ذخیره پیش‌نویس فروش',
+      });
+
+
+      // بررسی اطلاعات ردیف ذخیره‌شده
+      const savedItem = database.prepare(`
+      SELECT
+        product_id,
+        product_unit_id,
+        quantity_scaled,
+        base_quantity_scaled,
+        unit_price_scaled,
+        currency_code,
+        valuation_currency_code,
+        exchange_rate_num,
+        exchange_rate_den
+      FROM inventory_document_items
+      WHERE document_id = ?
+    `).get(salesDraft.id);
+
+
+      expect(savedItem).toMatchObject({
+        product_id: product.id,
+        product_unit_id: baseProductUnit.productUnitId,
+        quantity_scaled: 2_000_000,
+        base_quantity_scaled: 2_000_000,
+        unit_price_scaled: 65_000_000,
+        currency_code: 'AFN',
+        valuation_currency_code: 'AFN',
+        exchange_rate_num: 1,
+        exchange_rate_den: 1,
+      });
+
+
+      // پیش‌نویس فروش نباید گردش خروجی ایجاد کند
+      const salesMovements = database.prepare(`
+      SELECT COUNT(*) AS total
+      FROM inventory_movements
+      WHERE document_id = ?
+    `).get(salesDraft.id);
+
+
+      expect(Number(salesMovements.total)).toBe(0);
+
+
+      // موجودی واقعی همچنان باید ۱۲٫۵ باشد
+      const stock = database.prepare(`
+      SELECT
+        SUM(
+          CASE
+            WHEN movement_direction = 'in'
+              THEN base_quantity_scaled
+            WHEN movement_direction = 'out'
+              THEN -base_quantity_scaled
+            ELSE 0
+          END
+        ) AS stock_scaled
+      FROM inventory_movements
+      WHERE product_id = ?
+    `).get(product.id);
+
+
+      expect(Number(stock.stock_scaled)).toBe(12_500_000);
+
+
+      // فروش بیش از موجودی نباید پیش‌نویس ایجاد کند
+      expect(() =>
+        createSalesDraft(
+          database,
+          admin,
+          {
+            documentDate: '2026-11-28',
+
+            customerName: 'مشتری دوم',
+
+            items: [
+              {
+                productId: product.id,
+                productUnitId: baseProductUnit.productUnitId,
+                quantity: '20',
+                unitPrice: '65',
+                currencyCode: 'AFN',
+              },
+            ],
+          }
+        )
+      ).toThrow('موجودی کافی');
+
+
+      // فقط همان پیش‌نویس معتبر اول باید ذخیره شده باشد
+      const saleDocumentCount = database.prepare(`
+      SELECT COUNT(*) AS total
+      FROM inventory_documents
+      WHERE document_type = 'sale'
+    `).get();
+
+
+      expect(Number(saleDocumentCount.total)).toBe(1);
+
+    }
+  );
+
+
+  it(
+    'ایجاد پیش‌نویس فروش را برای کاربر فاقد مجوز رد می‌کند',
+    () => {
+
+      const restrictedUser = {
+        id: 'restricted-sales-user',
+        username: 'restricted',
+        displayName: 'کاربر محدود',
+        role: 'user',
+      };
+
+
+      expect(() =>
+        createSalesDraft(
+          database,
+          restrictedUser,
+          {}
+        )
+      ).toThrow(
+        'برای انجام این عملیات مجوز لازم را نداری.'
+      );
+
+    }
+  );
 
 });

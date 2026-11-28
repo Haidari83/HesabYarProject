@@ -278,6 +278,12 @@ contextBridge.exposeInMainWorld('hesabyar', {
       ipcRenderer.invoke(
         'sales:form-options'
       ),
+    // ثبت پیش‌نویس فاکتور فروش
+    createDraft: (input) =>
+      ipcRenderer.invoke(
+        'sales:create-draft',
+        input
+      ),
 
   },
   // API مدیریت موجودی انبار

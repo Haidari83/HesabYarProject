@@ -78,8 +78,8 @@ const {
 // سرویس مدیریت عملیات فروش
 const {
   getSalesFormOptions,
+  createSalesDraft,
 } = require('./services/salesService.cjs');
-
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -981,6 +981,23 @@ function registerIpcHandlers() {
     }
   );
 
+  // ثبت پیش‌نویس فاکتور فروش
+  ipcMain.handle(
+    'sales:create-draft',
+    (event, input) => {
+
+      // دریافت هویت کاربر دارای نشست معتبر
+      const actor = requireAuthenticatedSession(event);
+
+      // ایجاد پیش‌نویس فروش در پایگاه داده
+      return createSalesDraft(
+        database,
+        actor,
+        input
+      );
+
+    }
+  );
   // دریافت اطلاعات لازم برای فرم ورود کالا
   ipcMain.handle(
     'inventory:entry:form-options',
