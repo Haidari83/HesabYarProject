@@ -5,10 +5,12 @@ import {
   useState,
 } from 'react';
 
+
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
 import FormField from '../../components/ui/FormField';
 import KeyboardSelect from '../../components/ui/KeyboardSelect';
+import InventoryExcelImportModal from './InventoryExcelImportModal';
 
 import './inventory-entry.css';
 
@@ -178,6 +180,7 @@ function EntryProductPicker({
 }) {
 
   const [isOpen, setIsOpen] = useState(false);
+  // وضعیت پنجره ورود کالا از فایل Excel
 
   const filteredProducts = useMemo(() => {
 
@@ -294,6 +297,8 @@ function InventoryEntry() {
 
   // نوع سند ورود کالا
   const [entryType, setEntryType] = useState('purchase');
+
+  const [isExcelImportOpen, setIsExcelImportOpen] = useState(false);
 
   // اطلاعات عمومی سند
   const [documentDate, setDocumentDate] = useState(getLocalDate);
@@ -517,6 +522,62 @@ function InventoryEntry() {
       message,
       id: Date.now(),
     });
+
+  }
+
+  // بررسی شرایط فرم و بازکردن پنجره ورود از Excel
+  function handleOpenExcelImport() {
+
+    // در زمان ذخیره یا ثبت نهایی، ورود Excel مجاز نیست.
+    if (
+      savedDraft ||
+      isSaving ||
+      isPosting ||
+      isCheckingEntryType ||
+      isLoadingOptions ||
+      loadError
+    ) {
+      return;
+    }
+
+
+    // اطلاعات دستی ناقص نباید با ورود Excel مخلوط شوند.
+    if (items.length > 0 && !allItemsComplete) {
+      showToast(
+        'error',
+        'ابتدا اطلاعات تمام ردیف‌های دستی را تکمیل کن؛ سپس فایل Excel را وارد کن.'
+      );
+
+      return;
+    }
+
+
+    // علت سند متفرقه باید پیش از ذخیره مشخص شده باشد.
+    if (
+      entryType === 'other' &&
+      !reason.trim()
+    ) {
+      showToast(
+        'error',
+        'برای سند ورود متفرقه ابتدا علت ورود کالا را مشخص کن.'
+      );
+
+      return;
+    }
+
+
+    // رعایت محدودیت ۲۰۰ ردیف سند
+    if (items.length >= 200) {
+      showToast(
+        'error',
+        'این سند به حداکثر ۲۰۰ ردیف کالا رسیده است.'
+      );
+
+      return;
+    }
+
+
+    setIsExcelImportOpen(true);
 
   }
 
@@ -1029,7 +1090,95 @@ function InventoryEntry() {
 
   }
 
+  // دریافت پیش‌نویس ذخیره‌شده از پنجره ورود Excel
+  function handleExcelDraftSaved(
+    result,
+    documentItems,
+    postError = null
+  ) {
 
+    // تبدیل اقلام دریافتی به ساختار مورد استفاده فرم اصلی
+    const preparedItems = documentItems.map((item) => {
+
+      const product = activeProducts.find(
+        (currentProduct) => currentProduct.id === item.productId
+      );
+
+      return {
+
+        // شناسه مستقل برای هر ردیف فرم
+        id: nextItemId.current++,
+
+        productId: item.productId,
+
+        // نام کالا برای نمایش در انتخاب‌گر محصولات
+        productSearch: product?.name || '',
+
+        productUnitId: item.productUnitId,
+
+        quantity: String(item.quantity),
+
+        unitPrice: String(item.unitPrice),
+
+        currencyCode: item.currencyCode,
+
+      };
+
+    });
+
+
+    // قرار دادن اقلام ذخیره‌شده در فرم اصلی
+    setItems(preparedItems);
+
+
+    // نگهداری شناسه پیش‌نویس برای ثبت نهایی بعدی
+    setSavedDraft(result);
+
+
+    // بستن پنجره واردسازی
+    setIsExcelImportOpen(false);
+
+
+    // اگر پیش‌نویس ذخیره شده اما ثبت نهایی ناموفق بوده است،
+    // اطلاعات پیش‌نویس در فرم حفظ می‌شوند.
+    if (postError) {
+
+      showToast(
+        'error',
+        `پیش‌نویس سند ${result.documentNumber} ذخیره شد، اما ثبت نهایی انجام نشد: ${getInventoryErrorMessage(postError)}`
+      );
+
+      return;
+
+    }
+
+
+    showToast(
+      'success',
+      `پیش‌نویس سند ${result.documentNumber} با موفقیت ذخیره شد.`
+    );
+
+  }
+
+
+  // دریافت نتیجه ثبت نهایی از پنجره Excel
+  function handleExcelDocumentPosted(result) {
+
+    // بستن پنجره واردسازی
+    setIsExcelImportOpen(false);
+
+
+    // پاک‌کردن فرم برای سند بعدی
+    resetInventoryEntryForm();
+
+
+    // نمایش نتیجه موفقیت
+    showToast(
+      'success',
+      `سند ${result.documentNumber} با موفقیت ثبت نهایی شد.`
+    );
+
+  }
   // تلاش مجدد برای دریافت اطلاعات یا بررسی مجوز
   function handleRetryFormOptions() {
 
@@ -1569,7 +1718,21 @@ function InventoryEntry() {
                 )} ردیف
               </span>
 
-
+              {/* ورود کالا از فایل Excel */}
+              <Button
+                type="button"
+                variant="secondary"
+                startIcon="⇧"
+                onClick={handleOpenExcelImport}
+                disabled={
+                  Boolean(savedDraft) ||
+                  isSaving ||
+                  isPosting ||
+                  isCheckingEntryType
+                }
+              >
+                ورود از Excel
+              </Button>
               {/* دکمه افزودن کالا در بالای فهرست */}
               <Button
                 type="button"
@@ -2117,7 +2280,47 @@ function InventoryEntry() {
 
       </section>
 
+      {/* پنجره ورود کالا از فایل Excel */}
+      {isExcelImportOpen && (
 
+        <InventoryExcelImportModal
+
+          onClose={() => setIsExcelImportOpen(false)}
+
+          products={activeProducts}
+
+          currencies={currencies}
+
+          baseCurrencyCode={formOptions.baseCurrencyCode}
+
+          documentInput={{
+
+            documentType: entryType,
+
+            documentDate,
+
+            sourcePartyName,
+
+            sourceInvoiceNumber,
+
+            reason,
+
+            notes,
+
+          }}
+
+          // حفظ اقلام دستی موجود در فرم
+          existingItems={items}
+
+          // دریافت پیش‌نویس ذخیره‌شده
+          onDraftSaved={handleExcelDraftSaved}
+
+          // دریافت نتیجه ثبت نهایی
+          onDocumentPosted={handleExcelDocumentPosted}
+
+        />
+
+      )}
       {/* اعلان شناور پایین چپ صفحه */}
       <EntryToast toast={toast} />
 

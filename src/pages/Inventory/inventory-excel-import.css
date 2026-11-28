@@ -1,0 +1,493 @@
+/* ============================================
+   پنجره ورود کالا از Excel
+============================================ */
+
+.inventory-excel-import-modal {
+  --ui-modal-max-width: 1250px;
+}
+
+
+/* بدنه اصلی */
+
+.inventory-excel-import {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  min-width: 0;
+  direction: rtl;
+}
+
+
+/* ورودی فایل مخفی */
+
+.inventory-excel-import__file-input {
+  display: none;
+}
+
+
+/* ============================================
+   قوانین و راهنمای فایل
+============================================ */
+
+.inventory-excel-import__guide {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  min-width: 0;
+}
+
+.inventory-excel-import__guide h3 {
+  margin: 0;
+
+  color: var(--color-text, #1f2937);
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.inventory-excel-import__guide>p {
+  margin: 0;
+
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 12px;
+  line-height: 2;
+}
+
+
+/* ستون‌های فایل */
+
+.inventory-excel-import__columns {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.inventory-excel-import__column {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  min-width: 0;
+
+  padding: 12px;
+
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 9px;
+
+  background: var(--color-surface, #fff);
+}
+
+.inventory-excel-import__column strong {
+  color: var(--color-text, #334155);
+
+  font-size: 12px;
+}
+
+.inventory-excel-import__column span {
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 10px;
+}
+
+
+/* قوانین */
+
+.inventory-excel-import__rules {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  margin: 0;
+
+  padding: 14px 30px 14px 14px;
+
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 9px;
+
+  background: var(--color-surface-muted, #f8fafc);
+
+  color: var(--color-text-secondary, #475569);
+
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+
+/* انتخاب فایل */
+
+.inventory-excel-import__file-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.inventory-excel-import__file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  min-width: 0;
+
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 11px;
+}
+
+.inventory-excel-import__file-info strong {
+  color: var(--color-text, #334155);
+
+  overflow-wrap: anywhere;
+}
+
+
+/* وضعیت خواندن فایل */
+
+.inventory-excel-import__loading {
+  padding: 14px;
+
+  border: 1px solid var(--color-info-border, #bfdbfe);
+  border-radius: 8px;
+
+  background: var(--color-info-bg, #eff6ff);
+  color: var(--color-info-text, #1d4ed8);
+
+  font-size: 12px;
+}
+
+
+/* ============================================
+   سربرگ صفحات بررسی
+============================================ */
+
+.inventory-excel-import__review {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  min-width: 0;
+}
+
+.inventory-excel-import__page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  min-width: 0;
+}
+
+.inventory-excel-import__page-heading h3 {
+  margin: 0;
+
+  color: var(--color-text, #1f2937);
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.inventory-excel-import__page-heading p {
+  margin: 6px 0 0;
+
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+
+/* اطلاعات فایل انتخاب‌شده */
+
+.inventory-excel-import__selected-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  padding: 11px 14px;
+
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+
+  background: var(--color-surface-muted, #f8fafc);
+
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 11px;
+}
+
+.inventory-excel-import__selected-file strong {
+  color: var(--color-text, #334155);
+
+  overflow-wrap: anywhere;
+}
+
+
+/* ============================================
+   کارت‌های خلاصه
+============================================ */
+
+.inventory-excel-import__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+
+  min-width: 0;
+}
+
+.inventory-excel-import__summary-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  min-width: 0;
+  min-height: 85px;
+
+  padding: 14px;
+
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 9px;
+
+  background: var(--color-surface, #fff);
+}
+
+.inventory-excel-import__summary-card span {
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.inventory-excel-import__summary-card strong {
+  color: var(--color-text, #1f2937);
+
+  font-size: 22px;
+  font-weight: 700;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.inventory-excel-import__summary-card.is-valid {
+  border-color: var(--color-success-border, #bbf7d0);
+  background: var(--color-success-bg, #f0fdf4);
+}
+
+.inventory-excel-import__summary-card.is-valid strong {
+  color: var(--color-success-text, #166534);
+}
+
+.inventory-excel-import__summary-card.is-invalid {
+  border-color: var(--color-danger-border, #fecaca);
+  background: var(--color-danger-bg, #fef2f2);
+}
+
+.inventory-excel-import__summary-card.is-invalid strong {
+  color: var(--color-danger-text, #b91c1c);
+}
+
+
+/* ============================================
+   جدول بررسی اطلاعات
+============================================ */
+
+.inventory-excel-import__table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  gap: 10px;
+}
+
+.inventory-excel-import__table-heading h4 {
+  margin: 0;
+
+  color: var(--color-text, #334155);
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.inventory-excel-import__table-heading p {
+  margin: 5px 0 0;
+
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 11px;
+}
+
+.inventory-excel-import__table-heading>span {
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 11px;
+
+  white-space: nowrap;
+}
+
+.inventory-excel-import__table-wrapper {
+  width: 100%;
+  min-width: 0;
+
+  overflow-x: auto;
+
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 9px;
+
+  overscroll-behavior-x: contain;
+}
+
+.inventory-excel-import__table {
+  min-width: 1050px;
+}
+
+.inventory-excel-import__table th {
+  white-space: nowrap;
+}
+
+.inventory-excel-import__table td {
+  line-height: 1.8;
+  vertical-align: middle;
+
+  overflow-wrap: anywhere;
+}
+
+.inventory-excel-import__table td:first-child {
+  white-space: nowrap;
+}
+
+
+/* پیام‌های خطا در جدول */
+
+.inventory-excel-import__errors {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  min-width: 170px;
+
+  margin: 0;
+  padding: 0 17px 0 0;
+
+  color: var(--color-danger-text, #b91c1c);
+
+  font-size: 11px;
+  line-height: 1.9;
+}
+
+.inventory-excel-import__no-error {
+  color: var(--color-success-text, #166534);
+
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+
+/* حالت بدون داده */
+
+.inventory-excel-import__empty {
+  padding: 35px 15px;
+
+  border: 1px dashed var(--color-border, #d1d5db);
+  border-radius: 9px;
+
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 12px;
+  text-align: center;
+}
+
+
+/* ============================================
+   پایین پنجره
+============================================ */
+
+.inventory-excel-import__footer {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inventory-excel-import__footer-note {
+  margin: 0;
+
+  color: var(--color-text-secondary, #64748b);
+
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.inventory-excel-import__footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+
+  gap: 9px;
+}
+
+
+/* ============================================
+   واکنش‌گرایی
+============================================ */
+
+@media (max-width: 900px) {
+
+  .inventory-excel-import__columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .inventory-excel-import__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .inventory-excel-import__columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inventory-excel-import__summary-card {
+    min-height: 75px;
+    padding: 11px;
+  }
+
+  .inventory-excel-import__summary-card strong {
+    font-size: 19px;
+  }
+
+  .inventory-excel-import__footer {
+    align-items: stretch;
+  }
+
+  .inventory-excel-import__footer-note {
+    flex-basis: 100%;
+  }
+
+  .inventory-excel-import__footer-actions {
+    width: 100%;
+  }
+
+  .inventory-excel-import__footer-actions>.ui-button {
+    flex: 1 1 auto;
+  }
+
+}
+
+@media (max-width: 380px) {
+
+  .inventory-excel-import__columns,
+  .inventory-excel-import__summary {
+    grid-template-columns: 1fr;
+  }
+
+}

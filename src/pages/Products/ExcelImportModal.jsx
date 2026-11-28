@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { readSheet } from 'read-excel-file/browser';
 import { validateExcelProductRows } from './excel-import-validation';
-import { normalizePersianText } from '../../utils/persianText';
 import { formatNumber } from '../../utils/numberFormat';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
+
+import {
+  formatExcelFileSize,
+  getExcelCellText,
+  readExcelSheet,
+  resolveExcelColumnIndexes,
+} from '../../utils/excelImport';
 
 import './excel-import-modal.css';
 
@@ -59,30 +64,6 @@ const EXCEL_AFGHANISTAN_NUMBER_OPTIONS = {
   ...EXCEL_NUMBER_OPTIONS,
   locale: 'fa-AF',
 };
-
-// تبدیل مقدار سلول به متن قابل نمایش
-function getCellText(value) {
-  if (value === null || value === undefined) {
-    return '';
-  }
-
-  return String(value).trim();
-}
-
-
-// نمایش حجم فایل
-function formatFileSize(bytes) {
-  if (bytes < 1024) {
-    return `${bytes} بایت`;
-  }
-
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} کیلوبایت`;
-  }
-
-  return `${(bytes / (1024 * 1024)).toFixed(1)} مگابایت`;
-}
-
 
 function ExcelImportModal({
   onClose,
@@ -243,34 +224,18 @@ function ExcelImportModal({
 
     // پاک‌کردن نتیجه فایل قبلی
     setFileName(file.name);
-    setFileSize(formatFileSize(file.size));
+    setFileSize(formatExcelFileSize(file.size));
     setValidationResult(null);
     setReadError('');
     setImportError('');
     setImportReport(null);
     setCurrentStep('upload');
 
-    // در این نسخه فقط فایل XLSX پذیرفته می‌شود
-    if (!file.name.toLowerCase().endsWith('.xlsx')) {
-      setReadError(
-        'فرمت فایل معتبر نیست. لطفاً فایل را با فرمت XLSX انتخاب کن.'
-      );
-      return;
-    }
-
-    // جلوگیری از خواندن فایل‌های بسیار بزرگ
-    if (file.size > 10 * 1024 * 1024) {
-      setReadError(
-        'حجم فایل نمی‌تواند بیشتر از ۱۰ مگابایت باشد.'
-      );
-      return;
-    }
-
     setIsReading(true);
 
     try {
       // خواندن برگه اول فایل Excel
-      const sheetRows = await readSheet(file);
+      const sheetRows = await readExcelSheet(file);
 
       if (
         !Array.isArray(sheetRows) ||
@@ -286,55 +251,11 @@ function ExcelImportModal({
         ? sheetRows[0]
         : [];
 
-      // پیدا کردن شماره هر ستون بر اساس نام آن
-      const columnIndexes = {};
-
-      const missingColumns = [];
-
-      EXCEL_COLUMNS.forEach((column) => {
-        const aliases = column.aliases.map((alias) =>
-          normalizePersianText(alias, {
-            removeDiacritics: false,
-          })
-        );
-        const matchedIndexes = headerRow
-          .map((cell, index) => ({
-            index,
-            header: normalizePersianText(cell, {
-              removeDiacritics: false,
-            }),
-          }))
-          .filter((item) =>
-            aliases.includes(item.header)
-          )
-          .map((item) => item.index);
-
-        // جلوگیری از وجود دو ستون با یک مفهوم
-        if (matchedIndexes.length > 1) {
-          throw new Error(
-            `ستون «${column.label}» بیش از یک بار در فایل تعریف شده است.`
-          );
-        }
-
-        columnIndexes[column.key] =
-          matchedIndexes.length > 0
-            ? matchedIndexes[0]
-            : -1;
-
-        // بررسی ستون‌های الزامی
-        if (
-          column.required &&
-          matchedIndexes.length === 0
-        ) {
-          missingColumns.push(column.label);
-        }
-      });
-
-      if (missingColumns.length > 0) {
-        throw new Error(
-          `ستون‌های الزامی پیدا نشدند: ${missingColumns.join('، ')}`
-        );
-      }
+      // تشخیص جایگاه ستون‌ها با استفاده از ابزار عمومی Excel
+      const columnIndexes = resolveExcelColumnIndexes(
+        headerRow,
+        EXCEL_COLUMNS
+      );
 
       // تبدیل ردیف‌های Excel به ساختار قابل نمایش
       const dataRows = sheetRows
@@ -344,7 +265,7 @@ function ExcelImportModal({
 
           // حذف ردیف‌هایی که کاملاً خالی هستند
           const hasData = cells.some(
-            (cell) => getCellText(cell) !== ''
+            (cell) => getExcelCellText(cell) !== ''
           );
 
           if (!hasData) {
@@ -359,7 +280,7 @@ function ExcelImportModal({
               return '';
             }
 
-            return getCellText(cells[columnIndex]);
+            return getExcelCellText(cells[columnIndex]);
           };
 
           return {
